@@ -14,6 +14,17 @@ service cloud.firestore {
       return request.resource.data.keys().size() <= 60;
     }
 
+    // String-length caps for guest-written fields (spec §2.2). Matches the cuts in js/ui/guest/session.js.
+    function cap(f, n) {
+      let d = request.resource.data;
+      return !(f in d) || !(d[f] is string) || d[f].size() <= n;
+    }
+
+    function capped() {
+      return cap('fn', 80) && cap('fe', 32) && cap('note', 300) && cap('text', 500)
+        && cap('msg', 300) && cap('stack', 1500) && cap('screen', 40) && cap('ua', 200);
+    }
+
     match /rooms/{roomId} {
       allow get: if signedIn();
       allow create, update: if signedIn() && roomId.size() >= 20 && smallDoc();
@@ -24,7 +35,7 @@ service cloud.firestore {
           && col in ['history', 'places', 'live', 'feedback', 'errors'];
         allow create, update: if signedIn()
           && col in ['history', 'places', 'live', 'feedback', 'errors']
-          && smallDoc();
+          && smallDoc() && capped();
         allow delete: if signedIn()
           && col in ['history', 'places', 'live'];
       }

@@ -1,5 +1,5 @@
 // Guest quiz screens (spec-flow-firebase.md §2.1). Also used for the owner's "she's next to me" mode.
-// One question per screen, tap = answer. Escapes: 🤫 type it · ↩︎ undo · 🤷‍♀️ skip.
+// One question per screen, tap = answer. Escapes: 🤫 type it · ↩︎ undo. No skip on her screens (R5).
 // Every step is kept as a small action so the quiz can resume on another browser (live doc).
 import { FOODS } from "../../data/foods.js";
 import { QUESTIONS } from "../../data/questions.js";
@@ -9,7 +9,7 @@ import { priorFrom } from "../../engine/prior.js";
 import { moodFor } from "../../engine/mood.js";
 import { FoodQuiz } from "../../engine/quiz.js";
 import { learnFrom } from "../../engine/learn.js";
-import { pic } from "../pics.js";
+import { pic, catLabel, foodLabel } from "../pics.js";
 import { render, html, raw } from "../dom.js";
 
 const DAY = 864e5;
@@ -58,8 +58,7 @@ export function startGuestQuiz(root, opts) {
     return html`<div class="meter-wrap"><span class="sub">${STR.meter}</span>
       <div class="meter" role="meter" aria-label="${STR.meter}" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${w}"><i style="width:${w}%"></i></div></div>`;
   };
-  const footer = (skip) => html`<div class="foot">
-      ${skip ? raw(html`<button class="btn btn-ghost" data-on="skip">${STR.skip.e} ${STR.skip.t}</button>`) : ""}
+  const footer = () => html`<div class="foot">
       ${actions.length ? raw(html`<button class="btn btn-ghost" data-on="undo">↩︎ ${STR.back}</button>`) : ""}
       <button class="btn btn-ghost" data-on="escape">${STR.escape}</button>
       ${onFeedback ? raw(html`<button class="btn btn-ghost" data-on="feedback">${STR.feedback.open}</button>`) : ""}</div>`;
@@ -74,7 +73,6 @@ export function startGuestQuiz(root, opts) {
   const handlers = {
     go: () => show(),
     ans: (i) => act({ k: "a", q: step.q.id, i: Number(i) }),
-    skip: () => act({ k: "a", q: step.q.id, i: -1 }),
     undo: () => {
       if (!z.undo()) return;
       actions.pop();
@@ -125,38 +123,38 @@ export function startGuestQuiz(root, opts) {
       const { q, order } = step;
       body = html`<h2 class="q">${q.text}</h2>
         ${order.map((i) => raw(html`<button class="btn" data-on="ans" data-arg="${i}"><span class="em">${q.answers[i].e}</span>${q.answers[i].t}</button>`))}
-        ${raw(footer(true))}`;
+        ${raw(footer())}`;
     } else if (step.type === "grid") {
       body = html`<h2 class="q">${STR.grid.text}</h2>
-        <div class="grid">${step.items.map((f) => raw(html`<button class="btn" data-on="veto" data-arg="${f.id}" aria-pressed="false"><span class="em">${f.emoji}</span>${f.name}</button>`))}</div>
+        <div class="grid">${step.items.map((f) => raw(html`<button class="btn food" data-on="veto" data-arg="${f.id}" aria-pressed="false">${raw(foodLabel(f))}</button>`))}</div>
         <button class="btn btn-primary" data-on="gridDone">${STR.grid.done}</button>
-        ${raw(footer(false))}`;
+        ${raw(footer())}`;
     } else if (step.type === "duel") {
       const { a, b } = step;
       body = html`<h2 class="q">${STR.duel.text}</h2>
         <div class="duel">
-          <button class="btn" data-on="duel" data-arg="a"><span class="em">${a.emoji}</span>${a.name}</button>
-          <button class="btn" data-on="duel" data-arg="b"><span class="em">${b.emoji}</span>${b.name}</button>
+          <button class="btn food" data-on="duel" data-arg="a">${raw(foodLabel(a, "big"))}</button>
+          <button class="btn food" data-on="duel" data-arg="b">${raw(foodLabel(b, "big"))}</button>
         </div>
         <div class="duel">
           <button class="btn" data-on="duel" data-arg="both">${STR.duel.both}</button>
           <button class="btn" data-on="duel" data-arg="none">${STR.duel.neither}</button>
         </div>
-        ${raw(footer(false))}`;
+        ${raw(footer())}`;
     } else if (step.type === "guess") {
       const f = step.f;
       body = html`<div class="sub">${STR.guess.text}</div>
         <div class="big reveal" aria-hidden="true">${raw(pic(f))}</div>
-        <h2 class="title">${f.name}?</h2>
+        <h2 class="title">${f.name}?</h2><p class="cat">${catLabel(f)}</p>
         <button class="btn btn-primary" data-on="guess" data-arg="yes">${STR.guess.yes}</button>
         <div class="duel">
           <button class="btn" data-on="guess" data-arg="close">${STR.guess.close}</button>
           <button class="btn" data-on="guess" data-arg="no">${STR.guess.no}</button>
         </div>
-        ${raw(footer(false))}`;
+        ${raw(footer())}`;
     } else if (step.type === "pick") {
       body = html`<h2 class="q">${STR.pick.text}</h2>
-        <div class="grid">${step.items.map((f) => raw(html`<button class="btn" data-on="pick" data-arg="${f.id}"><span class="em">${f.emoji}</span>${f.name}</button>`))}</div>
+        <div class="grid">${step.items.map((f) => raw(html`<button class="btn food" data-on="pick" data-arg="${f.id}">${raw(foodLabel(f))}</button>`))}</div>
         <button class="btn btn-ghost" data-on="escape">${STR.pick.free}</button>`;
     }
     render(root, meter() + body, handlers);
@@ -171,7 +169,7 @@ export function startGuestQuiz(root, opts) {
     const out = { result: r, food, mood: moodFor(food), trail: [...z.trail], top: z.ranked().slice(0, 5).map((x) => x.f.id), ans, stats };
     if (onFinish) return onFinish(out);
     render(root, html`<div class="mood">${out.mood}</div>
-      <div class="big">${food?.emoji ?? "🍽️"}</div>
+      <div class="big">${raw(pic(food))}</div>
       <h2 class="title">${food?.name ?? r.free}</h2>`);
   }
 

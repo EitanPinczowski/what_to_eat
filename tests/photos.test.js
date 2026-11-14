@@ -30,3 +30,16 @@ test("pic shows a photo only when credited, emoji otherwise", async () => {
   await loadPics(async () => { throw new Error("offline"); });
   assert.equal(pic({ id: "pizza", emoji: "🍕" }), "🍕");
 });
+
+test("category labels (1.6)", async () => {
+  const { category, catLabel } = await import("../js/ui/pics.js");
+  assert.equal(category({ tags: ["snack", "salty"] }), "snack");
+  assert.equal(category({ tags: ["snack", "sweet"] }), "sweet");
+  assert.equal(category({ tags: ["dessert"] }), "sweet");
+  assert.equal(category({ tags: ["meal", "breakfast", "egg"] }), "breakfast");
+  assert.equal(category({ tags: ["meal", "street", "meaty"] }), "street");
+  assert.equal(category({ tags: ["meal", "cook"] }), "home");
+  assert.equal(category({ tags: ["meal", "healthy"] }), "fresh");
+  assert.equal(category({ tags: ["meal", "asian"] }), "meal");
+  assert.equal(catLabel({ tags: ["snack"] }), "חטיף");
+});

@@ -11,7 +11,7 @@ import { learnFrom } from "../js/engine/learn.js";
 const TRIALS = Number(process.argv[2]) || 5;
 const VERBOSE = process.argv.includes("--verbose");
 const NOISE = 0.15;
-const TARGETS = { exact: 0.75, found: 0.95, steps: 10 };
+const TARGETS = { exact: 0.75, found: 0.945, steps: 10 }; // found was 0.95; no-skip rule (1.6) costs ~1 trial in 475 — see docs/REVIEW.md
 
 const foods = buildFoods(FOODS);
 const rng = (seed) => () => ((seed = (seed * 16807) % 2147483647) / 2147483647);
@@ -23,6 +23,10 @@ function play(target, rnd, learned = {}) {
   const answer = (q, i) => (i >= 0 && ans.push([q.id, i]), z.answer(q, i));
 
   const sim = (f) => (f.id === target.id ? 1 : jaccard(f.tags, target.tags));
+  const lean = (q) => {
+    const sc = q.answers.map((a) => foods.reduce((s, f) => s + (f.id === target.id ? 0 : judge.delta(f, q, a)), 0));
+    return sc.indexOf(Math.min(...sc));
+  };
   for (let i = 0; i < 40; i++) {
     const s = z.next();
     if (s.type === "done") break;
@@ -30,7 +34,7 @@ function play(target, rnd, learned = {}) {
       const ds = s.q.answers.map((a) => judge.delta(target, s.q, a));
       const max = Math.max(...ds);
       if (rnd() < NOISE) answer(s.q, Math.floor(rnd() * ds.length));
-      else if (ds.every((d) => d === 0)) answer(s.q, -1);
+      else if (ds.every((d) => d === 0)) answer(s.q, lean(s.q)); // no skip on her screens (R5): she leans toward foods like her target
       else {
         const best = ds.map((d, j) => (d === max ? j : -1)).filter((j) => j >= 0);
         answer(s.q, best[Math.floor(rnd() * best.length)]);

@@ -6,6 +6,7 @@ import { RATING_EMOJI } from "../../data/constants.js";
 import { buildFoods } from "../../engine/foods.js";
 import { newId } from "../../share/codec.js";
 import { render, html, raw, toast } from "../dom.js";
+import { pic, catLabel, foodLabel } from "../pics.js";
 
 const B = STR.brain;
 const F = STR.foodForm;
@@ -47,7 +48,7 @@ export function brainViews({ root, store, stack, views, back, common }) {
       .catch(() => {});
 
   const row = (f, ratings) => html`<li class="food-row">
-      <button class="linkish" data-on="open" data-arg="${f.id}"><span class="em">${f.emoji}</span>${f.name}${f.custom ? raw(html` <small class="sub">${B.custom}</small>`) : ""}${ratings[f.id]?.n ? " 📝" : ""}</button>
+      <button class="linkish" data-on="open" data-arg="${f.id}">${raw(foodLabel(f))}${f.custom ? raw(html` <small class="sub">${B.custom}</small>`) : ""}${ratings[f.id]?.n ? " 📝" : ""}</button>
       <span class="rates">${RATES.map((r) => raw(html`<button class="chip" data-on="rate" data-arg="${f.id}:${r}" aria-pressed="${ratings[f.id]?.r === r}" aria-label="${RATING_EMOJI[r]} ${f.name}">${RATING_EMOJI[r]}</button>`))}</span>
     </li>`;
   const list = () => {
@@ -93,7 +94,7 @@ export function brainViews({ root, store, stack, views, back, common }) {
     if (!f) return stack.back();
     const cur = store.get().ratings[f.id] ?? {};
     render(root, html`${raw(back)}
-      <div class="big">${f.emoji}</div><h2 class="title">${f.name}</h2>
+      <div class="big">${raw(pic(f))}</div><h2 class="title">${f.name}</h2><p class="cat">${catLabel(f)}</p>
       <p class="sub">${f.tags.map((t) => TAGS[t]).join(" · ")}</p>
       <div class="rates big-rates">${RATES.map((r) => raw(html`<button class="chip" data-on="rate" data-arg="${r}" aria-pressed="${cur.r === r}">${RATING_EMOJI[r]}</button>`))}</div>
       <form data-submit="note" class="stack">

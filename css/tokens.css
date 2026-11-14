@@ -1,4 +1,4 @@
-/* Design tokens — direction A, Rubik "pop" (design/mockup.html). */
+/* Design tokens — direction A, Rubik "pop" (design/mockup.html). Revision 1.6: fresh green on near-white, no orange. */
 :root {
   --font: "Rubik", system-ui, sans-serif;
   --heavy: 800;
@@ -7,16 +7,16 @@
   --gap: 12px;
   --tap: 56px;
 
-  --bg: #fff6ec;
-  --fg: #2b1d16;
+  --bg: #f7fbf8;
+  --fg: #14231b;
   --card: #ffffff;
-  --muted: #8a6f63;
-  --accent: #ff5a3c;
+  --muted: #5d7468;
+  --accent: #12855a;
   --accent2: #ffd23f;
   --on-accent: #ffffff;
   --ok: #2fa86b;
   --danger: #d63b3b;
-  --ink: #2b1d16;
+  --ink: #14231b;
 
   --border: 2px solid var(--ink);
   --shadow: 3px 4px 0 var(--ink);
@@ -26,11 +26,11 @@
 
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
-    --bg: #1c1412; --fg: #fdeee6; --card: #2c211d; --muted: #b59a8e;
-    --accent: #ff6b4f; --ink: #000000;
+    --bg: #0f1813; --fg: #e8f5ee; --card: #1a261f; --muted: #93ad9f;
+    --accent: #3ccf86; --on-accent: #0b1a12; --ink: #000000;
   }
 }
 :root[data-theme="dark"] {
-  --bg: #1c1412; --fg: #fdeee6; --card: #2c211d; --muted: #b59a8e;
-  --accent: #ff6b4f; --ink: #000000;
+  --bg: #0f1813; --fg: #e8f5ee; --card: #1a261f; --muted: #93ad9f;
+  --accent: #3ccf86; --on-accent: #0b1a12; --ink: #000000;
 }

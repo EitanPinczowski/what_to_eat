@@ -1,7 +1,7 @@
 // All UI strings. Feminine 2nd person, questions not commands, the app speaks as Eitan.
 export const STR = {
   appTitle: "מה בא לך?",
-  skip: { e: "🤷‍♀️", t: "לא משנה לי" },
+  cats: { snack: "חטיף", sweet: "מתוק", meal: "ארוחה", street: "אוכל רחוב", breakfast: "ארוחת בוקר", home: "בישול ביתי", fresh: "טרי" },
   escape: "🤫 אני כבר יודעת מה בא לי",
   back: "רגע, אחורה",
   progress: (n, total) => `שאלה ${n} מתוך ~${total}`,
@@ -54,7 +54,6 @@ export const STR = {
       { m: "take", e: "🥡", t: "לקחת" },
       { m: "sit", e: "🍽️", t: "לשבת במקום" },
       { m: "home", e: "👩‍🍳", t: "לבשל" },
-      { m: "any", e: "🤷‍♀️", t: "לא משנה לי" },
     ],
     budget: "וכמה להשקיע?",
     prices: ["₪", "₪₪", "₪₪₪"],
