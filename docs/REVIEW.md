@@ -35,6 +35,11 @@ Every decision made without asking, newest last. Format: **what** — why — ho
 - **Owner tiles not built yet** (picker, brain, places, sweep, settings) show dimmed and toast "בקרוב" until their steps.
 - **e2e always runs on `?store=local`**, so CI never touches the real Firebase project.
 - **Phase-2 code review (self-review, no subagents)**: HTML sinks all go through escaped `html```; the two `href`s are always `https://wa.me/…`. Fixed: Firestore writes only resolve after the server acks, so owner paths no longer await them (boot, she's-next-to-me save, #r= import with a 4 s cap) and guest feedback has a 4 s cap — otherwise screens froze offline. Also: a hash-only navigation (pasting a link into an open tab) now reboots the app.
+- **Sweep swipe**: right = 😍, left = 😐 (a stray swipe never gives 🤢); buttons for all four + skip. Picking "only unrated / all" on the owner's sweep screen resets her deck — js/ui/guest/sweep.js `SWIPE_RATE`.
+- **Sweep ratings save live** to the room as she taps; "סיימתי" sends extras to the inbox; the #r= fallback carries this session's ratings, notes and extras.
+- **Learning tweak (3.3)**: learned (answer, tag) bonuses apply only to tags the answer doesn't already score. As specified (bonus on every tag) the sim dropped 84%→79%; with the tweak it stays 84%. Computed on the fly from history (≥5 quizzes, an answer seen ≥2 times) — js/engine/learn.js, `delta()` in js/engine/quiz.js.
+- **History stores** `ans` ("qid:i" strings, Firestore has no nested arrays) and `stats` {hit, steps, guesses, skips}. Stats card (history screen): hit rate, average steps, most *skipped* question as "most confusing".
+- **"How was it?"** shows on home ≥2 h after `goAt` (set by the picker in 4.2); 👍/👎 nudges `room.exp[food]` ±0.5 (cap ±1), used in the prior only for foods she hasn't rated; also nudges the place rating ±0.5.
 
 ## Skipped or unfinished
 - **Rules: string-length caps for guest docs not added** (spec §2.2). Changing firestore.rules means re-deploying to your Firebase project, which this run doesn't do unattended. Current rules cap field counts only. To do: add size checks, deploy, run `node tools/check-firebase.mjs`.

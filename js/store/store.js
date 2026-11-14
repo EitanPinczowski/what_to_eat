@@ -14,6 +14,7 @@ export function emptyRoom() {
     custom: [],
     inbox: [],
     learned: {},
+    exp: {},
     imported: [],
   };
 }

@@ -8,9 +8,12 @@ import { render, html, raw, toast, copy, confetti } from "../dom.js";
 import { startGuestQuiz } from "../guest/quiz.js";
 import { finishForm, resultEntry } from "../guest/session.js";
 import { brainViews } from "./brain.js";
+import { statsFrom, nudgeExp } from "../../engine/learn.js";
+import { QUESTIONS } from "../../data/questions.js";
 import { sweepViews } from "./send-sweep.js";
 
 const T = STR.owner;
+const HOW_AFTER = 2 * 3600e3;
 const fmtDate = (iso) => {
   try {
     return new Date(iso).toLocaleDateString("he-IL", { day: "numeric", month: "numeric", weekday: "short" });
@@ -49,6 +52,38 @@ export async function runOwner(root, store, { base = location.origin + location.
   const back = html`<button class="btn btn-ghost back" data-on="back">${T.back}</button>`;
   const common = { back: () => stack.back(), go: (v) => (views[v] ? stack.push(v) : toast(T.soon)) };
 
+  // "How was it?" — ≥2 h after "✅ הולכים" (entry.goAt, set by the picker), one tap 👍/👎.
+  const pendingHow = () => store.list("history").find((h) => h.goAt && h.how === undefined && Date.now() - new Date(h.goAt) >= HOW_AFTER);
+  const howCard = () => {
+    const h = pendingHow();
+    return h
+      ? html`<section class="card how" data-testid="how"><div>${T.how(h.fn)}</div>
+          <div class="chips"><button class="chip" data-on="how" data-arg="${h.id}:1">👍</button><button class="chip" data-on="how" data-arg="${h.id}:0">👎</button></div></section>`
+      : "";
+  };
+  const how = (arg) => {
+    const [id, v] = arg.split(":");
+    const h = store.doc("history", id);
+    if (!h) return;
+    const up = v === "1";
+    store.put("history", id, { ...h, how: up ? 1 : -1 }).catch(() => {});
+    if (h.f) store.update((db) => (db.exp = nudgeExp(db.exp ?? {}, h.f, up))).catch(() => {});
+    if (h.place && store.doc("places", h.place)) {
+      const p = store.doc("places", h.place);
+      store.put("places", h.place, { ...p, rating: Math.max(0, Math.min(5, (p.rating ?? 3) + (up ? 0.5 : -0.5))) }).catch(() => {});
+    }
+    toast(T.thanks);
+    views.home();
+  };
+  const statsCard = (list) => {
+    const st = statsFrom(list);
+    if (!st) return "";
+    const q = QUESTIONS.find((x) => x.id === st.confusing);
+    return html`<section class="card stats-card" data-testid="stats">
+      <div>${T.stats.hit(Math.round(st.hitRate * 100))} · ${T.stats.steps(st.avgSteps.toFixed(1))} · ${T.stats.n(st.n)}</div>
+      ${q ? raw(html`<div class="sub">${T.stats.confusing(q.text)}</div>`) : ""}</section>`;
+  };
+
   views.home = () => {
     const last = store.list("history")[0];
     const tiles = ["send", "local", "history", "picker", "brain", "places", "sweep", "settings"];
@@ -57,8 +92,9 @@ export async function runOwner(root, store, { base = location.origin + location.
         <div class="sub">${T.lastMeal}</div>
         ${last ? raw(html`<div class="big">${last.fe}</div><h2 class="title">${last.fn}</h2><div class="sub">${fmtDate(last.at)} · ${STR.modeLabel[last.m] ?? ""}</div>`) : raw(html`<p>${T.noMeals}</p>`)}
       </section>
+      ${raw(howCard())}
       <p class="sub" data-testid="live">${liveStatus(store.doc("live", "quiz"), S().her)}</p>
-      <div class="tiles">${tiles.map((k) => raw(html`<button class="btn tile${views[k] ? "" : " soon"}" data-on="go" data-arg="${k}"><span class="em">${T.tiles[k].e}</span>${T.tiles[k].t}</button>`))}</div>`, common);
+      <div class="tiles">${tiles.map((k) => raw(html`<button class="btn tile${views[k] ? "" : " soon"}" data-on="go" data-arg="${k}"><span class="em">${T.tiles[k].e}</span>${T.tiles[k].t}</button>`))}</div>`, { ...common, how });
   };
 
   views.send = () => {
@@ -80,6 +116,7 @@ export async function runOwner(root, store, { base = location.origin + location.
     const list = store.list("history");
     render(root, html`${raw(back)}
       <h2 class="q">${T.historyTitle}</h2>
+      ${raw(statsCard(list))}
       ${list.length ? "" : raw(html`<p class="sub">${T.noHistory}</p>`)}
       ${list.map((h) => raw(html`<article class="card hist">
         <div class="row"><span class="em">${h.fe}</span><b>${h.fn}</b><span class="sub">${fmtDate(h.at)}</span></div>

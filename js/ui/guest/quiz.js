@@ -8,6 +8,7 @@ import { buildFoods } from "../../engine/foods.js";
 import { priorFrom } from "../../engine/prior.js";
 import { moodFor } from "../../engine/mood.js";
 import { FoodQuiz } from "../../engine/quiz.js";
+import { learnFrom } from "../../engine/learn.js";
 import { render, html, raw } from "../dom.js";
 
 const DAY = 864e5;
@@ -16,8 +17,8 @@ const DAY = 864e5;
 export function makeQuiz(room, historyList, { now = new Date(), rnd } = {}) {
   const foods = buildFoods(FOODS, room.custom ?? []);
   const recent = historyList.filter((h) => h.f && now - new Date(h.at) <= 3 * DAY).map((h) => h.f);
-  const prior = priorFrom(foods, { ratings: room.ratings ?? {}, recent, now });
-  return new FoodQuiz(foods, QUESTIONS, prior, { rnd });
+  const prior = priorFrom(foods, { ratings: room.ratings ?? {}, recent, now, exp: room.exp ?? {} });
+  return new FoodQuiz(foods, QUESTIONS, prior, { rnd, learned: learnFrom(historyList, foods) });
 }
 
 /** Apply one recorded action to the engine. */
@@ -163,7 +164,10 @@ export function startGuestQuiz(root, opts) {
   function finish() {
     const r = z.result;
     const food = r.f ? z.food(r.f) : null;
-    const out = { result: r, food, mood: moodFor(food), trail: [...z.trail], top: z.ranked().slice(0, 5).map((x) => x.f.id) };
+    const answered = actions.filter((a) => a.k === "a");
+    const stats = { hit: actions.at(-1)?.k === "x", steps: z.n, guesses: actions.filter((a) => a.k === "x").length, skips: answered.filter((a) => a.i < 0).map((a) => a.q) };
+    const ans = answered.filter((a) => a.i >= 0).map((a) => [a.q, a.i]);
+    const out = { result: r, food, mood: moodFor(food), trail: [...z.trail], top: z.ranked().slice(0, 5).map((x) => x.f.id), ans, stats };
     if (onFinish) return onFinish(out);
     render(root, html`<div class="mood">${out.mood}</div>
       <div class="big">${food?.emoji ?? "🍽️"}</div>

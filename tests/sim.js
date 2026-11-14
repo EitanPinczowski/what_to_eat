@@ -6,6 +6,7 @@ import { QUESTIONS } from "../js/data/questions.js";
 import { buildFoods } from "../js/engine/foods.js";
 import { jaccard } from "../js/engine/similarity.js";
 import { FoodQuiz } from "../js/engine/quiz.js";
+import { learnFrom } from "../js/engine/learn.js";
 
 const TRIALS = Number(process.argv[2]) || 5;
 const VERBOSE = process.argv.includes("--verbose");
@@ -15,20 +16,24 @@ const TARGETS = { exact: 0.75, found: 0.95, steps: 10 };
 const foods = buildFoods(FOODS);
 const rng = (seed) => () => ((seed = (seed * 16807) % 2147483647) / 2147483647);
 
-function play(target, rnd) {
-  const z = new FoodQuiz(foods, QUESTIONS, {}, { rnd });
+function play(target, rnd, learned = {}) {
+  const z = new FoodQuiz(foods, QUESTIONS, {}, { rnd, learned });
+  const ans = [];
+  const judge = new FoodQuiz(foods, QUESTIONS); // the simulated user judges by the raw answer effects
+  const answer = (q, i) => (i >= 0 && ans.push([q.id, i]), z.answer(q, i));
+
   const sim = (f) => (f.id === target.id ? 1 : jaccard(f.tags, target.tags));
   for (let i = 0; i < 40; i++) {
     const s = z.next();
     if (s.type === "done") break;
     if (s.type === "q") {
-      const ds = s.q.answers.map((a) => z.delta(target, s.q, a));
+      const ds = s.q.answers.map((a) => judge.delta(target, s.q, a));
       const max = Math.max(...ds);
-      if (rnd() < NOISE) z.answer(s.q, Math.floor(rnd() * ds.length));
-      else if (ds.every((d) => d === 0)) z.answer(s.q, -1);
+      if (rnd() < NOISE) answer(s.q, Math.floor(rnd() * ds.length));
+      else if (ds.every((d) => d === 0)) answer(s.q, -1);
       else {
         const best = ds.map((d, j) => (d === max ? j : -1)).filter((j) => j >= 0);
-        z.answer(s.q, best[Math.floor(rnd() * best.length)]);
+        answer(s.q, best[Math.floor(rnd() * best.length)]);
       }
     } else if (s.type === "grid") {
       z.grid(s.items, s.items.filter((f) => f.id !== target.id && sim(f) < 0.15).map((f) => f.id));
@@ -41,10 +46,10 @@ function play(target, rnd) {
     } else if (s.type === "pick") {
       const hit = s.items.find((f) => f.id === target.id);
       z.choose(hit ?? "—");
-      return { exact: false, found: !!hit, steps: z.n + 1 };
+      return { exact: false, found: !!hit, steps: z.n + 1, ans };
     }
   }
-  return { exact: z.result?.f === target.id, found: z.result?.f === target.id, steps: z.n };
+  return { exact: z.result?.f === target.id, found: z.result?.f === target.id, steps: z.n, ans };
 }
 
 function coverage() {
@@ -72,10 +77,12 @@ function identical() {
 
 let exact = 0, found = 0, steps = 0, n = 0;
 const misses = [];
+const hist = [];
 for (const f of foods) {
   let fe = 0;
   for (let t = 0; t < TRIALS; t++) {
     const r = play(f, rng(1 + n * 7919));
+    if (t === 0) hist.push({ f: f.id, ans: r.ans });
     n++;
     exact += r.exact;
     found += r.found;
@@ -93,7 +100,13 @@ if (low.length) console.log(`low-coverage answers (<5%): ${low.map((c) => `${c.q
 if (dups.length) console.log(`identical tags: ${dups.join(", ")}`);
 if (VERBOSE && misses.length) console.log(`weak foods (${misses.length}): ${misses.join(", ")}`);
 // Accuracy gates CI; the step target is reported only (see docs/REVIEW.md, step 1.3).
-const ok = R.exact >= TARGETS.exact && R.found >= TARGETS.found;
+// Learning (§2.6) must never lower accuracy: replay with bonuses learned from one quiz per food.
+const learned = learnFrom(hist, foods);
+let lx = 0, ln = 0;
+for (const f of foods) for (let t = 0; t < TRIALS; t++) (lx += play(f, rng(99 + ln * 7919), learned).exact), ln++;
+const LX = lx / ln;
+console.log(`sim: with learning exact ${pct(LX)} (baseline ${pct(R.exact)}, ${Object.keys(learned).length} learned answers)`);
+const ok = R.exact >= TARGETS.exact && R.found >= TARGETS.found && LX >= R.exact - 0.02;
 if (R.steps > TARGETS.steps) console.log(`sim: WARN average steps ${R.steps.toFixed(1)} > ${TARGETS.steps}`);
 console.log(ok ? "sim: PASS" : "sim: BELOW TARGET");
 process.exitCode = ok ? 0 : 1;

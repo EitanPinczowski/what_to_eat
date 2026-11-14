@@ -32,6 +32,7 @@ export class FoodQuiz {
     this.byId = new Map(this.foods.map((f) => [f.id, f]));
     this.questions = questions;
     this.rnd = opts.rnd ?? Math.random;
+    this.learned = opts.learned ?? {};
     this.doShuffle = opts.shuffle ?? true;
     this.starters = questions.filter((q) => q.start).sort((a, b) => a.start - b.start);
     this.s = {
@@ -99,6 +100,9 @@ export class FoodQuiz {
       if (!set.has(tag)) continue;
       d += v * w * (this.s.big && tag === "healthy" ? 0.5 : 1);
     }
+    const learned = this.learned[`${q.id}:${q.answers.indexOf(a)}`];
+    // Learned bonuses only add associations the answer does not already score (no double counting).
+    if (learned) for (const [tag, v] of Object.entries(learned)) if (set.has(tag) && !(tag in a.fx)) d += v * w;
     return d;
   }
 
