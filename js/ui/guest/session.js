@@ -98,7 +98,7 @@ export async function runGuest(root, store, { base = location.origin + location.
       <button class="btn btn-ghost" data-on="back">${STR.feedback.back}</button>`, {
       send: async (fd) => {
         const t = cut(fd.get("t"), 500).trim();
-        if (t) await store.put("feedback", newId(12), { at: new Date().toISOString(), text: t, screen: prev, ua: ua() }).catch(() => {});
+        if (t) await withTimeout(store.put("feedback", newId(12), { at: new Date().toISOString(), text: t, screen: prev, ua: ua() }), 4000).catch(() => {});
         render(root, html`<p class="sub" role="status">${STR.feedback.thanks}</p>
           <button class="btn" data-on="back" autofocus>${STR.feedback.back}</button>`, { back: () => ((screen = prev), back()) });
       },

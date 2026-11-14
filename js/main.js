@@ -1,7 +1,7 @@
 // Boot: parse the hash → route.
 import { currentRoute, clearHash } from "./router.js";
 import { openStore, ownerRoomId, ROOM_KEY } from "./store/open.js";
-import { runGuest } from "./ui/guest/session.js";
+import { runGuest, withTimeout } from "./ui/guest/session.js";
 import { runOwner } from "./ui/owner/app.js";
 import { render, html, toast } from "./ui/dom.js";
 import { STR } from "./data/strings.js";
@@ -30,7 +30,7 @@ async function boot() {
   const store = await openStore(ownerRoomId(), { mode: route.mode });
   if (route.kind === "r") {
     // #r= fallback result from WhatsApp → import into the owner's room, then clear the hash.
-    const { fresh } = await store.importResult(route.payload);
+    const { fresh } = await withTimeout(store.importResult(route.payload), 4000).catch(() => ({ fresh: true }));
     clearHash();
     toast(fresh ? STR.imported : STR.importedOld);
   }

@@ -25,7 +25,8 @@ export function liveStatus(live, her) {
 }
 
 export async function runOwner(root, store, { base = location.origin + location.pathname } = {}) {
-  if (!store.get().settings.ntfy) await store.update((db) => (db.settings.ntfy = `mabalach-${newId(16)}`));
+  // Firestore writes resolve only once the server acks, so never await them on the owner path (offline-first).
+  if (!store.get().settings.ntfy) store.update((db) => (db.settings.ntfy = `mabalach-${newId(16)}`)).catch(() => {});
   const views = {};
   const stack = new ViewStack((v) => views[v]());
   const S = () => store.get().settings;
@@ -98,7 +99,7 @@ export async function runOwner(root, store, { base = location.origin + location.
       onFinish: (out) =>
         finishForm(inner, out, T.localSend, async (form) => {
           const entry = resultEntry(out, form);
-          await store.put("history", newId(16), { ...entry, src: "local" });
+          store.put("history", newId(16), { ...entry, src: "local" }).catch(() => {});
           toast(T.saved);
           stack.reset("home");
         }),

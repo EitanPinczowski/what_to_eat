@@ -32,6 +32,9 @@ Every decision made without asking, newest last. Format: **what** — why — ho
 - **Owner phone for the fallback** comes from room settings `myPhone` (empty → WhatsApp contact picker). Set it in Settings (step 5.1).
 - **Finish screen** offers 5 modes (delivery/take/sit/cook/don't mind) and 3 budgets, both optional, toggle off by tapping again.
 - **Error log** caps at 10 reports per session on her phone (plus 50 kept in the room).
+- **Owner tiles not built yet** (picker, brain, places, sweep, settings) show dimmed and toast "בקרוב" until their steps.
+- **e2e always runs on `?store=local`**, so CI never touches the real Firebase project.
+- **Phase-2 code review (self-review, no subagents)**: HTML sinks all go through escaped `html```; the two `href`s are always `https://wa.me/…`. Fixed: Firestore writes only resolve after the server acks, so owner paths no longer await them (boot, she's-next-to-me save, #r= import with a 4 s cap) and guest feedback has a 4 s cap — otherwise screens froze offline. Also: a hash-only navigation (pasting a link into an open tab) now reboots the app.
 
 ## Skipped or unfinished
 - **Rules: string-length caps for guest docs not added** (spec §2.2). Changing firestore.rules means re-deploying to your Firebase project, which this run doesn't do unattended. Current rules cap field counts only. To do: add size checks, deploy, run `node tools/check-firebase.mjs`.
