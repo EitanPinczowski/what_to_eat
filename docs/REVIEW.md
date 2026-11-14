@@ -41,6 +41,8 @@ Every decision made without asking, newest last. Format: **what** — why — ho
 - **History stores** `ans` ("qid:i" strings, Firestore has no nested arrays) and `stats` {hit, steps, guesses, skips}. Stats card (history screen): hit rate, average steps, most *skipped* question as "most confusing".
 - **"How was it?"** shows on home ≥2 h after `goAt` (set by the picker in 4.2); 👍/👎 nudges `room.exp[food]` ±0.5 (cap ±1), used in the prior only for foods she hasn't rated; also nudges the place rating ±0.5.
 - **Picker details (4.1)**: `place.shabbat = true` means *closed* on Shabbat; hidden Fri 16:00 → Sat 19:00. Places that neither serve the food nor share a cuisine tag are left out. Budget penalty only when she chose a budget — js/places/picker.js.
+- **Picker UI (4.2)**: opens prefilled from a history entry ("בוא נבחר מקום") or empty from the home tile; 🎲 runs a short slot animation (skipped with reduced motion). "✅ הולכים" logs a visit on the place and `goAt` on the entry (starts the "how was it?" timer). Opening a Maps/recipe/kiosk fallback also counts as going and shows the "לאן הלכתם?" quick-add.
+- **Place links** are kept only if they start with http(s).
 
 ## Skipped or unfinished
 - **Rules: string-length caps for guest docs not added** (spec §2.2). Changing firestore.rules means re-deploying to your Firebase project, which this run doesn't do unattended. Current rules cap field counts only. To do: add size checks, deploy, run `node tools/check-firebase.mjs`.

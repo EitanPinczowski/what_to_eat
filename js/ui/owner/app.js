@@ -11,6 +11,7 @@ import { brainViews } from "./brain.js";
 import { statsFrom, nudgeExp } from "../../engine/learn.js";
 import { QUESTIONS } from "../../data/questions.js";
 import { sweepViews } from "./send-sweep.js";
+import { placesViews } from "./places.js";
 
 const T = STR.owner;
 const HOW_AFTER = 2 * 3600e3;
@@ -50,7 +51,12 @@ export async function runOwner(root, store, { base = location.origin + location.
   });
 
   const back = html`<button class="btn btn-ghost back" data-on="back">${T.back}</button>`;
-  const common = { back: () => stack.back(), go: (v) => (views[v] ? stack.push(v) : toast(T.soon)) };
+  const ctx = {};
+  const common = {
+    back: () => stack.back(),
+    go: (v) => (v === "picker" && ((ctx.entryId = null), (ctx.pick = null)), views[v] ? stack.push(v) : toast(T.soon)),
+    pickFor: (id) => ((ctx.entryId = id), (ctx.pick = null), stack.push("picker")),
+  };
 
   // "How was it?" — ≥2 h after "✅ הולכים" (entry.goAt, set by the picker), one tap 👍/👎.
   const pendingHow = () => store.list("history").find((h) => h.goAt && h.how === undefined && Date.now() - new Date(h.goAt) >= HOW_AFTER);
@@ -123,7 +129,7 @@ export async function runOwner(root, store, { base = location.origin + location.
         <div class="sub">${STR.modeLabel[h.m] ?? ""}${h.price ? ` · ${"₪".repeat(h.price)}` : ""}</div>
         ${h.note ? raw(html`<p class="note">“${h.note}”</p>`) : ""}
         ${h.trail?.length ? raw(html`<details><summary>${T.trail}</summary><ol>${h.trail.map((t) => raw(html`<li>${t}</li>`))}</ol></details>`) : ""}
-        <button class="btn btn-ghost" data-on="go" data-arg="picker">${T.pickPlace}</button>
+        <button class="btn btn-ghost" data-on="pickFor" data-arg="${h.id}">${T.pickPlace}</button>
       </article>`))}`, common);
   };
 
@@ -147,6 +153,7 @@ export async function runOwner(root, store, { base = location.origin + location.
 
   brainViews({ root, store, stack, views, back, common });
   sweepViews({ root, store, views, back, common, base });
+  placesViews({ root, store, stack, views, back, common, ctx });
   stack.reset("home");
   return { stack, views };
 }
