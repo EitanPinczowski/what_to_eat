@@ -1,12 +1,12 @@
 # Progress
-**Next step: 1.4** · Resume note: —
+**Next step: 1.5** · Resume note: —
 
 ## Steps (budget in minutes · spec to read)
 - [x] S0 scaffolding (25)
 - [x] 1.1 data: tags, foods, questions, strings (40) · spec-questions.md, spec-foods.md, PLAN.md §4
 - [x] 1.2 engine + unit tests (50) · spec-questions.md rules R1–R12, PLAN.md §5.4 and §6
 - [x] 1.3 sim + tuning, max 3 rounds (40) · PLAN.md §6.5
-- [ ] 1.4 share: codec, links, whatsapp + tests (15) · overview.md (Links row), PLAN.md §5.1–5.2
+- [x] 1.4 share: codec, links, whatsapp + tests (15) · overview.md (Links row), PLAN.md §5.1–5.2
 - [ ] 1.5 mockup, pick direction, tokens.css (40) · spec-loops-places-design.md §2.8 → tag phase-1
 - [ ] 2.1 stores + rules + tests (50) · spec-flow-firebase.md §2.2, PLAN.md §5.3
 - [ ] 2.2 dom, router, guest quiz screens (60) · spec-flow-firebase.md §2.1

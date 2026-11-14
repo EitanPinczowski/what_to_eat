@@ -17,6 +17,7 @@ Every decision made without asking, newest last. Format: **what** — why — ho
 - **Sim gates CI on accuracy only**; the step target prints a WARN — tests/sim.js. Restore the step gate once tuned.
 - **Low-coverage fixes (R1)**: added foods fish_chips and risotto (fish/italian were <5%); bag "טרי" now also +1 healthy.
 - **Sim user model**: picks the highest-delta answer (skip if all zero), 15% random; vetoes grid items with similarity <.15; "close" when similarity ≥.5.
+- **Links follow overview.md (short room ids)**, not PLAN §5.2's full payloads: `#q=/#s=/#join=<roomId>`; only the `#r=` fallback carries base64url JSON (v:1, must have `id`). Room ids: 6–40 chars [a-z0-9] — js/share/links.js.
 
 ## Skipped or unfinished
 
