@@ -18,6 +18,8 @@ Every decision made without asking, newest last. Format: **what** — why — ho
 - **Low-coverage fixes (R1)**: added foods fish_chips and risotto (fish/italian were <5%); bag "טרי" now also +1 healthy.
 - **Sim user model**: picks the highest-delta answer (skip if all zero), 15% random; vetoes grid items with similarity <.15; "close" when similarity ≥.5.
 - **Links follow overview.md (short room ids)**, not PLAN §5.2's full payloads: `#q=/#s=/#join=<roomId>`; only the `#r=` fallback carries base64url JSON (v:1, must have `id`). Room ids: 6–40 chars [a-z0-9] — js/share/links.js.
+- **Design direction A, Rubik "pop"** (spec default): cream background, coral accent, yellow mood chip, chunky ink borders and offset shadows; dark theme included. B "soft" (Varela Round) and C "clean" (Assistant) are in design/mockup.html (open the file in a browser) — to switch, change the values in css/tokens.css.
+- **Mockup not visually checked**: the browser pane can't screenshot local files and the run may not leave a server running. Worth a 1-minute look at design/mockup.html.
 
 ## Skipped or unfinished
 

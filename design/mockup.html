@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Design mockup</title>
+<link href="https://fonts.googleapis.com/css2?family=Rubik:wght@400;500;700;800&family=Varela+Round&family=Assistant:wght@400;600;800&display=swap" rel="stylesheet">
+<style>
+  body { margin: 0; padding: 16px; background: #eee; font-family: system-ui, sans-serif; }
+  h2 { margin: 24px 8px 8px; font: 700 1.2rem system-ui; }
+  .row { display: flex; gap: 16px; flex-wrap: wrap; }
+  .phone { width: 340px; min-height: 620px; border-radius: 32px; padding: 20px 18px; box-sizing: border-box;
+    background: var(--bg); color: var(--fg); font-family: var(--font); display: flex; flex-direction: column; gap: 14px;
+    box-shadow: 0 8px 30px #0002; }
+  .dark { --bg: var(--bg-d); --fg: var(--fg-d); --card: var(--card-d); --muted: var(--muted-d); }
+  .meter { height: 8px; border-radius: 99px; background: var(--card); overflow: hidden; }
+  .meter i { display: block; height: 100%; width: 55%; background: var(--accent); border-radius: inherit; }
+  .q { font-size: 1.6rem; font-weight: var(--heavy); line-height: 1.25; margin: 18px 0 6px; }
+  .btn { display: flex; align-items: center; gap: 12px; width: 100%; padding: 16px; border: var(--border);
+    border-radius: var(--radius); background: var(--card); color: var(--fg); font: inherit; font-size: 1.1rem;
+    box-shadow: var(--shadow); text-align: start; }
+  .btn b { font-size: 1.7rem; }
+  .ghost { background: none; border: none; box-shadow: none; color: var(--muted); justify-content: center; font-size: .95rem; }
+  .primary { background: var(--accent); color: var(--on-accent); justify-content: center; font-weight: var(--heavy); }
+  .big { font-size: 6rem; text-align: center; margin-top: 24px; }
+  .title { font-size: 2rem; font-weight: var(--heavy); text-align: center; }
+  .sub { text-align: center; color: var(--muted); }
+  .mood { align-self: center; background: var(--accent2); color: #2b1d16; padding: 6px 14px; border-radius: 99px; font-weight: var(--heavy); }
+  .grid3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+  .grid3 .btn { flex-direction: column; justify-content: center; padding: 12px 4px; font-size: .95rem; }
+  .card { background: var(--card); border-radius: var(--radius); padding: 28px 16px; text-align: center; box-shadow: var(--shadow); border: var(--border); }
+  .rates { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+  .rates .btn { justify-content: center; font-size: 1.8rem; padding: 12px 0; }
+  .pile { display: flex; justify-content: space-between; color: var(--muted); font-size: .9rem; }
+  /* directions */
+  .pop { --font: "Rubik", sans-serif; --heavy: 800; --radius: 20px; --border: 2px solid #2b1d16; --shadow: 3px 4px 0 #2b1d16;
+    --bg: #fff6ec; --fg: #2b1d16; --card: #fff; --muted: #8a6f63; --accent: #ff5a3c; --accent2: #ffd23f; --on-accent: #fff;
+    --bg-d: #1c1412; --fg-d: #fdeee6; --card-d: #2c211d; --muted-d: #b59a8e; }
+  .pop.dark { --border: 2px solid #000; --shadow: 3px 4px 0 #000; }
+  .soft { --font: "Varela Round", sans-serif; --heavy: 400; --radius: 28px; --border: none; --shadow: 0 6px 18px #c9a0dc33;
+    --bg: #fbf5ff; --fg: #3b2c4a; --card: #fff; --muted: #8e7ea0; --accent: #b57edc; --accent2: #ffc8dd; --on-accent: #fff;
+    --bg-d: #1d1724; --fg-d: #f3e9ff; --card-d: #2a2234; --muted-d: #a493b8; }
+  .clean { --font: "Assistant", sans-serif; --heavy: 800; --radius: 12px; --border: 1px solid #e3e6ea; --shadow: none;
+    --bg: #ffffff; --fg: #111827; --card: #f6f7f9; --muted: #6b7280; --accent: #0f9d76; --accent2: #c7f0e2; --on-accent: #fff;
+    --bg-d: #0f1115; --fg-d: #f3f4f6; --card-d: #1b1e24; --muted-d: #9ca3af; }
+  .clean.dark { --border: 1px solid #2a2f37; }
+</style>
+</head>
+<body>
+<template id="screens">
+  <div class="phone">
+    <div class="meter"><i></i></div>
+    <div class="q">איזה מרקם בא לך?</div>
+    <button class="btn"><b>🥨</b>קראנצ׳י, שיישמע כשאני נוגסת</button>
+    <button class="btn"><b>☁️</b>רך וקרמי</button>
+    <button class="btn"><b>🫓</b>עם רוטב שצריך לנגב</button>
+    <button class="btn"><b>🧀</b>גבינה נמתחת</button>
+    <button class="btn ghost">🤷‍♀️ לא משנה לי</button>
+    <button class="btn ghost">🤫 אני כבר יודעת מה בא לי</button>
+  </div>
+  <div class="phone">
+    <div class="meter"><i style="width:85%"></i></div>
+    <div class="sub">נראה לי שבא לך…</div>
+    <div class="big">🍕</div>
+    <div class="title">פיצה</div>
+    <div style="flex:1"></div>
+    <button class="btn primary">בול! 🎯</button>
+    <div class="grid3" style="grid-template-columns:1fr 1fr">
+      <button class="btn">קרוב…</button><button class="btn">ממש לא</button>
+    </div>
+  </div>
+  <div class="phone">
+    <div class="mood">פחמימה מחבקת 🫶</div>
+    <div class="big">🍝</div>
+    <div class="title">פסטה שמנת</div>
+    <div class="sub">מאיפה?</div>
+    <div class="grid3">
+      <button class="btn"><b>🛵</b>משלוח</button><button class="btn"><b>🥡</b>לקחת</button><button class="btn"><b>🍽️</b>לשבת</button>
+    </div>
+    <div style="flex:1"></div>
+    <button class="btn primary">לשלוח לאיתן? 💌</button>
+  </div>
+  <div class="phone">
+    <div class="sub">כמה את אוהבת…</div>
+    <div class="card"><div class="big" style="margin:0">🍫</div><div class="title">קרמבו</div></div>
+    <div class="rates">
+      <button class="btn">🤢</button><button class="btn">😐</button><button class="btn">🙂</button><button class="btn">😍</button>
+    </div>
+    <button class="btn ghost">לא מכירה ← דילוג</button>
+    <div style="flex:1"></div>
+    <div class="pile"><span>↩️ רגע, אחורה</span><span>דילגת: 3</span><span>12 / 95</span></div>
+  </div>
+</template>
+<h2>A · Rubik "pop" (chosen)</h2><div class="row" data-dir="pop"></div>
+<h2>A · dark</h2><div class="row" data-dir="pop dark"></div>
+<h2>B · Varela Round "soft"</h2><div class="row" data-dir="soft"></div>
+<h2>C · Assistant "clean"</h2><div class="row" data-dir="clean"></div>
+<script>
+  const t = document.getElementById("screens");
+  for (const row of document.querySelectorAll("[data-dir]")) {
+    row.append(t.content.cloneNode(true));
+    for (const p of row.querySelectorAll(".phone")) p.className += " " + row.dataset.dir;
+  }
+</script>
+</body>
+</html>

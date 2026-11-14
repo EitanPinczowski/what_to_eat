@@ -1,0 +1,36 @@
+/* Design tokens — direction A, Rubik "pop" (design/mockup.html). */
+:root {
+  --font: "Rubik", system-ui, sans-serif;
+  --heavy: 800;
+  --radius: 20px;
+  --radius-sm: 12px;
+  --gap: 12px;
+  --tap: 56px;
+
+  --bg: #fff6ec;
+  --fg: #2b1d16;
+  --card: #ffffff;
+  --muted: #8a6f63;
+  --accent: #ff5a3c;
+  --accent2: #ffd23f;
+  --on-accent: #ffffff;
+  --ok: #2fa86b;
+  --danger: #d63b3b;
+  --ink: #2b1d16;
+
+  --border: 2px solid var(--ink);
+  --shadow: 3px 4px 0 var(--ink);
+  --shadow-press: 1px 1px 0 var(--ink);
+  --ease: cubic-bezier(.2, .9, .3, 1.3);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #1c1412; --fg: #fdeee6; --card: #2c211d; --muted: #b59a8e;
+    --accent: #ff6b4f; --ink: #000000;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #1c1412; --fg: #fdeee6; --card: #2c211d; --muted: #b59a8e;
+  --accent: #ff6b4f; --ink: #000000;
+}
