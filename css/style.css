@@ -62,3 +62,5 @@ input:focus-visible, textarea:focus-visible { outline: 3px solid var(--accent2);
 .confetti { position: fixed; inset: 0; pointer-events: none; overflow: hidden; z-index: 20; }
 .confetti span { position: absolute; top: -2rem; font-size: 1.6rem; animation: fall 2.2s ease-in forwards; }
 @keyframes fall { to { transform: translateY(110vh) rotate(540deg); } }
+.choose .btn[aria-pressed="true"] { background: var(--accent2); color: #2b1d16; }
+a.btn { text-decoration: none; }

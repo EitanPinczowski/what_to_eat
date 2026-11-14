@@ -9,7 +9,7 @@ const MAX_ERRORS = 50;
 export function emptyRoom() {
   return {
     v: SCHEMA,
-    settings: { her: "נגה", me: "איתן", base: "", city: "", ntfy: "" },
+    settings: { her: "נגה", me: "איתן", myPhone: "", base: "", city: "", ntfy: "" },
     ratings: {},
     custom: [],
     inbox: [],

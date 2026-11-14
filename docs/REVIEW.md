@@ -26,6 +26,12 @@ Every decision made without asking, newest last. Format: **what** — why — ho
 - **Guest intro copy**: "היי {her} 👋 / {me} כאן. נשחק? את עונה, ואני מנחש מה בא לך לאכול. / יאללה, תנחש"; guess line "אני חושב שבא לך…" (app speaks as Eitan) — js/data/strings.js.
 - **Meter** shows the engine's top probability, floored at 10% — js/ui/guest/quiz.js `meter()`.
 - **e2e quiz spec added early** (e2e/quiz.spec.js, local store) to check 2.2's screens; step 2.5 extends it.
+- **Resume = replay**: the live doc stores a compact action log (answer/skip/grid/duel/guess/choose); reopening replays it. A log that no longer replays (food removed) stops at the last good step — js/ui/guest/quiz.js `applyAction`.
+- **Finished link** shows "כבר שלחת ל… 💌" + "עוד סיבוב?" (starts fresh, overwrites the live doc).
+- **Send = history doc + live doc finished**, 8 s timeout; on failure the WhatsApp fallback (#r= link) uses the same result id, so a late Firestore sync and the import dedupe — js/ui/guest/session.js.
+- **Owner phone for the fallback** comes from room settings `myPhone` (empty → WhatsApp contact picker). Set it in Settings (step 5.1).
+- **Finish screen** offers 5 modes (delivery/take/sit/cook/don't mind) and 3 budgets, both optional, toggle off by tapping again.
+- **Error log** caps at 10 reports per session on her phone (plus 50 kept in the room).
 
 ## Skipped or unfinished
 - **Rules: string-length caps for guest docs not added** (spec §2.2). Changing firestore.rules means re-deploying to your Firebase project, which this run doesn't do unattended. Current rules cap field counts only. To do: add size checks, deploy, run `node tools/check-firebase.mjs`.

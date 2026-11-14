@@ -1,0 +1,162 @@
+// Guest session: live doc + resume, finish/send, ntfy ping, feedback, error log, #r= WhatsApp fallback.
+import { STR } from "../../data/strings.js";
+import { newId } from "../../share/codec.js";
+import { buildResultLink } from "../../share/links.js";
+import { waUrl } from "../../share/whatsapp.js";
+import { render, html, raw, confetti } from "../dom.js";
+import { startGuestQuiz } from "./quiz.js";
+
+const SEND_TIMEOUT = 8000;
+const cut = (s, n) => String(s ?? "").slice(0, n);
+const ua = () => cut(globalThis.navigator?.userAgent, 200);
+
+export function withTimeout(p, ms) {
+  return Promise.race([p, new Promise((_, rej) => setTimeout(() => rej(new Error("timeout")), ms))]);
+}
+
+/** Minimal public ping (ntfy.sh is public: no food, no notes). */
+export async function ping(topic, text, f = globalThis.fetch) {
+  if (!topic) return false;
+  try {
+    await f(`https://ntfy.sh/${encodeURIComponent(topic)}`, { method: "POST", body: text });
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+/** Crashes on her phone go to rooms/{id}/errors (max 10 per session). */
+export function installErrorLog(store, screen, win = globalThis.window) {
+  let left = 10;
+  const log = (msg, stack) => {
+    if (left-- <= 0) return;
+    store.logError({ msg: cut(msg, 300), stack: cut(stack, 1500), screen: cut(screen(), 40), ua: ua() }).catch(() => {});
+  };
+  win?.addEventListener("error", (e) => log(e.message, e.error?.stack));
+  win?.addEventListener("unhandledrejection", (e) => log(e.reason?.message ?? e.reason, e.reason?.stack));
+}
+
+/** Build the history entry + #r= payload for a finished quiz. */
+export function resultEntry(out, form, at = new Date().toISOString()) {
+  const { result, food, trail, top } = out;
+  return {
+    at,
+    f: food?.id ?? null,
+    fn: cut(food?.name ?? result.free, 80),
+    fe: food?.emoji ?? "🍽️",
+    m: form.m ?? "any",
+    price: form.price ?? null,
+    note: cut(form.note, 300),
+    trail: trail.slice(-40).map((s) => cut(s, 120)),
+    top: (top ?? []).slice(0, 5),
+  };
+}
+
+export async function runGuest(root, store, { base = location.origin + location.pathname } = {}) {
+  const room = store.get();
+  const s = room.settings;
+  let screen = "intro";
+  installErrorLog(store, () => screen);
+
+  const live = store.doc("live", "quiz");
+  const saveLive = (data) => store.put("live", "quiz", { ...data, at: new Date().toISOString() }).catch(() => {});
+
+  const feedback = (back) => {
+    const prev = screen;
+    screen = "feedback";
+    render(root, html`<h2 class="q">${STR.feedback.text}</h2>
+      <form data-submit="send" class="stack">
+        <textarea name="t" rows="4" maxlength="500" placeholder="${STR.feedback.placeholder}" autofocus></textarea>
+        <button class="btn btn-primary" type="submit">${STR.feedback.send}</button>
+      </form>
+      <button class="btn btn-ghost" data-on="back">${STR.feedback.back}</button>`, {
+      send: async (fd) => {
+        const t = cut(fd.get("t"), 500).trim();
+        if (t) await store.put("feedback", newId(12), { at: new Date().toISOString(), text: t, screen: prev, ua: ua() }).catch(() => {});
+        render(root, html`<p class="sub" role="status">${STR.feedback.thanks}</p>
+          <button class="btn" data-on="back" autofocus>${STR.feedback.back}</button>`, { back: () => ((screen = prev), back()) });
+      },
+      back: () => ((screen = prev), back()),
+    });
+  };
+
+  const start = (actions) => {
+    screen = actions?.length ? "quiz" : "intro";
+    const opened = live?.opened && actions ? live.opened : new Date().toISOString();
+    saveLive({ opened, n: actions?.length ?? 0, actions: actions ?? [], trail: [], finished: false });
+    startGuestQuiz(root, {
+      room,
+      history: store.list("history"),
+      actions,
+      onFeedback: feedback,
+      onProgress: (p) => {
+        screen = `q${p.n}`;
+        saveLive({ opened, n: p.n, actions: p.actions, trail: p.trail.slice(-40), finished: false });
+      },
+      onFinish: (out) => finishScreen(out, opened),
+    });
+  };
+
+  const finishScreen = (out, opened) => {
+    screen = "finish";
+    const form = { m: null, price: null, note: "" };
+    const draw = () =>
+      render(root, html`<div class="mood">${out.mood}</div>
+        <div class="big reveal" aria-hidden="true">${out.food?.emoji ?? "🍽️"}</div>
+        <h2 class="title">${out.food?.name ?? out.result.free}</h2>
+        <p class="sub">${STR.result.how}</p>
+        <div class="grid choose">${STR.result.modes.map((x) => raw(html`<button class="btn" data-on="mode" data-arg="${x.m}" aria-pressed="${form.m === x.m}"><span class="em">${x.e}</span>${x.t}</button>`))}</div>
+        <p class="sub">${STR.result.budget}</p>
+        <div class="grid choose">${STR.result.prices.map((t, i) => raw(html`<button class="btn" data-on="price" data-arg="${i + 1}" aria-pressed="${form.price === i + 1}">${t}</button>`))}</div>
+        <textarea name="note" rows="2" maxlength="300" placeholder="${STR.result.note}" data-input="note">${form.note}</textarea>
+        <button class="btn btn-primary" data-on="send">${STR.result.send(s.me)}</button>`, handlers);
+    const handlers = {
+      mode: (m) => ((form.m = form.m === m ? null : m), draw()),
+      price: (p) => ((form.price = form.price === Number(p) ? null : Number(p)), draw()),
+      note: (v) => (form.note = v),
+      send: async (_a, _e, btn) => {
+        btn.disabled = true;
+        btn.textContent = STR.result.sending;
+        const id = newId(16);
+        const entry = resultEntry(out, form);
+        try {
+          await withTimeout(
+            Promise.all([
+              store.put("history", id, { ...entry, src: "live" }),
+              store.put("live", "quiz", { opened, n: out.trail.length, actions: [], trail: entry.trail, finished: true, resultId: id, at: entry.at }),
+            ]),
+            SEND_TIMEOUT,
+          );
+          ping(s.ntfy, STR.ntfy(s.her));
+          sent();
+        } catch {
+          fallback({ t: "quiz", id, ...entry });
+        }
+      },
+    };
+    draw();
+  };
+
+  const sent = () => {
+    screen = "sent";
+    confetti();
+    render(root, html`<div class="big reveal" aria-hidden="true">💌</div>
+      <h2 class="title" role="status">${STR.result.sent(s.me)}</h2>
+      <p class="sub">${STR.result.sentSub}</p>`);
+  };
+
+  const fallback = (payload) => {
+    screen = "fallback";
+    const link = buildResultLink(base, payload);
+    const url = waUrl(`${STR.result.waText(payload.fn)}\n${link}`, s.myPhone);
+    render(root, html`<p class="sub" role="alert">${STR.result.failed}</p>
+      <a class="btn btn-primary" href="${url}" target="_blank" rel="noopener">${STR.result.wa}</a>`);
+  };
+
+  if (live?.finished) {
+    screen = "already";
+    render(root, html`<div class="big" aria-hidden="true">💌</div>
+      <h2 class="title">${STR.result.already(s.me)}</h2>
+      <button class="btn btn-primary" data-on="again" autofocus>${STR.result.again}</button>`, { again: () => start(null) });
+  } else start(live?.actions?.length ? live.actions : null);
+}

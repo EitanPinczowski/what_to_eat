@@ -1,5 +1,5 @@
 # Progress
-**Next step: 2.3** · Resume note: —
+**Next step: 2.4** · Resume note: —
 
 ## Steps (budget in minutes · spec to read)
 - [x] S0 scaffolding (25)
@@ -10,7 +10,7 @@
 - [x] 1.5 mockup, pick direction, tokens.css (40) · spec-loops-places-design.md §2.8 → tag phase-1
 - [x] 2.1 stores + rules + tests (50) · spec-flow-firebase.md §2.2, PLAN.md §5.3
 - [x] 2.2 dom, router, guest quiz screens (60) · spec-flow-firebase.md §2.1
-- [ ] 2.3 finish/send, live doc, ntfy, feedback, error log, fallback (40) · spec-flow-firebase.md
+- [x] 2.3 finish/send, live doc, ntfy, feedback, error log, fallback (40) · spec-flow-firebase.md
 - [ ] 2.4 owner home, send-quiz, toast, history, next-to-me mode (45) · PLAN.md §7.4
 - [ ] 2.5 e2e quiz spec, code review, tag phase-2 (30)
 - [ ] 3.1 brain + food form (45) · PLAN.md §7.4

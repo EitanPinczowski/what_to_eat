@@ -42,3 +42,51 @@ test("a broken link shows a friendly error", async ({ page }) => {
   await page.goto(`/#q=<bad>`);
   await expect(page.getByRole("alert")).toContainText("שבור");
 });
+
+test("finish: choose how and budget, send, then the link says it was sent", async ({ page }) => {
+  const room = "e2esend00000000000000000";
+  await page.goto(`/?store=local#q=${room}`);
+  await page.getByRole("button", { name: "יאללה, תנחש" }).click();
+  await page.locator('[data-on="escape"]').click();
+  await page.locator('input[name="food"]').fill("פיצה");
+  await page.getByRole("button", { name: "זה!" }).click();
+  await expect(page.locator(".title")).toHaveText("פיצה");
+  await page.locator('[data-on="mode"][data-arg="delivery"]').click();
+  await expect(page.locator('[data-on="mode"][data-arg="delivery"]')).toHaveAttribute("aria-pressed", "true");
+  await page.locator('[data-on="price"][data-arg="2"]').click();
+  await page.locator("textarea").fill("עם זיתים");
+  await page.locator('[data-on="send"]').click();
+  await expect(page.getByRole("status").first()).toContainText("קיבל");
+  const saved = await page.evaluate((r) => JSON.parse(localStorage.getItem(`mabalach_v1:${r}`)), room);
+  const h = Object.values(saved.cols.history)[0];
+  expect(h).toMatchObject({ f: "pizza", m: "delivery", price: 2, note: "עם זיתים" });
+  expect(saved.cols.live.quiz.finished).toBe(true);
+  await page.reload();
+  await expect(page.locator(".title")).toContainText("כבר שלחת");
+});
+
+test("resume: reopening the link continues where she stopped", async ({ page }) => {
+  const room = "e2eresume000000000000000";
+  await page.goto(`/?store=local#q=${room}`);
+  await page.getByRole("button", { name: "יאללה, תנחש" }).click();
+  await page.locator('[data-on="ans"]').first().click();
+  await page.locator('[data-on="ans"]').first().click();
+  const q = await page.locator(".q").textContent();
+  await page.reload();
+  await expect(page.locator(".q")).toHaveText(q);
+  await expect(page.locator('[data-on="undo"]')).toBeVisible();
+});
+
+test("feedback is saved to the room", async ({ page }) => {
+  const room = "e2efeedback0000000000000";
+  await page.goto(`/?store=local#q=${room}`);
+  await page.getByRole("button", { name: "יאללה, תנחש" }).click();
+  await page.locator('[data-on="feedback"]').click();
+  await page.locator("textarea").fill("הכפתור לא עבד");
+  await page.getByRole("button", { name: "שליחה" }).click();
+  await expect(page.getByRole("status")).toContainText("תודה");
+  const saved = await page.evaluate((r) => JSON.parse(localStorage.getItem(`mabalach_v1:${r}`)), room);
+  expect(Object.values(saved.cols.feedback)[0].text).toBe("הכפתור לא עבד");
+  await page.getByRole("button", { name: "חזרה" }).click();
+  await expect(page.locator(".q")).toBeVisible();
+});
