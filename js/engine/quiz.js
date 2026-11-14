@@ -1,14 +1,14 @@
 // FoodQuiz — the guessing engine (PLAN.md §5.4, §6; spec-questions.md R1–R12).
 import { jaccard } from "./similarity.js";
 
-export const T = 1.6;
+export const T = 1.3;
 const TOP_K = 14;
 const MIN_VALUE = 0.15;
 const GRID_AT = 5;
 const GRID_SIZE = 9;
 const PICK_SIZE = 8;
 const MAX_WRONG = 4;
-const MAX_DUELS = 3;
+const MAX_DUELS = 1;
 const NEED_MASS = 0.15;
 
 function shuffle(arr, rnd) {
@@ -169,7 +169,7 @@ export class FoodQuiz {
     if (n >= GRID_AT && !this.s.gridDone) return { type: "grid", items: ranked.slice(0, GRID_SIZE).map((x) => x.f) };
 
     const best = this.bestQuestion(ranked);
-    if ((this.confident(ranked) || !best) && n - this.s.lastGuessAt >= 2)
+    if ((this.confident(ranked) || !best) && n - this.s.lastGuessAt >= 1)
       return { type: "guess", f: ranked[0].f, p: ranked[0].p };
 
     if (n % 4 === 3 && this.s.duels < MAX_DUELS && ranked.length >= 3) {

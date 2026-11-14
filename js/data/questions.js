@@ -93,7 +93,7 @@ export const QUESTIONS = [
   ] },
   { id: "bag", need: ["snack"], text: "חטיף משקית או משהו טרי?", answers: [
     a("🛍️", "משקית", { kiosk: 3, junk: 1.5 }),
-    a("🥪", "טרי", { kiosk: -1.5, cook: 1 }),
+    a("🥪", "טרי", { kiosk: -1.5, healthy: 1, cook: 1 }),
   ] },
   { id: "regret", w: 0.7, text: "משהו שתתחרטי עליו מחר?", answers: [
     a("😇", "לא, שיהיה טוב גם מחר", { healthy: 2, light: 2, junk: -2.5 }),

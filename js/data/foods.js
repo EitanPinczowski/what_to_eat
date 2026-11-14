@@ -72,6 +72,8 @@ export const FOODS = [
   ["gyoza", "גיוזה", "🥟", "meal doughy asian japanese hot meaty fried hands"],
   ["hot_dog", "נקניקייה בלחמנייה", "🌭", "meal meaty bread american street junk hands quick"],
   ["nachos", "נאצ׳וס", "🧀", "snack salty crunchy cheesy mexican spicy couch junk"],
+  ["fish_chips", "פיש אנד צ׳יפס", "🐟", "meal fish fried crunchy hot junk hands"],
+  ["risotto", "ריזוטו", "🍚", "meal rice italian creamy cheesy fancy hot resto"],
   ["caesar", "סלט קיסר", "🥗", "meal light healthy cold crunchy veg fancy"],
   // breakfast
   ["shakshuka", "שקשוקה", "🍳", "meal egg breakfast hot saucy spicy israeli bread home"],
