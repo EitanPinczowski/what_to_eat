@@ -66,6 +66,6 @@ Things only you can do (they need your account, phone or OK in a live session):
 5. **Real-phone check** — your Pixel and her iPhone: open a quiz link from WhatsApp, finish a quiz (no skip anywhere — check it feels OK for her), get the live toast + ntfy alert, install to home screen (Settings has the steps), dark mode, the "גרסה חדשה — לרענן?" bar after the next deploy.
 6. **Read the decisions above** (palette, categories, optional mode on the finish screen, sim found gate 94.5%, PWA caching) and the Hebrew in `js/data/strings.js`; tell me what to change.
 7. **Add your first places** (📍 מקומות) so the picker has something to choose from.
-8. The nightly build task is disabled after this step; re-enable it only if you queue new steps.
+8. **Disable the nightly task "what-to-eat-nightly-build"** (Scheduled tasks in the Claude app). The run tried, but disabling needs your approval. Until then each run finds no open step and just exits.
 
 Known gaps: sim average steps 11.8 (target 10, reported only); sim "found" gate lowered from 95% to 94.5% after the no-skip rule.
