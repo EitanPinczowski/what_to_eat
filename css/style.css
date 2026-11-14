@@ -64,3 +64,15 @@ input:focus-visible, textarea:focus-visible { outline: 3px solid var(--accent2);
 @keyframes fall { to { transform: translateY(110vh) rotate(540deg); } }
 .choose .btn[aria-pressed="true"] { background: var(--accent2); color: #2b1d16; }
 a.btn { text-decoration: none; }
+.tiles { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.tile { flex-direction: column; justify-content: center; text-align: center; min-height: 92px; }
+.tile.soon { opacity: .55; }
+.back { align-self: flex-start; width: auto; }
+code.link { display: block; padding: 8px; font-size: .8rem; word-break: break-all; color: var(--muted); }
+.hist { text-align: start; padding: 14px 16px; display: flex; flex-direction: column; gap: 4px; }
+.hist .row { display: flex; align-items: center; gap: 8px; }
+.hist .row .sub { margin-inline-start: auto; }
+.hist .note { margin: 4px 0; font-style: italic; }
+.hist details { font-size: .9rem; color: var(--muted); }
+.last { display: flex; flex-direction: column; gap: 4px; }
+.last .big { font-size: 4rem; }

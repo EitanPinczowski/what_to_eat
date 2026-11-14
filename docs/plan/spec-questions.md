@@ -5,7 +5,7 @@
 | R2 | Recent meals: −1.5 for a food eaten in the last 3 days, −0.8×similarity for foods like it |
 | R3 | Core bank = taste, texture, temperature, heaviness. Answers are vivid sensory images |
 | R4 | "What don't you want" comes early: veto is the 3rd starter; the ✕ grid stays at step 5 |
-| R5 | 2–4 options, no "medium". `🤷‍♀️ לא משנה לי` skips without scoring |
+| R5 | 2–4 options, no "medium". **No skip or "לא משנה לי" anywhere on her screens** (owner rule, 2026-11-14: she knows what she wants, she just won't say it; every question needs a real answer). Her only way out is "🤫 אני כבר יודעת מה בא לי" |
 | R6 | One idea per question and per answer |
 | R7 | Feminine 2nd person, phrased as questions ("בא לך…?"), never commands |
 | R8 | At most 2 playful questions (flight, regret), weight .7. The result gets a mood title ("פחמימה מחבקת 🫶") |

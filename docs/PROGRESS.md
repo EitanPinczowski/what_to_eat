@@ -1,5 +1,5 @@
 # Progress
-**Next step: 2.4** · Resume note: —
+**Next step: 2.5** · Resume note: —
 
 ## Steps (budget in minutes · spec to read)
 - [x] S0 scaffolding (25)
@@ -8,10 +8,11 @@
 - [x] 1.3 sim + tuning, max 3 rounds (40) · PLAN.md §6.5
 - [x] 1.4 share: codec, links, whatsapp + tests (15) · overview.md (Links row), PLAN.md §5.1–5.2
 - [x] 1.5 mockup, pick direction, tokens.css (40) · spec-loops-places-design.md §2.8 → tag phase-1
+- [ ] 1.6 design revision from Eitan (40) — do this before 2.2: (a) LESS ORANGE: replace the coral accent and the cream background with a palette that is not orange (fresh green or berry accent on a near-white background; keep the Rubik pop shapes), update css/tokens.css, dark theme and design/mockup.html; (b) CLEARER FOOD ICONS: emoji alone does not say what a food is, so pull step 3.4 (Wikimedia photo script, credits, contact sheet) forward into this step; every food card (guess, grid, duel, pick list, sweep, brain) shows photo + name + a small category label (חטיף / מתוק / ארוחה / אוכל רחוב / ארוחת בוקר / בישול ביתי / טרי); emoji stays only on question answers and as the fallback when a photo is missing. Log choices in REVIEW.md and tick 3.4 as done here. (c) NO SKIP FOR HER: remove every "🤷‍♀️ לא משנה לי" option from guest screens: the skip link on questions (STR.skip) and the "any" mode chip on the finish screen (strings.js line ~57); the finish screen offers only sit / take / delivery / cook. Engine skip support may stay but the guest UI never calls it; update tests and the sim user model accordingly (sim must not skip). See spec-questions.md R5.
 - [x] 2.1 stores + rules + tests (50) · spec-flow-firebase.md §2.2, PLAN.md §5.3
 - [x] 2.2 dom, router, guest quiz screens (60) · spec-flow-firebase.md §2.1
 - [x] 2.3 finish/send, live doc, ntfy, feedback, error log, fallback (40) · spec-flow-firebase.md
-- [ ] 2.4 owner home, send-quiz, toast, history, next-to-me mode (45) · PLAN.md §7.4
+- [x] 2.4 owner home, send-quiz, toast, history, next-to-me mode (45) · PLAN.md §7.4
 - [ ] 2.5 e2e quiz spec, code review, tag phase-2 (30)
 - [ ] 3.1 brain + food form (45) · PLAN.md §7.4
 - [ ] 3.2 guest sweep, send-sweep, e2e (45) · PLAN.md §7.3

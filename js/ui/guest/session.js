@@ -52,6 +52,32 @@ export function resultEntry(out, form, at = new Date().toISOString()) {
   };
 }
 
+/** Result + how / budget / note form. onSend(form) runs once when the button is tapped. */
+export function finishForm(root, out, sendLabel, onSend) {
+  const form = { m: null, price: null, note: "" };
+  const handlers = {
+    mode: (m) => ((form.m = form.m === m ? null : m), draw()),
+    price: (p) => ((form.price = form.price === Number(p) ? null : Number(p)), draw()),
+    note: (v) => (form.note = v),
+    send: async (_a, _e, btn) => {
+      btn.disabled = true;
+      btn.textContent = STR.result.sending;
+      await onSend({ ...form });
+    },
+  };
+  const draw = () =>
+    render(root, html`<div class="mood">${out.mood}</div>
+      <div class="big reveal" aria-hidden="true">${out.food?.emoji ?? "🍽️"}</div>
+      <h2 class="title">${out.food?.name ?? out.result.free}</h2>
+      <p class="sub">${STR.result.how}</p>
+      <div class="grid choose">${STR.result.modes.map((x) => raw(html`<button class="btn" data-on="mode" data-arg="${x.m}" aria-pressed="${form.m === x.m}"><span class="em">${x.e}</span>${x.t}</button>`))}</div>
+      <p class="sub">${STR.result.budget}</p>
+      <div class="grid choose">${STR.result.prices.map((t, i) => raw(html`<button class="btn" data-on="price" data-arg="${i + 1}" aria-pressed="${form.price === i + 1}">${t}</button>`))}</div>
+      <textarea name="note" rows="2" maxlength="300" placeholder="${STR.result.note}" data-input="note">${form.note}</textarea>
+      <button class="btn btn-primary" data-on="send">${sendLabel}</button>`, handlers);
+  draw();
+}
+
 export async function runGuest(root, store, { base = location.origin + location.pathname } = {}) {
   const room = store.get();
   const s = room.settings;
@@ -99,24 +125,7 @@ export async function runGuest(root, store, { base = location.origin + location.
 
   const finishScreen = (out, opened) => {
     screen = "finish";
-    const form = { m: null, price: null, note: "" };
-    const draw = () =>
-      render(root, html`<div class="mood">${out.mood}</div>
-        <div class="big reveal" aria-hidden="true">${out.food?.emoji ?? "🍽️"}</div>
-        <h2 class="title">${out.food?.name ?? out.result.free}</h2>
-        <p class="sub">${STR.result.how}</p>
-        <div class="grid choose">${STR.result.modes.map((x) => raw(html`<button class="btn" data-on="mode" data-arg="${x.m}" aria-pressed="${form.m === x.m}"><span class="em">${x.e}</span>${x.t}</button>`))}</div>
-        <p class="sub">${STR.result.budget}</p>
-        <div class="grid choose">${STR.result.prices.map((t, i) => raw(html`<button class="btn" data-on="price" data-arg="${i + 1}" aria-pressed="${form.price === i + 1}">${t}</button>`))}</div>
-        <textarea name="note" rows="2" maxlength="300" placeholder="${STR.result.note}" data-input="note">${form.note}</textarea>
-        <button class="btn btn-primary" data-on="send">${STR.result.send(s.me)}</button>`, handlers);
-    const handlers = {
-      mode: (m) => ((form.m = form.m === m ? null : m), draw()),
-      price: (p) => ((form.price = form.price === Number(p) ? null : Number(p)), draw()),
-      note: (v) => (form.note = v),
-      send: async (_a, _e, btn) => {
-        btn.disabled = true;
-        btn.textContent = STR.result.sending;
+    finishForm(root, out, STR.result.send(s.me), async (form) => {
         const id = newId(16);
         const entry = resultEntry(out, form);
         try {
@@ -132,9 +141,7 @@ export async function runGuest(root, store, { base = location.origin + location.
         } catch {
           fallback({ t: "quiz", id, ...entry });
         }
-      },
-    };
-    draw();
+    });
   };
 
   const sent = () => {

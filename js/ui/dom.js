@@ -25,11 +25,13 @@ export function render(root, markup, handlers = {}) {
   if (!root.__delegated) {
     root.__delegated = true;
     root.addEventListener("click", (e) => {
+      if (e.__handled) return;
       const el = e.target.closest("[data-on]");
       if (!el || !root.contains(el) || el.disabled) return;
       const h = bound.get(root)?.[el.dataset.on];
       if (h) {
         e.preventDefault();
+        e.__handled = true;
         h(el.dataset.arg, e, el);
       }
     });
@@ -38,6 +40,8 @@ export function render(root, markup, handlers = {}) {
       const h = f && bound.get(root)?.[f.dataset.submit];
       if (h) {
         e.preventDefault();
+        if (e.__handled) return;
+        e.__handled = true;
         h(new FormData(f), e, f);
       }
     });
