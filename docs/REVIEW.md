@@ -20,7 +20,11 @@ Every decision made without asking, newest last. Format: **what** — why — ho
 - **Links follow overview.md (short room ids)**, not PLAN §5.2's full payloads: `#q=/#s=/#join=<roomId>`; only the `#r=` fallback carries base64url JSON (v:1, must have `id`). Room ids: 6–40 chars [a-z0-9] — js/share/links.js.
 - **Design direction A, Rubik "pop"** (spec default): cream background, coral accent, yellow mood chip, chunky ink borders and offset shadows; dark theme included. B "soft" (Varela Round) and C "clean" (Assistant) are in design/mockup.html (open the file in a browser) — to switch, change the values in css/tokens.css.
 - **Mockup not visually checked**: the browser pane can't screenshot local files and the run may not leave a server running. Worth a 1-minute look at design/mockup.html.
+- **Store API** (js/store/store.js): async `ready()`, sync `get()`/`list(col)`/`doc(col,id)`, async `update(fn)`/`put`/`remove`, `subscribe(cb)`, `importResult`, `logError` (keeps 50), `exportJSON`/`importJSON`. Room id = 24 chars from crypto (≈120 bits; rules need ≥20) — js/store/open.js.
+- **Firebase SDK pinned to 10.14.1** from gstatic (js/store/firebase.js `SDK_VERSION`); falls back to no offline cache if IndexedDB is unavailable.
+- **Store choice**: `?store=local` or a missing js/firebase-config.js → LocalStore; else FirebaseStore — js/store/open.js.
 
 ## Skipped or unfinished
+- **Rules: string-length caps for guest docs not added** (spec §2.2). Changing firestore.rules means re-deploying to your Firebase project, which this run doesn't do unattended. Current rules cap field counts only. To do: add size checks, deploy, run `node tools/check-firebase.mjs`.
 
 ## Final checklist for Eitan (filled in at step 5.4)
