@@ -1,0 +1,15 @@
+{
+  "name": "what-to-eat",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "serve": "node tools/serve.mjs",
+    "test:unit": "node --test --test-reporter=dot \"tests/**/*.test.js\"",
+    "sim": "node tests/sim.js",
+    "e2e": "playwright test --reporter=line",
+    "test": "npm run test:unit && npm run sim && npm run e2e"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.49.0"
+  }
+}
