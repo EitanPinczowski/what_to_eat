@@ -7,6 +7,7 @@ import { ViewStack } from "../../router.js";
 import { render, html, raw, toast, copy, confetti } from "../dom.js";
 import { startGuestQuiz } from "../guest/quiz.js";
 import { finishForm, resultEntry } from "../guest/session.js";
+import { brainViews } from "./brain.js";
 
 const T = STR.owner;
 const fmtDate = (iso) => {
@@ -106,6 +107,7 @@ export async function runOwner(root, store, { base = location.origin + location.
     });
   };
 
+  brainViews({ root, store, stack, views, back, common });
   stack.reset("home");
   return { stack, views };
 }
