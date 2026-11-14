@@ -7,6 +7,7 @@ import { buildFoods } from "../../engine/foods.js";
 import { newId } from "../../share/codec.js";
 import { buildResultLink } from "../../share/links.js";
 import { waUrl } from "../../share/whatsapp.js";
+import { pic } from "../pics.js";
 import { render, html, raw, confetti } from "../dom.js";
 import { withTimeout, ping, installErrorLog } from "./session.js";
 
@@ -115,7 +116,7 @@ export async function runSweep(root, store, { base = location.origin + location.
       return;
     }
     render(root, html`<div class="sub">${W.howMuch}</div>
-      <div class="card sweep-card" data-testid="card"><div class="big">${f.emoji}</div><h2 class="title">${f.name}</h2></div>
+      <div class="card sweep-card" data-testid="card"><div class="big">${raw(pic(f))}</div><h2 class="title">${f.name}</h2></div>
       <div class="rates big-rates">${[1, 2, 3, 4].map((r) => raw(html`<button class="chip" data-on="rate" data-arg="${r}" aria-label="${RATING_EMOJI[r]}">${RATING_EMOJI[r]}</button>`))}</div>
       <button class="btn btn-ghost" data-on="skip">${W.skip}</button>
       <button class="btn btn-ghost" data-on="note">${W.note}</button>

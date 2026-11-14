@@ -9,6 +9,7 @@ import { priorFrom } from "../../engine/prior.js";
 import { moodFor } from "../../engine/mood.js";
 import { FoodQuiz } from "../../engine/quiz.js";
 import { learnFrom } from "../../engine/learn.js";
+import { pic } from "../pics.js";
 import { render, html, raw } from "../dom.js";
 
 const DAY = 864e5;
@@ -145,7 +146,7 @@ export function startGuestQuiz(root, opts) {
     } else if (step.type === "guess") {
       const f = step.f;
       body = html`<div class="sub">${STR.guess.text}</div>
-        <div class="big reveal" aria-hidden="true">${f.emoji}</div>
+        <div class="big reveal" aria-hidden="true">${raw(pic(f))}</div>
         <h2 class="title">${f.name}?</h2>
         <button class="btn btn-primary" data-on="guess" data-arg="yes">${STR.guess.yes}</button>
         <div class="duel">

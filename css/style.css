@@ -94,3 +94,4 @@ code.link { display: block; padding: 8px; font-size: .8rem; word-break: break-al
 .field { display: flex; flex-direction: column; gap: 4px; text-align: start; font-weight: 500; }
 .sweep-card { touch-action: pan-y; user-select: none; transition: transform .15s; }
 .pile { display: flex; justify-content: space-between; align-items: center; color: var(--muted); font-size: .9rem; }
+.big .pic { width: 160px; height: 160px; object-fit: cover; border-radius: var(--radius); border: var(--border); display: block; margin: 0 auto; }

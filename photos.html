@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Food photos</title>
+  <link rel="stylesheet" href="css/style.css">
+  <style>
+    .sheet { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px; max-width: 1100px; margin: 0 auto; }
+    .sheet figure { margin: 0; padding: 8px; text-align: center; }
+    .sheet img, .sheet .em { width: 120px; height: 120px; object-fit: cover; border-radius: 12px; display: block; margin: 0 auto; font-size: 4rem; line-height: 120px; }
+    .sheet figcaption { font-size: .8rem; color: var(--muted); word-break: break-word; }
+    .sheet code { display: block; direction: ltr; font-size: .7rem; margin-top: 4px; user-select: all; }
+  </style>
+</head>
+<body>
+  <h1>תמונות וקרדיטים</h1>
+  <p class="sub">תמונה לא מתאימה? מריצים את הפקודה שמתחת לה (‎--pick 2 = התוצאה הבאה). בלי תמונה — מוצג האימוג׳י.</p>
+  <main class="sheet" id="sheet"></main>
+  <script type="module">
+    import { FOODS } from "./js/data/foods.js";
+    import { html, raw } from "./js/ui/dom.js";
+    let credits = {};
+    try { const r = await fetch("img/foods/credits.json", { cache: "no-cache" }); if (r.ok) credits = await r.json(); } catch {}
+    document.getElementById("sheet").innerHTML = FOODS.map(([id, name, emoji]) => {
+      const c = credits[id];
+      return html`<figure class="card">
+        ${c ? raw(html`<img src="img/foods/${id}.jpg" alt="${name}" loading="lazy">`) : raw(html`<span class="em">${emoji}</span>`)}
+        <figcaption><b>${name}</b><br>${c ? raw(html`<a href="${c.page}" target="_blank" rel="noopener">${c.author}</a> · ${c.license}`) : "—"}
+        <code>node tools/fetch-photos.mjs --only ${id} --pick 2</code></figcaption></figure>`;
+    }).join("");
+  </script>
+</body>
+</html>

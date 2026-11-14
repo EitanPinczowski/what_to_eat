@@ -3,6 +3,7 @@ import { STR } from "../../data/strings.js";
 import { newId } from "../../share/codec.js";
 import { buildResultLink } from "../../share/links.js";
 import { waUrl } from "../../share/whatsapp.js";
+import { pic } from "../pics.js";
 import { render, html, raw, confetti } from "../dom.js";
 import { startGuestQuiz } from "./quiz.js";
 
@@ -69,7 +70,7 @@ export function finishForm(root, out, sendLabel, onSend) {
   };
   const draw = () =>
     render(root, html`<div class="mood">${out.mood}</div>
-      <div class="big reveal" aria-hidden="true">${out.food?.emoji ?? "🍽️"}</div>
+      <div class="big reveal" aria-hidden="true">${raw(pic(out.food))}</div>
       <h2 class="title">${out.food?.name ?? out.result.free}</h2>
       <p class="sub">${STR.result.how}</p>
       <div class="grid choose">${STR.result.modes.map((x) => raw(html`<button class="btn" data-on="mode" data-arg="${x.m}" aria-pressed="${form.m === x.m}"><span class="em">${x.e}</span>${x.t}</button>`))}</div>

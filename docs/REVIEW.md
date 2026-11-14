@@ -43,5 +43,6 @@ Every decision made without asking, newest last. Format: **what** — why — ho
 
 ## Skipped or unfinished
 - **Rules: string-length caps for guest docs not added** (spec §2.2). Changing firestore.rules means re-deploying to your Firebase project, which this run doesn't do unattended. Current rules cap field counts only. To do: add size checks, deploy, run `node tools/check-firebase.mjs`.
+- **Food photos not downloaded yet** (3.4). The script is ready and tested, but downloading ~95 images from Wikimedia needs your OK, so the unattended run didn't fetch them. To do: `node tools/fetch-photos.mjs`, then open `/photos.html` (contact sheet + credits) and swap bad ones with `--only <id> --pick 2`. Until then the app shows emoji. Search terms: tools/photo-lib.mjs `QUERY`.
 
 ## Final checklist for Eitan (filled in at step 5.4)
