@@ -26,3 +26,4 @@
 
 ## Run log (date · steps done · minutes · 5h% start→end · weekly% start→end · notes)
 - 2026-11-14 · S0 · interactive session · scaffolding. Firebase project ready: config in js/firebase-config.js, rules published and verified with tools/check-firebase.mjs (7/7 pass)
+- 2026-11-14 · dry run · model: claude-opus-5-5 · cwd at start: C:\Users\eitan\OneDrive\Desktop\what_to_eat · 5h 82% · weekly 42% · unit tests pass · usage tool worked
