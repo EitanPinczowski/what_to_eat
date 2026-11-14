@@ -1,5 +1,5 @@
 # Progress
-**Next step: 1.6** · Resume note: 1.6 was added by Eitan mid-run and got skipped; do it FIRST (retrofit: the UI and the photo script already exist), then 5.2.
+**Next step: 1.6** · Resume note: OWNER APPROVALS (Eitan, 2026-11-14 17:45, in chat): (1) download the Wikimedia food photos now: run tools/fetch-photos.mjs, review the contact sheet, commit img/foods + credits; (2) add the guest string-length caps to firestore.rules and redeploy them to the Firebase project what-to-eat-63b4b (firebase MCP deploy; if it needs an interactive login, leave the rules committed and put 'paste firestore.rules in the console' on the final checklist), then run node tools/check-firebase.mjs; (3) TODAY ONLY (2026-11-14) the daytime 5-hour cap is raised to 80% (75% = start no new step), overriding the 50%/45% day rule. Order: 1.6 (retrofit; it uses the photos) → 5.2 → 5.3 → 5.4.
 
 ## Steps (budget in minutes · spec to read)
 - [x] S0 scaffolding (25)
