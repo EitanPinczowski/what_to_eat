@@ -6,6 +6,7 @@ import { buildJoinLink, parseHash } from "../../share/links.js";
 import { normPhone } from "../../share/whatsapp.js";
 import { ROOM_KEY, openStore } from "../../store/open.js";
 import { render, html, raw, toast, copy } from "../dom.js";
+import { installKind, installHelp } from "../../pwa.js";
 
 const G = STR.settings;
 export const BACKUP_EVERY = 30 * 864e5;
@@ -44,9 +45,18 @@ export function settingsViews({ root, store, views, back, common, base, mode }) 
       <section class="card stack"><b>${G.backup}</b>
         <button class="btn" data-on="export">${G.export}</button>
         <label class="btn">${G.restore}<input type="file" accept="application/json,.json" data-input="restore" hidden></label></section>
+      <section class="card stack install"><b>${STR.install.title}</b><span class="sub">${installHelp(installKind())}</span>
+        ${globalThis.__installPrompt ? raw(html`<button class="btn" data-on="install">${STR.install.button}</button>`) : ""}
+        ${installKind() !== "ios" ? raw(html`<span class="sub">${STR.install.ios}</span>`) : ""}</section>
       <button class="btn btn-ghost" data-on="rotate">${G.rotate}</button>
       <button class="btn btn-ghost" data-on="reset">${G.reset}</button>`, {
       ...common,
+      install: async () => {
+        const p = globalThis.__installPrompt;
+        globalThis.__installPrompt = null;
+        await p?.prompt?.();
+        views.settings();
+      },
       save: (fd) => {
         const v = (k, n) => String(fd.get(k) ?? "").trim().slice(0, n);
         store

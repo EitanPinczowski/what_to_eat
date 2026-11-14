@@ -7,6 +7,7 @@ import { runSweep } from "./ui/guest/sweep.js";
 import { render, html, toast } from "./ui/dom.js";
 import { STR } from "./data/strings.js";
 import { loadPics } from "./ui/pics.js";
+import { registerSW } from "./pwa.js";
 
 const root = document.getElementById("app");
 const pics = loadPics();
@@ -47,6 +48,27 @@ async function boot() {
 boot().catch((e) => {
   console.error(e);
   fail(STR.errors.offline);
+});
+
+// New version waiting → a small bar with "refresh" (never reloads by itself mid-quiz).
+registerSW((apply) => {
+  if (document.querySelector(".update-bar")) return;
+  const bar = document.createElement("div");
+  bar.className = "update-bar";
+  bar.setAttribute("role", "status");
+  bar.innerHTML = html`<span>${STR.update.text}</span><button class="btn btn-primary" data-k="yes">${STR.update.yes}</button><button class="btn btn-ghost" data-k="later">${STR.update.later}</button>`;
+  bar.addEventListener("click", (e) => {
+    const k = e.target.closest("button")?.dataset.k;
+    if (k === "yes") apply();
+    if (k) bar.remove();
+  });
+  document.body.append(bar);
+}).catch(() => {});
+
+// Android/desktop Chrome: keep the install prompt for the button in settings.
+addEventListener("beforeinstallprompt", (e) => {
+  e.preventDefault();
+  globalThis.__installPrompt = e;
 });
 
 // A new link opened in this tab (hash-only navigation): boot again.

@@ -37,6 +37,8 @@ jobs:
           for f in index.html css js img design manifest.webmanifest sw.js; do
             if [ -e "$f" ]; then cp -r "$f" _site/; fi
           done
+      - name: Stamp the service worker version
+        run: sed -i "s/__VERSION__/${GITHUB_SHA::8}/" _site/sw.js
       - uses: actions/upload-pages-artifact@v3
         with:
           path: _site
