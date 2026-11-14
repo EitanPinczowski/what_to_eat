@@ -21,6 +21,11 @@ const bound = new WeakMap();
  */
 export function render(root, markup, handlers = {}) {
   root.innerHTML = markup;
+  if (root.classList && root.offsetWidth !== undefined) {
+    root.classList.remove("screen-in");
+    void root.offsetWidth; // restart the enter animation on every new screen
+    root.classList.add("screen-in");
+  }
   bound.set(root, handlers);
   if (!root.__delegated) {
     root.__delegated = true;

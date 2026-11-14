@@ -83,7 +83,7 @@ export const STR = {
       local: { e: "🫶", t: "היא לידי" },
       history: { e: "📜", t: "היסטוריה" },
       picker: { e: "🎲", t: "לבחור מקום" },
-      brain: { e: "🧠", t: "המוח של נגה" },
+      brain: { e: "🧠", t: "המוח שלה" },
       places: { e: "📍", t: "מקומות" },
       sweep: { e: "🃏", t: "היכרות" },
       settings: { e: "⚙️", t: "הגדרות" },
@@ -121,6 +121,7 @@ export const STR = {
     inbox: "דברים שהיא כתבה ועוד אין במאגר",
     addTags: "הוספה עם תגיות",
     dismiss: "✕",
+    dismissLabel: (t) => `להסיר את „${t}”`,
     search: "חיפוש מאכל…",
     all: "הכל",
     unknown: "❔",
@@ -259,5 +260,6 @@ export const STR = {
   errors: {
     badLink: "הקישור הזה נראה שבור 😕 אולי תבקשי ממני חדש?",
     offline: "אין אינטרנט כרגע. ננסה שוב כשיחזור?",
+    retry: "🔄 לנסות שוב",
   },
 };

@@ -1,5 +1,5 @@
 # Progress
-**Next step: 5.3** · Resume note: OWNER APPROVALS (Eitan, 2026-11-14 17:45, in chat): (1) download the Wikimedia food photos now: run tools/fetch-photos.mjs, review the contact sheet, commit img/foods + credits; (2) add the guest string-length caps to firestore.rules and redeploy them to the Firebase project what-to-eat-63b4b (firebase MCP deploy; if it needs an interactive login, leave the rules committed and put 'paste firestore.rules in the console' on the final checklist), then run node tools/check-firebase.mjs; (3) TODAY ONLY (2026-11-14) the daytime 5-hour cap is raised to 80% (75% = start no new step), overriding the 50%/45% day rule. Order: 1.6 (retrofit; it uses the photos) → 5.2 → 5.3 → 5.4.
+**Next step: 5.4** · Resume note: OWNER APPROVALS (Eitan, 2026-11-14 17:45, in chat): (1) download the Wikimedia food photos now: run tools/fetch-photos.mjs, review the contact sheet, commit img/foods + credits; (2) add the guest string-length caps to firestore.rules and redeploy them to the Firebase project what-to-eat-63b4b (firebase MCP deploy; if it needs an interactive login, leave the rules committed and put 'paste firestore.rules in the console' on the final checklist), then run node tools/check-firebase.mjs; (3) TODAY ONLY (2026-11-14) the daytime 5-hour cap is raised to 80% (75% = start no new step), overriding the 50%/45% day rule. Order: 1.6 (retrofit; it uses the photos) → 5.2 → 5.3 → 5.4.
 
 ## Steps (budget in minutes · spec to read)
 - [x] S0 scaffolding (25)
@@ -22,7 +22,7 @@
 - [x] 4.2 places UI, quick-add, picker UI, e2e, tag phase-4 (50)
 - [x] 5.1 settings, backup, reminder (35)
 - [x] 5.2 PWA, sw, update toast, iOS help (35)
-- [ ] 5.3 polish, accessibility review, Hebrew copy pass (45)
+- [x] 5.3 polish, accessibility review, Hebrew copy pass (45)
 - [ ] 5.4 code review, docs, final REVIEW.md, tag phase-5, notify done, disable the nightly task (25)
 
 ## Run log (date · steps done · minutes · 5h% start→end · weekly% start→end · notes)

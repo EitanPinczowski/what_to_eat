@@ -4,7 +4,7 @@ import { openStore, ownerRoomId, ROOM_KEY } from "./store/open.js";
 import { runGuest, withTimeout } from "./ui/guest/session.js";
 import { runOwner } from "./ui/owner/app.js";
 import { runSweep } from "./ui/guest/sweep.js";
-import { render, html, toast } from "./ui/dom.js";
+import { render, html, raw, toast } from "./ui/dom.js";
 import { STR } from "./data/strings.js";
 import { loadPics } from "./ui/pics.js";
 import { registerSW } from "./pwa.js";
@@ -12,8 +12,9 @@ import { registerSW } from "./pwa.js";
 const root = document.getElementById("app");
 const pics = loadPics();
 
-function fail(msg) {
-  render(root, html`<p class="sub" role="alert">${msg}</p>`);
+function fail(msg, retry = false) {
+  render(root, html`<div class="big" aria-hidden="true">🍽️</div><p class="sub" role="alert">${msg}</p>
+    ${retry ? raw(html`<button class="btn btn-primary" data-on="retry">${STR.errors.retry}</button>`) : ""}`, { retry: () => location.reload() });
 }
 
 async function boot() {
@@ -47,7 +48,7 @@ async function boot() {
 
 boot().catch((e) => {
   console.error(e);
-  fail(STR.errors.offline);
+  fail(STR.errors.offline, true);
 });
 
 // New version waiting → a small bar with "refresh" (never reloads by itself mid-quiz).
