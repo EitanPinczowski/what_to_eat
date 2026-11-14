@@ -40,6 +40,7 @@ Every decision made without asking, newest last. Format: **what** — why — ho
 - **Learning tweak (3.3)**: learned (answer, tag) bonuses apply only to tags the answer doesn't already score. As specified (bonus on every tag) the sim dropped 84%→79%; with the tweak it stays 84%. Computed on the fly from history (≥5 quizzes, an answer seen ≥2 times) — js/engine/learn.js, `delta()` in js/engine/quiz.js.
 - **History stores** `ans` ("qid:i" strings, Firestore has no nested arrays) and `stats` {hit, steps, guesses, skips}. Stats card (history screen): hit rate, average steps, most *skipped* question as "most confusing".
 - **"How was it?"** shows on home ≥2 h after `goAt` (set by the picker in 4.2); 👍/👎 nudges `room.exp[food]` ±0.5 (cap ±1), used in the prior only for foods she hasn't rated; also nudges the place rating ±0.5.
+- **Picker details (4.1)**: `place.shabbat = true` means *closed* on Shabbat; hidden Fri 16:00 → Sat 19:00. Places that neither serve the food nor share a cuisine tag are left out. Budget penalty only when she chose a budget — js/places/picker.js.
 
 ## Skipped or unfinished
 - **Rules: string-length caps for guest docs not added** (spec §2.2). Changing firestore.rules means re-deploying to your Firebase project, which this run doesn't do unattended. Current rules cap field counts only. To do: add size checks, deploy, run `node tools/check-firebase.mjs`.
