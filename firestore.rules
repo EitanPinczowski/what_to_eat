@@ -1,0 +1,37 @@
+rules_version = '2';
+
+// Everything lives under rooms/{roomId}. The room id is a long random string
+// that only travels inside the links the owner sends, so holding the id is
+// what grants access. Nobody can list rooms, so ids cannot be discovered.
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function smallDoc() {
+      return request.resource.data.keys().size() <= 60;
+    }
+
+    match /rooms/{roomId} {
+      allow get: if signedIn();
+      allow create, update: if signedIn() && roomId.size() >= 20 && smallDoc();
+      allow list, delete: if false;
+
+      match /{col}/{docId} {
+        allow read: if signedIn()
+          && col in ['history', 'places', 'live', 'feedback', 'errors'];
+        allow create, update: if signedIn()
+          && col in ['history', 'places', 'live', 'feedback', 'errors']
+          && smallDoc();
+        allow delete: if signedIn()
+          && col in ['history', 'places', 'live'];
+      }
+    }
+
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
