@@ -153,7 +153,7 @@ export function startGuestQuiz(root, opts) {
         </div>
         ${raw(footer())}`;
     } else if (step.type === "pick") {
-      body = html`<h2 class="q">${STR.pick.text}</h2>
+      body = html`<h2 class="q">${step.express ? STR.pick.express : STR.pick.text}</h2>
         <div class="grid">${step.items.map((f) => raw(html`<button class="btn food" data-on="pick" data-arg="${f.id}">${raw(foodLabel(f))}</button>`))}</div>
         <button class="btn btn-ghost" data-on="escape">${STR.pick.free}</button>`;
     }

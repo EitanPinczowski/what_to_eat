@@ -11,7 +11,7 @@ import { learnFrom } from "../js/engine/learn.js";
 const TRIALS = Number(process.argv[2]) || 5;
 const VERBOSE = process.argv.includes("--verbose");
 const NOISE = 0.15;
-const TARGETS = { exact: 0.75, found: 0.945, steps: 10 }; // found was 0.95; no-skip rule (1.6) costs ~1 trial in 475 — see docs/REVIEW.md
+const TARGETS = { exact: 0.75, found: 0.945, steps: 10, express: 0.25 }; // found was 0.95; no-skip rule (1.6) costs ~1 trial in 475 — see docs/REVIEW.md
 
 const foods = buildFoods(FOODS);
 const rng = (seed) => () => ((seed = (seed * 16807) % 2147483647) / 2147483647);
@@ -50,10 +50,10 @@ function play(target, rnd, learned = {}) {
     } else if (s.type === "pick") {
       const hit = s.items.find((f) => f.id === target.id);
       z.choose(hit ?? "—");
-      return { exact: false, found: !!hit, steps: z.n + 1, ans };
+      return { exact: false, found: !!hit, steps: z.n + 1, ans, express: !!s.express };
     }
   }
-  return { exact: z.result?.f === target.id, found: z.result?.f === target.id, steps: z.n, ans };
+  return { exact: z.result?.f === target.id, found: z.result?.f === target.id, steps: z.n, ans, express: false };
 }
 
 function coverage() {
@@ -80,6 +80,7 @@ function identical() {
 }
 
 let exact = 0, found = 0, steps = 0, n = 0;
+let mn = 0, xf = 0, xn = 0; // 🦖 express runs (end on a 3-item shortlist) are gated separately
 const misses = [];
 const hist = [];
 for (const f of foods) {
@@ -88,6 +89,12 @@ for (const f of foods) {
     const r = play(f, rng(1 + n * 7919));
     if (t === 0) hist.push({ f: f.id, ans: r.ans });
     n++;
+    if (r.express) {
+      xn++;
+      xf += r.found;
+      continue;
+    }
+    mn++;
     exact += r.exact;
     found += r.found;
     steps += r.steps;
@@ -95,22 +102,29 @@ for (const f of foods) {
   }
   if (fe / TRIALS < 0.5) misses.push(`${f.id} ${fe}/${TRIALS}`);
 }
-const R = { exact: exact / n, found: found / n, steps: steps / n };
+const R = { exact: exact / mn, found: found / mn, steps: steps / mn };
+const XF = xn ? xf / xn : 1;
 const low = coverage().filter((c) => c.share < 0.05);
 const dups = identical();
 const pct = (x) => `${Math.round(x * 100)}%`;
 console.log(`sim: exact ${pct(R.exact)} (≥${pct(TARGETS.exact)}) · found ${pct(R.found)} (≥${pct(TARGETS.found)}) · steps ${R.steps.toFixed(1)} (≤${TARGETS.steps}) · ${foods.length} foods × ${TRIALS}`);
+console.log(`sim: 🦖 express runs ${xn}/${n} · target in the 3-item shortlist ${pct(XF)} (≥${pct(TARGETS.express)})`);
 if (low.length) console.log(`low-coverage answers (<5%): ${low.map((c) => `${c.q}:${c.a}`).join(", ")}`);
 if (dups.length) console.log(`identical tags: ${dups.join(", ")}`);
 if (VERBOSE && misses.length) console.log(`weak foods (${misses.length}): ${misses.join(", ")}`);
 // Accuracy gates CI; the step target is reported only (see docs/REVIEW.md, step 1.3).
 // Learning (§2.6) must never lower accuracy: replay with bonuses learned from one quiz per food.
 const learned = learnFrom(hist, foods);
-let lx = 0, ln = 0;
-for (const f of foods) for (let t = 0; t < TRIALS; t++) (lx += play(f, rng(99 + ln * 7919), learned).exact), ln++;
-const LX = lx / ln;
+let lx = 0, ln = 0, lm = 0;
+for (const f of foods)
+  for (let t = 0; t < TRIALS; t++) {
+    const r = play(f, rng(99 + ln * 7919), learned);
+    ln++;
+    if (!r.express) (lx += r.exact), lm++;
+  }
+const LX = lx / lm;
 console.log(`sim: with learning exact ${pct(LX)} (baseline ${pct(R.exact)}, ${Object.keys(learned).length} learned answers)`);
-const ok = R.exact >= TARGETS.exact && R.found >= TARGETS.found && LX >= R.exact - 0.02;
+const ok = R.exact >= TARGETS.exact && R.found >= TARGETS.found && XF >= TARGETS.express && LX >= R.exact - 0.02;
 if (R.steps > TARGETS.steps) console.log(`sim: WARN average steps ${R.steps.toFixed(1)} > ${TARGETS.steps}`);
 console.log(ok ? "sim: PASS" : "sim: BELOW TARGET");
 process.exitCode = ok ? 0 : 1;

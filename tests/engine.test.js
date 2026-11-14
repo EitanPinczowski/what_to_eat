@@ -198,3 +198,21 @@ test("mood title follows the food's tags", () => {
   assert.equal(moodFor(foods.find((f) => f.id === "doritos")), "יום ג׳אנק מגיע לך 😈");
   assert.equal(moodFor(null), "בדיוק מה שבא לך 😋");
 });
+
+test("🦖 express quiz: ends on a pick-one-of-3 shortlist by step 5", () => {
+  const z = quiz();
+  z.answer(q("hunger"), 3);
+  let s;
+  for (let i = 0; i < 10; i++) {
+    s = z.next();
+    if (s.type === "q") z.answer(s.q, 0);
+    else if (s.type === "guess") z.guessResult(s.f, "no");
+    else if (s.type === "duel") z.duel(s.a, s.b, "none");
+    else if (s.type === "grid") z.grid(s.items, []);
+    else break;
+  }
+  assert.equal(s.type, "pick");
+  assert.equal(s.express, true);
+  assert.equal(s.items.length, 3);
+  assert.ok(z.n <= 5);
+});

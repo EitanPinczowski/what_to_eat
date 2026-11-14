@@ -59,6 +59,8 @@ Every decision made without asking, newest last. Format: **what** — why — ho
 
 - **Delivery shortcut** (picker, js/ui/owner/places.js): when mode = delivery and no saved place scores, the result area shows two plain search links for the guessed food, Wolt (`wolt.com/he/isr/search?q=`) and 10bis (`10bis.co.il/next/search?query=`). No API. The URL patterns are from memory and not checked live (no network call made); if one lands on a bad page, change `woltUrl`/`tenbisUrl` in js/places/picker.js. To always show them in delivery mode, drop the `!scored.length` test.
 
+- **Starving express quiz** (js/engine/quiz.js): answering 🦖 (hunger, index 3) makes the engine end at step 5 (`EXPRESS_AT`) on a `pick` step with `express: true` and 3 foods (`SHORTLIST_SIZE`), shown with `STR.pick.express`. Earlier confident guesses still happen (R11). The 3 are the top food plus the next best that are not near-twins (jaccard < 0.6). Change the cap/size via the two constants. Sim: express runs are scored separately (target must be in the shortlist, gate 25%, measured ~27%, inherently low at 5 noisy steps) and excluded from the exact/found/steps gates, which are unchanged; the old 94.5% found gate is untouched.
+
 ## Final checklist for Eitan (filled in at step 5.4)
 Things only you can do (they need your account, phone or OK in a live session):
 1. **Deploy the new Firestore rules** (string-length caps, added in the 1.6 run): paste `firestore.rules` into Firebase console → Firestore → Rules → Publish (project what-to-eat-63b4b), or ask me in a live session. Then `node tools/check-firebase.mjs` — it should still pass 7/7.

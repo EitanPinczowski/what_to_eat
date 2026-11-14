@@ -31,6 +31,7 @@ export const STR = {
     text: "טוב, ניצחת 😅 מה מאלה?",
     free: "משהו אחר? מה בא לך?",
     send: "זה!",
+    express: "רעבה כזאת? אין זמן. מה מ-3 האלה?",
   },
 
   // Result mood titles (R8), chosen by the winning food's tags; first match wins.

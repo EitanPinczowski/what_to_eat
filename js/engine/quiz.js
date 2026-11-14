@@ -8,6 +8,8 @@ const GRID_AT = 5;
 const GRID_SIZE = 9;
 const PICK_SIZE = 8;
 const MAX_WRONG = 4;
+const EXPRESS_AT = 5; // 🦖 starving: end on a shortlist after ~5 steps
+const SHORTLIST_SIZE = 3;
 const MAX_DUELS = 1;
 const NEED_MASS = 0.15;
 
@@ -152,6 +154,17 @@ export class FoodQuiz {
     return n >= 6 && p1 >= 0.25 && p1 >= 1.8 * p2;
   }
 
+  /** 3 hungry-guest options: the top food, then the best ones not too alike (a real choice, not 3 near-twins). */
+  shortlist(ranked) {
+    const out = [ranked[0]];
+    for (const x of ranked.slice(1, 12)) {
+      if (out.length >= SHORTLIST_SIZE) break;
+      if (out.every((o) => jaccard(this.byId.get(o.f.id).set, this.byId.get(x.f.id).set) < 0.6)) out.push(x);
+    }
+    for (const x of ranked) if (out.length < SHORTLIST_SIZE && !out.includes(x)) out.push(x);
+    return out.map((x) => x.f);
+  }
+
   qStep(q) {
     const idx = q.answers.map((_, i) => i);
     const order = q.ordered || !this.doShuffle ? idx : shuffle(idx, this.rnd);
@@ -170,6 +183,8 @@ export class FoodQuiz {
     if (starter) return this.qStep(starter);
 
     const n = this.s.n;
+    if (this.s.big && n >= EXPRESS_AT)
+      return { type: "pick", express: true, items: this.shortlist(ranked) };
     if (n >= GRID_AT && !this.s.gridDone) return { type: "grid", items: ranked.slice(0, GRID_SIZE).map((x) => x.f) };
 
     const best = this.bestQuestion(ranked);
