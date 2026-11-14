@@ -45,3 +45,20 @@ h1 { margin: 24px 0 8px; font-size: 2rem; font-weight: var(--heavy); color: var(
 @media (prefers-reduced-motion: reduce) {
   * { transition: none !important; animation: none !important; }
 }
+
+.duel { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.duel .btn { flex-direction: column; justify-content: center; text-align: center; }
+.stack { display: flex; flex-direction: column; gap: var(--gap); }
+.foot { display: flex; flex-direction: column; margin-top: 8px; }
+.meter-wrap { display: flex; flex-direction: column; gap: 4px; text-align: start; }
+.meter-wrap .sub { text-align: start; font-size: .85rem; }
+input, textarea, select {
+  width: 100%; min-height: var(--tap); padding: 12px 14px; font: inherit; font-size: 1.05rem; color: var(--fg);
+  background: var(--card); border: var(--border); border-radius: var(--radius-sm);
+}
+input:focus-visible, textarea:focus-visible { outline: 3px solid var(--accent2); outline-offset: 1px; }
+.reveal { animation: pop .5s var(--ease) both; }
+@keyframes pop { from { transform: scale(.3) rotate(-12deg); opacity: 0; } to { transform: none; opacity: 1; } }
+.confetti { position: fixed; inset: 0; pointer-events: none; overflow: hidden; z-index: 20; }
+.confetti span { position: absolute; top: -2rem; font-size: 1.6rem; animation: fall 2.2s ease-in forwards; }
+@keyframes fall { to { transform: translateY(110vh) rotate(540deg); } }

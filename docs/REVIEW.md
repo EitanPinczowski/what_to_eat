@@ -23,6 +23,9 @@ Every decision made without asking, newest last. Format: **what** — why — ho
 - **Store API** (js/store/store.js): async `ready()`, sync `get()`/`list(col)`/`doc(col,id)`, async `update(fn)`/`put`/`remove`, `subscribe(cb)`, `importResult`, `logError` (keeps 50), `exportJSON`/`importJSON`. Room id = 24 chars from crypto (≈120 bits; rules need ≥20) — js/store/open.js.
 - **Firebase SDK pinned to 10.14.1** from gstatic (js/store/firebase.js `SDK_VERSION`); falls back to no offline cache if IndexedDB is unavailable.
 - **Store choice**: `?store=local` or a missing js/firebase-config.js → LocalStore; else FirebaseStore — js/store/open.js.
+- **Guest intro copy**: "היי {her} 👋 / {me} כאן. נשחק? את עונה, ואני מנחש מה בא לך לאכול. / יאללה, תנחש"; guess line "אני חושב שבא לך…" (app speaks as Eitan) — js/data/strings.js.
+- **Meter** shows the engine's top probability, floored at 10% — js/ui/guest/quiz.js `meter()`.
+- **e2e quiz spec added early** (e2e/quiz.spec.js, local store) to check 2.2's screens; step 2.5 extends it.
 
 ## Skipped or unfinished
 - **Rules: string-length caps for guest docs not added** (spec §2.2). Changing firestore.rules means re-deploying to your Firebase project, which this run doesn't do unattended. Current rules cap field counts only. To do: add size checks, deploy, run `node tools/check-firebase.mjs`.
