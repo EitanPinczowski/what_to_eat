@@ -16,7 +16,7 @@ Vanilla JS ES modules, no build step, nothing shipped from npm. Firebase Firesto
 
 ## Hard rules
 - Unattended: decide alone, never ask mid-run, log decisions in REVIEW.md. Push-notify only when blocked on the owner's account or phone, on money, or by the usage/stale rules.
-- Usage: call get_usage first. Either limit at 80% or more → exit. Re-check after each step; at 75% start nothing new.
+- Usage: call get_usage first. Night (23:00–07:00): either limit at 80% → exit; at 75% start nothing new. Day (07:00–23:00): the 5-hour limit caps at 50% (45% = start nothing new); weekly stays 80%.
 - Stale: update `.build/heartbeat.json` at every step boundary. Step cap = 2× its budget. Run cap = 3 hours. Every command gets a timeout.
 - Each step: targeted tests → commit. Each phase: `npm test` → tag `phase-N` → push → check the Actions run.
 - Never weaken or delete a passing test. Max 3 fix attempts per failure, then mark it todo and log it.
