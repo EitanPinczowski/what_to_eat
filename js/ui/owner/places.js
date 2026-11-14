@@ -4,7 +4,7 @@ import { STR } from "../../data/strings.js";
 import { TAGS } from "../../data/tags.js";
 import { buildFoods } from "../../engine/foods.js";
 import { newId } from "../../share/codec.js";
-import { scorePlaces, weightedPick, mapsUrl, kioskUrl, recipeUrl } from "../../places/picker.js";
+import { scorePlaces, weightedPick, mapsUrl, kioskUrl, recipeUrl, woltUrl, tenbisUrl } from "../../places/picker.js";
 import { render, html, raw, toast } from "../dom.js";
 
 const L = STR.places;
@@ -117,6 +117,8 @@ export function placesViews({ root, store, stack, views, back, common, ctx }) {
         <ul class="foods">${scored.map((r) => raw(html`<li class="food-row"><button class="linkish" data-on="choose" data-arg="${r.place.id}"><b>${r.place.name}</b> <span class="sub">${reasonText(r, food)}</span></button><span class="sub">${r.score}</span></li>`))}</ul>`) : raw(html`<p class="sub">${st.mode === "home" ? "" : K.none}</p>`)}
       <div class="stack fallbacks">
         ${st.mode === "home" ? raw(html`<a class="btn" href="${recipeUrl(label || "")}" target="_blank" rel="noopener" data-on="fallback">${K.recipe}</a>`) : raw(html`<a class="btn" href="${mapsUrl(q || "אוכל")}" target="_blank" rel="noopener" data-on="fallback">${K.maps(q)}</a>`)}
+        ${st.mode === "delivery" && !scored.length ? raw(html`<a class="btn" href="${woltUrl(label || "אוכל")}" target="_blank" rel="noopener" data-on="fallback">${K.wolt(label || "אוכל")}</a>
+          <a class="btn" href="${tenbisUrl(label || "אוכל")}" target="_blank" rel="noopener" data-on="fallback">${K.tenbis(label || "אוכל")}</a>`) : ""}
         ${food?.tags[0] === "snack" ? raw(html`<a class="btn" href="${kioskUrl()}" target="_blank" rel="noopener" data-on="fallback">${K.kiosk}</a>`) : ""}
       </div>
       ${ctx.quickAdd ? raw(html`<form class="card stack" data-submit="quick" data-testid="quick-add"><b>${K.whereWent}</b>

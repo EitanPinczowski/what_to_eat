@@ -60,4 +60,6 @@ export function weightedPick(scored, rnd = Math.random) {
 // Fallbacks when no saved place fits.
 export const mapsUrl = (q) => `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(q)}`;
 export const recipeUrl = (food) => `https://www.youtube.com/results?search_query=${encodeURIComponent(`מתכון ${food}`)}`;
+export const woltUrl = (q) => `https://wolt.com/he/isr/search?q=${encodeURIComponent(q)}`;
+export const tenbisUrl = (q) => `https://www.10bis.co.il/next/search?query=${encodeURIComponent(q)}`;
 export const kioskUrl = () => mapsUrl("קיוסק");

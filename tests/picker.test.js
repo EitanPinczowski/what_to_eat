@@ -2,7 +2,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { FOODS } from "../js/data/foods.js";
 import { buildFoods } from "../js/engine/foods.js";
-import { scorePlaces, weightedPick, isShabbat, mapsUrl, recipeUrl } from "../js/places/picker.js";
+import { scorePlaces, weightedPick, isShabbat, mapsUrl, recipeUrl, woltUrl, tenbisUrl } from "../js/places/picker.js";
 
 const foods = buildFoods(FOODS);
 const food = (id) => foods.find((f) => f.id === id);
@@ -64,4 +64,9 @@ test("weightedPick follows the weights", () => {
 test("fallback links", () => {
   assert.equal(mapsUrl("פיצה רעננה"), "https://www.google.com/maps/search/?api=1&query=%D7%A4%D7%99%D7%A6%D7%94%20%D7%A8%D7%A2%D7%A0%D7%A0%D7%94");
   assert.match(recipeUrl("שקשוקה"), /^https:\/\/www\.youtube\.com\/results\?search_query=/);
+});
+
+test("delivery search links", () => {
+  assert.equal(woltUrl("פיצה"), "https://wolt.com/he/isr/search?q=%D7%A4%D7%99%D7%A6%D7%94");
+  assert.match(tenbisUrl("פיצה"), /^https:\/\/www\.10bis\.co\.il\/next\/search\?query=/);
 });
