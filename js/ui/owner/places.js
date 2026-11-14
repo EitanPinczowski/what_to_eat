@@ -18,6 +18,8 @@ export function reasonText(r, food) {
   return "";
 }
 
+export const closesText = (r) => (r.closesIn ? K.closesSoon(r.closesIn) : "");
+
 export function placesViews({ root, store, stack, views, back, common, ctx }) {
   const foods = () => buildFoods(FOODS, store.get().custom);
   const cities = () => [...new Set([store.get().settings.city, ...store.list("places").map((p) => p.city)].filter(Boolean))];
@@ -34,7 +36,7 @@ export function placesViews({ root, store, stack, views, back, common, ctx }) {
       ${Object.entries(byCity).map(([city, ps]) => raw(html`<section><h3 class="sub">${city}</h3>
         ${ps.map((p) => raw(html`<button class="btn place-row" data-on="edit" data-arg="${p.id}"><b>${p.name}</b><span class="sub">${"₪".repeat(p.price || 0)} ${"❤️".repeat(Math.round(p.rating || 0))}</span></button>`))}</section>`))}`, {
       ...common,
-      add: () => ((ctx.place = { name: "", city: store.get().settings.city, modes: [], foods: [], price: 2, rating: 3, link: "", note: "", shabbat: false, visits: [] }), stack.push("placeForm")),
+      add: () => ((ctx.place = { name: "", city: store.get().settings.city, modes: [], foods: [], price: 2, rating: 3, link: "", note: "", shabbat: false, hours: [], visits: [] }), stack.push("placeForm")),
       edit: (id) => ((ctx.place = store.doc("places", id)), stack.push("placeForm")),
     });
   };
@@ -63,6 +65,12 @@ export function placesViews({ root, store, stack, views, back, common, ctx }) {
         <label class="field">${L.link}<input data-input="link" value="${p.link}" maxlength="300" dir="ltr" inputmode="url"></label>
         <label class="field">${L.note}<input data-input="note" value="${p.note}" maxlength="200"></label>
         <label class="check"><input type="checkbox" data-input="shabbat" ${p.shabbat ? "checked" : ""}> ${L.shabbat}</label>
+        <div class="field">${L.hours}${L.days.map((dn, d) => {
+          const r = (p.hours ?? []).find((h) => h.d === d);
+          return raw(html`<div class="hours-row"><b>${dn}</b>
+            <input type="time" data-input="hour" data-day="${d}" data-k="o" value="${r?.o ?? ""}" aria-label="${L.opensAt} ${dn}">
+            <input type="time" data-input="hour" data-day="${d}" data-k="c" value="${r?.c ?? ""}" aria-label="${L.closesAt} ${dn}"></div>`);
+        })}</div>
         <button class="btn btn-primary" data-on="save">${L.save}</button>
         ${p.id ? raw(html`<button class="btn btn-ghost" data-on="del">${L.del}</button>`) : ""}`, {
         ...common,
@@ -77,10 +85,19 @@ export function placesViews({ root, store, stack, views, back, common, ctx }) {
         price: (n) => ((p.price = Number(n)), draw()),
         rating: (n) => ((p.rating = Number(n)), draw()),
         shabbat: (_v, _e, el) => (p.shabbat = el.checked),
+        hour: (v, _e, el) => {
+          const d = Number(el.dataset.day);
+          const hrs = (p.hours ??= []);
+          let r = hrs.find((h) => h.d === d);
+          if (!r) hrs.push((r = { d, o: "", c: "" }));
+          r[el.dataset.k] = v;
+        },
         save: () => {
           if (!p.name.trim()) return toast(L.needName);
           const { id = newId(12), ...data } = p;
-          store.put("places", id, { ...data, name: data.name.trim().slice(0, 60), link: /^https?:\/\//.test(data.link) ? data.link : "" }).catch(() => {});
+          // Keep only complete ranges; none left = no hours = always eligible.
+          const hours = (data.hours ?? []).filter((h) => h.o && h.c).sort((a, b) => a.d - b.d);
+          store.put("places", id, { ...data, hours, name: data.name.trim().slice(0, 60), link: /^https?:\/\//.test(data.link) ? data.link : "" }).catch(() => {});
           toast(STR.owner.saved);
           stack.back();
         },
@@ -114,7 +131,7 @@ export function placesViews({ root, store, stack, views, back, common, ctx }) {
       ${st.chosen ? raw(html`<section class="card chosen" data-testid="chosen"><div class="big" aria-hidden="true">🎯</div><h3 class="title">${st.chosen}</h3>
           <button class="btn btn-primary" data-on="go" data-arg="${st.chosen}">${K.go}</button></section>`) : ""}
       ${scored.length && st.mode !== "home" ? raw(html`<button class="btn btn-primary" data-on="roll">${K.roll}</button>
-        <ul class="foods">${scored.map((r) => raw(html`<li class="food-row"><button class="linkish" data-on="choose" data-arg="${r.place.id}"><b>${r.place.name}</b> <span class="sub">${reasonText(r, food)}</span></button><span class="sub">${r.score}</span></li>`))}</ul>`) : raw(html`<p class="sub">${st.mode === "home" ? "" : K.none}</p>`)}
+        <ul class="foods">${scored.map((r) => raw(html`<li class="food-row"><button class="linkish" data-on="choose" data-arg="${r.place.id}"><b>${r.place.name}</b> <span class="sub">${reasonText(r, food)}</span> ${r.closesIn ? raw(html`<span class="sub" data-testid="closes-soon">⏰ ${closesText(r)}</span>`) : ""}</button><span class="sub">${r.score}</span></li>`))}</ul>`) : raw(html`<p class="sub">${st.mode === "home" ? "" : K.none}</p>`)}
       <div class="stack fallbacks">
         ${st.mode === "home" ? raw(html`<a class="btn" href="${recipeUrl(label || "")}" target="_blank" rel="noopener" data-on="fallback">${K.recipe}</a>`) : raw(html`<a class="btn" href="${mapsUrl(q || "אוכל")}" target="_blank" rel="noopener" data-on="fallback">${K.maps(q)}</a>`)}
         ${st.mode === "delivery" && !scored.length ? raw(html`<a class="btn" href="${woltUrl(label || "אוכל")}" target="_blank" rel="noopener" data-on="fallback">${K.wolt(label || "אוכל")}</a>

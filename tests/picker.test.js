@@ -2,7 +2,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { FOODS } from "../js/data/foods.js";
 import { buildFoods } from "../js/engine/foods.js";
-import { scorePlaces, weightedPick, isShabbat, mapsUrl, recipeUrl, woltUrl, tenbisUrl } from "../js/places/picker.js";
+import { scorePlaces, weightedPick, isShabbat, openStatus, mapsUrl, recipeUrl, woltUrl, tenbisUrl } from "../js/places/picker.js";
 
 const foods = buildFoods(FOODS);
 const food = (id) => foods.find((f) => f.id === id);
@@ -69,4 +69,47 @@ test("fallback links", () => {
 test("delivery search links", () => {
   assert.equal(woltUrl("פיצה"), "https://wolt.com/he/isr/search?q=%D7%A4%D7%99%D7%A6%D7%94");
   assert.match(tenbisUrl("פיצה"), /^https:\/\/www\.10bis\.co\.il\/next\/search\?query=/);
+});
+
+const H = (d, o, c) => ({ d, o, c });
+test("openStatus: no hours = open; day without range = closed; boundaries", () => {
+  assert.deepEqual(openStatus(P("a")), { open: true, closesIn: null });
+  assert.deepEqual(openStatus(P("a", { hours: [] })), { open: true, closesIn: null });
+  const p = P("a", { hours: [H(3, "11:00", "23:00")] }); // Wednesday
+  assert.equal(openStatus(p, new Date(2026, 10, 11, 10, 59)).open, false);
+  assert.deepEqual(openStatus(p, new Date(2026, 10, 11, 11, 0)), { open: true, closesIn: 720 });
+  assert.deepEqual(openStatus(p, new Date(2026, 10, 11, 22, 59)), { open: true, closesIn: 1 });
+  assert.equal(openStatus(p, new Date(2026, 10, 11, 23, 0)).open, false);
+  assert.equal(openStatus(p, new Date(2026, 10, 12, 13)).open, false); // Thursday has no range
+});
+
+test("openStatus: closing after midnight spills into the next day, also Sat -> Sun", () => {
+  const p = P("bar", { hours: [H(3, "18:00", "02:00"), H(6, "20:00", "01:00")] });
+  assert.deepEqual(openStatus(p, new Date(2026, 10, 12, 1, 30)), { open: true, closesIn: 30 }); // Thu 01:30
+  assert.equal(openStatus(p, new Date(2026, 10, 12, 2, 0)).open, false);
+  assert.equal(openStatus(p, new Date(2026, 10, 15, 0, 30)).open, true); // Sun 00:30 from Sat
+});
+
+test("picker hides closed places, flags closing within 45 min, keeps hourless places", () => {
+  const at = (h, m) => new Date(2026, 10, 11, h, m);
+  const places = [
+    P("hourless", { foods: ["pizza"] }),
+    P("open", { foods: ["pizza"], hours: [H(3, "09:00", "23:00")] }),
+    P("closing", { foods: ["pizza"], hours: [H(3, "09:00", "22:30")] }),
+    P("closed", { foods: ["pizza"], hours: [H(3, "09:00", "20:00")] }),
+  ];
+  const r = scorePlaces(places, foods, { food: food("pizza"), now: at(22, 0) });
+  const byId = Object.fromEntries(r.map((x) => [x.place.id, x]));
+  assert.deepEqual(Object.keys(byId).sort(), ["closing", "hourless", "open"]);
+  assert.equal(byId.closing.closesIn, 30);
+  assert.equal(byId.open.closesIn, undefined);
+  assert.equal(byId.hourless.closesIn, undefined);
+  assert.equal(scorePlaces([places[2]], foods, { food: food("pizza"), now: at(21, 45) })[0].closesIn, 45);
+  assert.equal(scorePlaces([places[2]], foods, { food: food("pizza"), now: at(21, 44) })[0].closesIn, undefined);
+});
+
+test("Shabbat still applies together with hours", () => {
+  const fri = new Date(2026, 10, 13, 18);
+  const places = [P("k", { foods: ["pizza"], shabbat: true, hours: [H(5, "09:00", "23:00")] }), P("o", { foods: ["pizza"], hours: [H(5, "09:00", "23:00")] })];
+  assert.deepEqual(scorePlaces(places, foods, { food: food("pizza"), now: fri }).map((x) => x.place.id), ["o"]);
 });

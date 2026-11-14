@@ -1,9 +1,39 @@
 // Place picker (PLAN.md §5.5, §7.4; spec-loops-places-design.md §2.7).
 // score = 10 if it serves the food | 2 × shared cuisine tags · + 0.8 × rating · −3 if visited this week
-//         · −2 per price step above her budget. Closed-on-Shabbat places hide Fri evening → Sat evening.
+//         · −2 per price step above her budget. Closed-on-Shabbat places hide Fri evening → Sat evening. Places closed right now (opening hours) are hidden.
 import { CUISINE } from "../data/constants.js";
 
 const WEEK = 7 * 864e5;
+export const CLOSING_SOON_MIN = 45;
+const DAY_MIN = 1440;
+
+const toMin = (t) => {
+  const m = /^(\d{1,2}):(\d{2})$/.exec(String(t ?? ""));
+  return m ? Number(m[1]) * 60 + Number(m[2]) : null;
+};
+
+/**
+ * Opening hours (spec §2.7): place.hours = [{d: 0-6 (Sunday=0), o: "HH:MM", c: "HH:MM"}, ...].
+ * No hours (missing/empty/no valid range) = always eligible. With hours, a day without a range is closed.
+ * c <= o means it closes after midnight (spills into the next day). "00:00" as c = midnight.
+ * @returns {{open: boolean, closesIn: number|null}} closesIn = minutes until closing while open
+ */
+export function openStatus(place, now = new Date()) {
+  const ranges = (place?.hours ?? []).map((r) => ({ d: Number(r?.d), o: toMin(r?.o), c: toMin(r?.c) })).filter((r) => r.d >= 0 && r.d <= 6 && r.o !== null && r.c !== null);
+  if (!ranges.length) return { open: true, closesIn: null };
+  const t = now.getDay() * DAY_MIN + now.getHours() * 60 + now.getMinutes();
+  const week = 7 * DAY_MIN;
+  for (const r of ranges) {
+    const start = r.d * DAY_MIN + r.o;
+    const end = r.d * DAY_MIN + r.c + (r.c <= r.o ? DAY_MIN : 0);
+    for (const shift of [0, week]) {
+      // shift = week handles a Saturday range that spills into Sunday.
+      const left = end - (t + shift);
+      if (t + shift >= start && left > 0) return { open: true, closesIn: left };
+    }
+  }
+  return { open: false, closesIn: null };
+}
 
 /** Friday 16:00 → Saturday 19:00 (local time). */
 export function isShabbat(now = new Date()) {
@@ -16,7 +46,7 @@ export function isShabbat(now = new Date()) {
  * @param {object[]} places  Place[] ({id, name, city, modes, foods, price, rating, visits, shabbat})
  * @param {Map<string,object>|object[]} foods  all foods (to read cuisine tags of what a place serves)
  * @param {{food?: object, mode?: string, city?: string, now?: Date, budget?: number|null}} q
- * @returns {{place, score, reason}[]} best first
+ * @returns {{place, score, reason, closesIn?}[]} best first; closed places are dropped, closesIn is set when closing within 45 min
  */
 export function scorePlaces(places, foods, { food = null, mode = null, city = null, now = new Date(), budget = null } = {}) {
   const byId = foods instanceof Map ? foods : new Map(foods.map((f) => [f.id, f]));
@@ -27,6 +57,8 @@ export function scorePlaces(places, foods, { food = null, mode = null, city = nu
     if (mode && mode !== "any" && mode !== "home" && !(p.modes ?? []).includes(mode)) continue;
     if (city && p.city && p.city !== city) continue;
     if (shabbat && p.shabbat) continue;
+    const hrs = openStatus(p, now);
+    if (!hrs.open) continue;
     let score = 0;
     let reason = "";
     if (food && (p.foods ?? []).includes(food.id)) {
@@ -43,7 +75,7 @@ export function scorePlaces(places, foods, { food = null, mode = null, city = nu
     const lastVisit = Math.max(0, ...(p.visits ?? []).map((v) => +new Date(v) || 0));
     if (lastVisit && now - lastVisit < WEEK) score -= 3;
     if (budget && p.price > budget) score -= 2 * (p.price - budget);
-    out.push({ place: p, score: Math.round(score * 10) / 10, reason });
+    out.push({ place: p, score: Math.round(score * 10) / 10, reason, ...(hrs.closesIn !== null && hrs.closesIn <= CLOSING_SOON_MIN ? { closesIn: hrs.closesIn } : {}) });
   }
   return out.sort((a, b) => b.score - a.score);
 }
