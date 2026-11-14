@@ -19,10 +19,12 @@ phase file → do the next steps → stop by the rules below." One run per night
 your daytime usage is untouched. When step 5.4 is done the task disables itself.
 Fallback if scheduled runs can't work unattended: you send "continue the build" in a fresh session in that folder.
 
-### 3.3 Usage guard — always leave ≥20% free, on the 5-hour window and the weekly limit
-- First action of every run: `get_usage`. If either limit is ≥80%, exit at once.
-- Re-check after every step. At ≥75% start no new step; at 80% commit WIP, write "resume at" in PROGRESS.md, stop.
-- Weekly ≥80%: one push notification ("paused for weekly budget"); later runs exit silently until the weekly reset.
+### 3.3 Usage guard — shared with SplitSmart: `C:\Users\eitan\.claude\usage-budget.md`
+- First action of every run: `get_usage`. If either limit is past its hard line, exit at once.
+- Hard / soft lines: weekly 75% / 70% (always); 5-hour 75% / 70% by day (08:00–24:00), 95% / 90% at night (00:00–08:00).
+- Re-check after every step. At the soft line start no new step; at the hard line commit WIP, write "resume at" in PROGRESS.md, stop.
+- This project's weekly share is 40 points, summed from `C:\Users\eitan\.claude\usage-ledger.md`; at the share, treat it as the weekly hard line.
+- Weekly stop: one push notification ("paused for weekly budget"); later runs exit silently until the weekly reset.
 - At planning time you were on Pro at 36% (5-hour) and 36% (weekly), so expect the build to take **about 7–10 nights**.
   That is an estimate; PROGRESS.md records actual minutes and usage % per step so it gets sharper after night one.
 

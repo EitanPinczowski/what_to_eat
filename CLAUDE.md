@@ -16,14 +16,15 @@ Vanilla JS ES modules, no build step, nothing shipped from npm. Firebase Firesto
 
 ## Hard rules
 - Unattended: decide alone, never ask mid-run, log decisions in REVIEW.md. Push-notify only when blocked on the owner's account or phone, on money, or by the usage/stale rules.
-- Usage: call get_usage first. Night (23:00–07:00): either limit at 80% → exit; at 75% start nothing new. Day (07:00–23:00): the 5-hour limit caps at 50% (45% = start nothing new); weekly stays 80%.
+- Usage: follow `C:\Users\eitan\.claude\usage-budget.md` (shared with SplitSmart) and log every run in `C:\Users\eitan\.claude\usage-ledger.md`. In short: weekly 70% soft / 75% hard, always; 5-hour 70/75% by day (08:00–24:00), 90/95% at night (00:00–08:00); this project's weekly share is 40 points.
 - Stale: update `.build/heartbeat.json` at every step boundary. Step cap = 2× its budget. Run cap = 3 hours. Every command gets a timeout.
 - Each step: targeted tests → commit. Each phase: `npm test` → tag `phase-N` → push → check the Actions run.
 - Never weaken or delete a passing test. Max 3 fix attempts per failure, then mark it todo and log it.
 - No phone numbers, room ids, ntfy topics or personal data in the repo.
 - Hebrew: feminine 2nd person, questions not commands, the app speaks as Eitan. All strings live in `js/data/strings.js`.
 - UI and engine reach data only through the Store interface (`js/store/`).
-- No `git push --force`, `reset --hard` or `clean`. No subagents.
+- No `git push --force`, `reset --hard` or `clean`. No subagents, except the boss's one worker at a time (Sonnet to build, Opus to research; see `C:\Users\eitan\.claude\boss\BOSS.md`).
+- Handover: a worker whose context passes 100k tokens or ~40 tool calls stops at a safe point, commits what passes the tests, and writes the "Resume note" in `docs/PROGRESS.md`.
 
 ## Tokens
 Read one spec file at a time and only the range needed. Quiet test output. Check pages by text, not screenshots. Short log lines, no long chat.
