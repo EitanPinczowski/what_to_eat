@@ -25,4 +25,4 @@
 - [ ] 5.4 code review, docs, final REVIEW.md, tag phase-5, notify done, disable the nightly task (25)
 
 ## Run log (date · steps done · minutes · 5h% start→end · weekly% start→end · notes)
-- 2026-11-14 · S0 · interactive session · scaffolding
+- 2026-11-14 · S0 · interactive session · scaffolding. Firebase project ready: config in js/firebase-config.js, rules published and verified with tools/check-firebase.mjs (7/7 pass)
