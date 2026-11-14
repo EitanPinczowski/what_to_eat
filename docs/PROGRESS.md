@@ -1,5 +1,5 @@
 # Progress
-**Next step: 5.2** · Resume note: —
+**Next step: 5.2** · Resume note: stopped cleanly after 5.1 at the daytime 45% cap; nothing in progress. Start 5.2 (PWA).
 
 ## Steps (budget in minutes · spec to read)
 - [x] S0 scaffolding (25)
@@ -28,3 +28,4 @@
 ## Run log (date · steps done · minutes · 5h% start→end · weekly% start→end · notes)
 - 2026-11-14 · S0 · interactive session · scaffolding. Firebase project ready: config in js/firebase-config.js, rules published and verified with tools/check-firebase.mjs (7/7 pass)
 - 2026-11-14 · dry run · model: claude-opus-5-5 · cwd at start: C:\Users\eitan\OneDrive\Desktop\what_to_eat · 5h 82% · weekly 42% · unit tests pass · usage tool worked
+- 2026-11-14 · 1.1–5.1 (16 steps; phases 1, 2, 4 tagged) · ~34 min (17:04–17:38) · 5h 7%→45% · weekly 46%→51% · claude-opus-5-5 · daytime run, stopped at the 45% line. Sim 84% exact/96% found/11.8 steps (step target WARN). Not done unattended: photo download, rules string caps (see REVIEW.md)
