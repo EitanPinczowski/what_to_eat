@@ -35,7 +35,7 @@ self.addEventListener("fetch", (e) => {
           if (res.ok) cache.put(key, res.clone());
           return res;
         })
-        .catch(() => hit);
+        .catch(() => hit ?? Response.error());
       return hit ?? net;
     }),
   );
