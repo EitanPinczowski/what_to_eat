@@ -111,6 +111,7 @@ export class Store {
           db.ratings[id] = { r };
           if (p.n?.[id]) db.ratings[id].n = String(p.n[id]).slice(0, 200);
         }
+        for (const t of p.x ?? []) if (t && !db.inbox.includes(t)) db.inbox.push(String(t).slice(0, 40));
         db.imported = [p.id, ...db.imported].slice(0, MAX_IMPORTED);
       });
       return { fresh: true };

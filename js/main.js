@@ -3,6 +3,7 @@ import { currentRoute, clearHash } from "./router.js";
 import { openStore, ownerRoomId, ROOM_KEY } from "./store/open.js";
 import { runGuest, withTimeout } from "./ui/guest/session.js";
 import { runOwner } from "./ui/owner/app.js";
+import { runSweep } from "./ui/guest/sweep.js";
 import { render, html, toast } from "./ui/dom.js";
 import { STR } from "./data/strings.js";
 
@@ -26,7 +27,10 @@ async function boot() {
     clearHash();
     toast(STR.joined);
   }
-  if (route.kind === "s") return fail(STR.owner.soon);
+  if (route.kind === "s") {
+    const store = await openStore(route.room, { mode: route.mode });
+    return runSweep(root, store);
+  }
   const store = await openStore(ownerRoomId(), { mode: route.mode });
   if (route.kind === "r") {
     // #r= fallback result from WhatsApp → import into the owner's room, then clear the hash.

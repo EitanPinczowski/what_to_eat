@@ -8,6 +8,7 @@ import { render, html, raw, toast, copy, confetti } from "../dom.js";
 import { startGuestQuiz } from "../guest/quiz.js";
 import { finishForm, resultEntry } from "../guest/session.js";
 import { brainViews } from "./brain.js";
+import { sweepViews } from "./send-sweep.js";
 
 const T = STR.owner;
 const fmtDate = (iso) => {
@@ -42,7 +43,7 @@ export async function runOwner(root, store, { base = location.origin + location.
           known.add(h.id);
         }
     }
-    if (["history", "live", "room"].includes(what) && ["home", "send", "history"].includes(stack.top)) views[stack.top]();
+    if (["history", "live", "room"].includes(what) && ["home", "send", "history", "sweep"].includes(stack.top)) views[stack.top]();
   });
 
   const back = html`<button class="btn btn-ghost back" data-on="back">${T.back}</button>`;
@@ -108,6 +109,7 @@ export async function runOwner(root, store, { base = location.origin + location.
   };
 
   brainViews({ root, store, stack, views, back, common });
+  sweepViews({ root, store, views, back, common, base });
   stack.reset("home");
   return { stack, views };
 }

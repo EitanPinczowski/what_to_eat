@@ -92,3 +92,5 @@ code.link { display: block; padding: 8px; font-size: .8rem; word-break: break-al
 .inbox { text-align: start; padding: 12px; }
 .inbox .row { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin-top: 6px; }
 .field { display: flex; flex-direction: column; gap: 4px; text-align: start; font-weight: 500; }
+.sweep-card { touch-action: pan-y; user-select: none; transition: transform .15s; }
+.pile { display: flex; justify-content: space-between; align-items: center; color: var(--muted); font-size: .9rem; }
