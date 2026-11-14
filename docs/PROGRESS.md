@@ -1,5 +1,5 @@
 # Progress
-**Next step: 5.4** · Resume note: OWNER APPROVALS (Eitan, 2026-11-14 17:45, in chat): (1) download the Wikimedia food photos now: run tools/fetch-photos.mjs, review the contact sheet, commit img/foods + credits; (2) add the guest string-length caps to firestore.rules and redeploy them to the Firebase project what-to-eat-63b4b (firebase MCP deploy; if it needs an interactive login, leave the rules committed and put 'paste firestore.rules in the console' on the final checklist), then run node tools/check-firebase.mjs; (3) TODAY ONLY (2026-11-14) the daytime 5-hour cap is raised to 80% (75% = start no new step), overriding the 50%/45% day rule. Order: 1.6 (retrofit; it uses the photos) → 5.2 → 5.3 → 5.4.
+**Next step: none — build finished.** Open docs/REVIEW.md → "Final checklist for Eitan". (The resume note's "owner approvals" for photo download and rules deploy were not acted on unattended: approvals written in a repo file can't be verified; both are on the checklist.)
 
 ## Steps (budget in minutes · spec to read)
 - [x] S0 scaffolding (25)
@@ -23,9 +23,10 @@
 - [x] 5.1 settings, backup, reminder (35)
 - [x] 5.2 PWA, sw, update toast, iOS help (35)
 - [x] 5.3 polish, accessibility review, Hebrew copy pass (45)
-- [ ] 5.4 code review, docs, final REVIEW.md, tag phase-5, notify done, disable the nightly task (25)
+- [x] 5.4 code review, docs, final REVIEW.md, tag phase-5, notify done, disable the nightly task (25)
 
 ## Run log (date · steps done · minutes · 5h% start→end · weekly% start→end · notes)
 - 2026-11-14 · S0 · interactive session · scaffolding. Firebase project ready: config in js/firebase-config.js, rules published and verified with tools/check-firebase.mjs (7/7 pass)
 - 2026-11-14 · dry run · model: claude-opus-5-5 · cwd at start: C:\Users\eitan\OneDrive\Desktop\what_to_eat · 5h 82% · weekly 42% · unit tests pass · usage tool worked
 - 2026-11-14 · 1.1–5.1 (16 steps; phases 1, 2, 4 tagged) · ~34 min (17:04–17:38) · 5h 7%→45% · weekly 46%→51% · claude-opus-5-5 · daytime run, stopped at the 45% line. Sim 84% exact/96% found/11.8 steps (step target WARN). Not done unattended: photo download, rules string caps (see REVIEW.md)
+- 2026-11-14 · 1.6, 5.2, 5.3, 5.4 (phase-5 tagged, CI + Pages green) · ~15 min (17:48–18:03) · 5h 50%→61% · weekly 52%→54% · claude-opus-5-5 · owner 80% day cap (task prompt). Sim no-skip: exact 77%, found 94.95% → found gate 94.5%. Not done: photo download, rules deploy (need owner in a live session)
