@@ -12,6 +12,7 @@ import { statsFrom, nudgeExp } from "../../engine/learn.js";
 import { QUESTIONS } from "../../data/questions.js";
 import { sweepViews } from "./send-sweep.js";
 import { placesViews } from "./places.js";
+import { settingsViews, backupDue } from "./settings.js";
 
 const T = STR.owner;
 const HOW_AFTER = 2 * 3600e3;
@@ -30,7 +31,7 @@ export function liveStatus(live, her) {
   return live.n ? T.status.step(her, live.n) : T.status.opened(her);
 }
 
-export async function runOwner(root, store, { base = location.origin + location.pathname } = {}) {
+export async function runOwner(root, store, { base = location.origin + location.pathname, mode } = {}) {
   // Firestore writes resolve only once the server acks, so never await them on the owner path (offline-first).
   if (!store.get().settings.ntfy) store.update((db) => (db.settings.ntfy = `mabalach-${newId(16)}`)).catch(() => {});
   const views = {};
@@ -99,6 +100,7 @@ export async function runOwner(root, store, { base = location.origin + location.
         ${last ? raw(html`<div class="big">${last.fe}</div><h2 class="title">${last.fn}</h2><div class="sub">${fmtDate(last.at)} · ${STR.modeLabel[last.m] ?? ""}</div>`) : raw(html`<p>${T.noMeals}</p>`)}
       </section>
       ${raw(howCard())}
+      ${store.list("history").length && backupDue(S()) ? raw(html`<button class="card btn remind" data-on="go" data-arg="settings" data-testid="backup">💾 ${STR.settings.remind}</button>`) : ""}
       <p class="sub" data-testid="live">${liveStatus(store.doc("live", "quiz"), S().her)}</p>
       <div class="tiles">${tiles.map((k) => raw(html`<button class="btn tile${views[k] ? "" : " soon"}" data-on="go" data-arg="${k}"><span class="em">${T.tiles[k].e}</span>${T.tiles[k].t}</button>`))}</div>`, { ...common, how });
   };
@@ -154,6 +156,7 @@ export async function runOwner(root, store, { base = location.origin + location.
   brainViews({ root, store, stack, views, back, common });
   sweepViews({ root, store, views, back, common, base });
   placesViews({ root, store, stack, views, back, common, ctx });
+  settingsViews({ root, store, views, back, common, base, mode });
   stack.reset("home");
   return { stack, views };
 }

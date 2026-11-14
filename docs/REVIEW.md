@@ -43,6 +43,7 @@ Every decision made without asking, newest last. Format: **what** — why — ho
 - **Picker details (4.1)**: `place.shabbat = true` means *closed* on Shabbat; hidden Fri 16:00 → Sat 19:00. Places that neither serve the food nor share a cuisine tag are left out. Budget penalty only when she chose a budget — js/places/picker.js.
 - **Picker UI (4.2)**: opens prefilled from a history entry ("בוא נבחר מקום") or empty from the home tile; 🎲 runs a short slot animation (skipped with reduced motion). "✅ הולכים" logs a visit on the place and `goAt` on the entry (starts the "how was it?" timer). Opening a Maps/recipe/kiosk fallback also counts as going and shows the "לאן הלכתם?" quick-add.
 - **Place links** are kept only if they start with http(s).
+- **Settings (5.1)**: "rotate key" copies everything to a new room id and switches this device (old links and other devices stay on the old room — re-open the join link there). "Reset" = switch to a fresh empty room keeping names/phones; the old data isn't deleted (rules don't allow deleting rooms). Both ask with a confirm dialog. Backup reminder shows on home when there's history and no backup in 30 days; exporting sets `lastBackup`.
 
 ## Skipped or unfinished
 - **Rules: string-length caps for guest docs not added** (spec §2.2). Changing firestore.rules means re-deploying to your Firebase project, which this run doesn't do unattended. Current rules cap field counts only. To do: add size checks, deploy, run `node tools/check-firebase.mjs`.

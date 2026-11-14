@@ -41,7 +41,7 @@ async function boot() {
     clearHash();
     toast(fresh ? STR.imported : STR.importedOld);
   }
-  return runOwner(root, store);
+  return runOwner(root, store, { mode: route.mode });
 }
 
 boot().catch((e) => {

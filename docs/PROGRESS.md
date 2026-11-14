@@ -1,5 +1,5 @@
 # Progress
-**Next step: 5.1** · Resume note: —
+**Next step: 5.2** · Resume note: —
 
 ## Steps (budget in minutes · spec to read)
 - [x] S0 scaffolding (25)
@@ -20,7 +20,7 @@
 - [x] 3.4 photo script, credits, contact sheet (30) · spec-foods.md
 - [x] 4.1 picker logic + tests (25) · spec-loops-places-design.md §2.7, PLAN.md §5.5
 - [x] 4.2 places UI, quick-add, picker UI, e2e, tag phase-4 (50)
-- [ ] 5.1 settings, backup, reminder (35)
+- [x] 5.1 settings, backup, reminder (35)
 - [ ] 5.2 PWA, sw, update toast, iOS help (35)
 - [ ] 5.3 polish, accessibility review, Hebrew copy pass (45)
 - [ ] 5.4 code review, docs, final REVIEW.md, tag phase-5, notify done, disable the nightly task (25)
