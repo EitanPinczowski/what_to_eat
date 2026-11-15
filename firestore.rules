@@ -22,7 +22,7 @@ service cloud.firestore {
 
     function capped() {
       return cap('fn', 80) && cap('fe', 32) && cap('note', 300) && cap('text', 500)
-        && cap('msg', 300) && cap('stack', 1500) && cap('screen', 40) && cap('ua', 200);
+        && cap('msg', 300) && cap('recipe', 80) && cap('stack', 1500) && cap('screen', 40) && cap('ua', 200);
     }
 
     match /rooms/{roomId} {
@@ -32,12 +32,12 @@ service cloud.firestore {
 
       match /{col}/{docId} {
         allow read: if signedIn()
-          && col in ['history', 'places', 'live', 'feedback', 'errors'];
+          && col in ['history', 'places', 'live', 'feedback', 'errors', 'shopping'];
         allow create, update: if signedIn()
-          && col in ['history', 'places', 'live', 'feedback', 'errors']
+          && col in ['history', 'places', 'live', 'feedback', 'errors', 'shopping']
           && smallDoc() && capped();
         allow delete: if signedIn()
-          && col in ['history', 'places', 'live'];
+          && col in ['history', 'places', 'live', 'shopping'];
       }
     }
 

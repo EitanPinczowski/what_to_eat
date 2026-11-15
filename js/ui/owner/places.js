@@ -4,8 +4,10 @@ import { STR } from "../../data/strings.js";
 import { TAGS } from "../../data/tags.js";
 import { buildFoods } from "../../engine/foods.js";
 import { newId } from "../../share/codec.js";
-import { scorePlaces, weightedPick, navLinks, mapsUrl, kioskUrl, recipeUrl, woltUrl, tenbisUrl } from "../../places/picker.js";
+import { scorePlaces, weightedPick, navLinks, mapsUrl, kioskUrl, woltUrl, tenbisUrl } from "../../places/picker.js";
 import { parsePlaceLink } from "../../places/links.js";
+import { recipesFor } from "../../data/recipes.js";
+import { recipeBlock } from "./shopping.js";
 import { VOTE_MAX, VOTE_MIN, VOTE_NONE } from "../../store/store.js";
 import { render, html, raw, toast } from "../dom.js";
 
@@ -207,7 +209,7 @@ export function placesViews({ root, store, stack, views, back, common, ctx }) {
       ${scored.length && st.mode !== "home" ? raw(html`<button class="btn btn-primary" data-on="roll">${K.roll}</button>
         <ul class="foods">${scored.map((r) => raw(html`<li class="food-row"><button class="linkish" data-on="choose" data-arg="${r.place.id}"><b>${r.place.name}</b> <span class="sub">${reasonText(r, food)}</span> ${r.closesIn ? raw(html`<span class="sub" data-testid="closes-soon">⏰ ${closesText(r)}</span>`) : ""}</button><button class="chip" data-on="voteToggle" data-arg="${r.place.id}" aria-pressed="${(st.sel ?? []).includes(r.place.id)}">${(st.sel ?? []).includes(r.place.id) ? K.voteIn : K.voteAdd}</button><span class="sub">${r.score}</span></li>`))}</ul>`) : raw(html`<p class="sub">${st.mode === "home" ? "" : K.none}</p>`)}
       <div class="stack fallbacks">
-        ${st.mode === "home" ? raw(html`<a class="btn" href="${recipeUrl(label || "")}" target="_blank" rel="noopener" data-on="fallback">${K.recipe}</a>`) : raw(html`<a class="btn" href="${mapsUrl(q || "אוכל")}" target="_blank" rel="noopener" data-on="fallback">${K.maps(q)}</a>`)}
+        ${st.mode === "home" ? raw(recipeBlock(recipesFor(food?.id, label), label || "")) : raw(html`<a class="btn" href="${mapsUrl(q || "אוכל")}" target="_blank" rel="noopener" data-on="fallback">${K.maps(q)}</a>`)}
         ${st.mode === "delivery" && !scored.length ? raw(html`<a class="btn" href="${woltUrl(label || "אוכל")}" target="_blank" rel="noopener" data-on="fallback">${K.wolt(label || "אוכל")}</a>
           <a class="btn" href="${tenbisUrl(label || "אוכל")}" target="_blank" rel="noopener" data-on="fallback">${K.tenbis(label || "אוכל")}</a>`) : ""}
         ${food?.tags[0] === "snack" ? raw(html`<a class="btn" href="${kioskUrl()}" target="_blank" rel="noopener" data-on="fallback">${K.kiosk}</a>`) : ""}
@@ -223,6 +225,7 @@ export function placesViews({ root, store, stack, views, back, common, ctx }) {
       city: (c) => ((st.city = c || null), (st.chosen = null), views.picker()),
       choose: (id) => ((st.chosen = store.doc("places", id)?.name ?? null), (st.chosenId = id), views.picker()),
       roll: () => roll(scored, st),
+      recipeOpen: (id) => ((ctx.recipeId = id), stack.push("recipe")),
       go: (id) => goTo(id || st.chosenId, st),
       voteToggle: (id) => {
         const sel = (st.sel ??= []);

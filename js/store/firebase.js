@@ -40,8 +40,13 @@ export class FirebaseStore extends Store {
     const cols = {};
     for (const c of COLLECTIONS) {
       cols[c] = {};
-      const qs = await s.getDocs(s.collection(this.roomRef, c));
-      qs.forEach((d) => (cols[c][d.id] = d.data()));
+      try {
+        const qs = await s.getDocs(s.collection(this.roomRef, c));
+        qs.forEach((d) => (cols[c][d.id] = d.data()));
+      } catch (e) {
+        // A collection the published rules do not allow yet (e.g. shopping before the rules are re-published) must not break the app.
+        if (c !== "shopping") throw e;
+      }
     }
 
     this.unsubs.push(
@@ -56,7 +61,7 @@ export class FirebaseStore extends Store {
           const docs = {};
           qs.forEach((d) => (docs[d.id] = d.data()));
           this._remote(undefined, { [c]: docs });
-        }),
+        }, () => {}),
       );
     return { room: snap.exists() ? snap.data() : null, cols };
   }

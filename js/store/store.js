@@ -1,8 +1,8 @@
 // Store interface (PLAN.md §5.3, spec-flow-firebase.md §2.2). UI and engine reach data only through a Store.
 // Room doc = settings, ratings, custom foods, inbox, learned weights, imported ids.
-// Subcollections: history, places, live, feedback, errors.
+// Subcollections: history, places, live, feedback, errors, shopping.
 export const SCHEMA = 1;
-export const COLLECTIONS = ["history", "places", "live", "feedback", "errors"];
+export const COLLECTIONS = ["history", "places", "live", "feedback", "errors", "shopping"];
 /** Eitan's one-tap replies to her sent result. Stored as a short code in live/quiz.ack (no rules change needed). */
 export const ACK_CODES = ["seen", "ordered", "onway", "there"];
 /** Her place vote (live/vote): Eitan offers 2-3 place ids, she picks one or this "neither" code. Short fields only. */
@@ -11,6 +11,7 @@ export const VOTE_MIN = 2;
 export const VOTE_MAX = 3;
 const MAX_IMPORTED = 200;
 const MAX_ERRORS = 50;
+const MAX_SHOPPING = 200;
 
 export function emptyRoom() {
   return {
@@ -132,6 +133,45 @@ export class Store {
 
   async clearVote() {
     if (this.cols.live.vote) await this.remove("live", "vote");
+  }
+
+  /** Shared shopping list, oldest first: [{id, text, done, addedAt, recipe}]. */
+  shopping() {
+    return Object.entries(this.cols.shopping)
+      .map(([id, d]) => ({ ...clone(d), id }))
+      .sort((a, b) => String(a.addedAt ?? "").localeCompare(String(b.addedAt ?? "")) || a.id.localeCompare(b.id));
+  }
+
+  /** Add lines to the list. Skips a line that is already waiting (not ticked) on the list. Returns how many were added. */
+  async addShopping(lines, recipe = "") {
+    const open = new Set(this.shopping().filter((i) => !i.done).map((i) => i.text));
+    const at = new Date().toISOString();
+    let n = 0;
+    for (const raw of lines ?? []) {
+      const text = String(raw ?? "").trim().slice(0, 120);
+      if (!text || open.has(text) || this.shopping().length >= MAX_SHOPPING) continue;
+      open.add(text);
+      const id = `${Date.now().toString(36)}${n.toString(36)}${Math.random().toString(36).slice(2, 6)}`;
+      await this.put("shopping", id, { text, done: false, addedAt: at, recipe: String(recipe ?? "").slice(0, 80) });
+      n++;
+    }
+    return n;
+  }
+
+  /** Tick or untick one item (done = true/false; omit to flip). */
+  async tickShopping(id, done) {
+    const d = this.doc("shopping", id);
+    if (!d) return false;
+    const { id: _id, ...rest } = d;
+    await this.put("shopping", id, { ...rest, done: done ?? !d.done });
+    return true;
+  }
+
+  /** Remove every ticked item. Returns how many were removed. */
+  async clearDoneShopping() {
+    const done = this.shopping().filter((i) => i.done);
+    for (const i of done) await this.remove("shopping", i.id);
+    return done.length;
   }
 
   async remove(col, id) {

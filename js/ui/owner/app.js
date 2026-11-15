@@ -13,6 +13,7 @@ import { QUESTIONS } from "../../data/questions.js";
 import { sweepViews } from "./send-sweep.js";
 import { wrappedViews, isFirstOfMonth } from "./send-wrapped.js";
 import { placesViews } from "./places.js";
+import { shoppingViews } from "./shopping.js";
 import { ACK_CODES } from "../../store/store.js";
 import { settingsViews, backupDue } from "./settings.js";
 
@@ -102,7 +103,7 @@ export async function runOwner(root, store, { base = location.origin + location.
 
   views.home = () => {
     const last = store.list("history")[0];
-    const tiles = ["send", "local", "history", "picker", "brain", "places", "sweep", "wrapped", "settings"];
+    const tiles = ["send", "local", "history", "picker", "brain", "places", "sweep", "wrapped", "shopping", "settings"];
     render(root, html`
       <section class="card last">
         <div class="sub">${T.lastMeal}</div>
@@ -167,6 +168,7 @@ export async function runOwner(root, store, { base = location.origin + location.
   sweepViews({ root, store, views, back, common, base });
   wrappedViews({ root, store, views, back, common, base });
   placesViews({ root, store, stack, views, back, common, ctx });
+  shoppingViews({ root, store, stack, views, back, common, ctx });
   settingsViews({ root, store, views, back, common, base, mode });
   stack.reset("home");
   return { stack, views };
