@@ -15,7 +15,9 @@ const cut = (s, n) => String(s ?? "").slice(0, n);
 const ua = () => cut(globalThis.navigator?.userAgent, 200);
 
 export function withTimeout(p, ms) {
-  return Promise.race([p, new Promise((_, rej) => setTimeout(() => rej(new Error("timeout")), ms))]);
+  let timer;
+  const limit = new Promise((_, rej) => (timer = setTimeout(() => rej(new Error("timeout")), ms)));
+  return Promise.race([p, limit]).finally(() => clearTimeout(timer));
 }
 
 /** Minimal public ping (ntfy.sh is public: no food, no notes). */

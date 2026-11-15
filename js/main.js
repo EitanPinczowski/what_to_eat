@@ -18,6 +18,13 @@ function fail(msg, retry = false) {
     ${retry ? raw(html`<button class="btn btn-primary" data-on="retry">${STR.errors.retry}</button>`) : ""}`, { retry: () => location.reload() });
 }
 
+/** A room retired by "rotate key" shows a message instead of empty data, also when it happens while open. */
+function guardMoved(store) {
+  if (store.moved) return (fail(STR.errors.moved), true);
+  store.subscribe((what) => what === "room" && store.moved && fail(STR.errors.moved));
+  return false;
+}
+
 async function boot() {
   const route = currentRoute();
   render(root, html`<p class="sub">${STR.loading}</p>`);
@@ -26,6 +33,7 @@ async function boot() {
   if (route.kind === "w") return runWrapped(root, route.payload);
   if (route.kind === "q") {
     const store = await openStore(route.room, { mode: route.mode });
+    if (guardMoved(store)) return;
     return runGuest(root, store);
   }
   if (route.kind === "join") {
@@ -37,9 +45,11 @@ async function boot() {
   }
   if (route.kind === "s") {
     const store = await openStore(route.room, { mode: route.mode });
+    if (guardMoved(store)) return;
     return runSweep(root, store);
   }
   const store = await openStore(ownerRoomId(), { mode: route.mode });
+  if (guardMoved(store)) return;
   if (route.kind === "r") {
     // #r= fallback result from WhatsApp → import into the owner's room, then clear the hash.
     const { fresh } = await withTimeout(store.importResult(route.payload), 4000).catch(() => ({ fresh: true }));

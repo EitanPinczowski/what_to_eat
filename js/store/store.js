@@ -34,6 +34,9 @@ export function migrate(room) {
   return r;
 }
 
+/** Subcollections whose docs the rules do not let a client delete: "rotate key" overwrites them with a tombstone instead. */
+export const NO_DELETE = ["feedback", "errors"];
+
 const clone = (x) => (x === undefined ? x : JSON.parse(JSON.stringify(x)));
 
 /**
@@ -64,6 +67,28 @@ export class Store {
   /** Current room doc (a copy). */
   get() {
     return clone(this.room);
+  }
+
+  /** True once this room was retired by "rotate key" (its data moved to a new room id). */
+  get moved() {
+    return !!this.room.moved;
+  }
+
+  /**
+   * Retire this room after its data was copied elsewhere: blank every doc (delete where the rules allow it,
+   * else overwrite with {moved:true, at}), then replace the room doc with a tombstone so clients that still
+   * open the old link learn it moved. Best effort per doc; the room tombstone goes last (it also stops writes).
+   */
+  async retire(at = new Date().toISOString()) {
+    const ops = [];
+    for (const c of COLLECTIONS)
+      for (const id of Object.keys(this.cols[c])) {
+        ops.push(NO_DELETE.includes(c) ? this._writeDoc(c, id, { moved: true, at }) : this._writeDoc(c, id, null));
+        this.cols[c] = {};
+      }
+    await Promise.allSettled(ops);
+    this.room = migrate({ moved: true, at }); // quiet: this device is the one that moved, its page reloads next
+    await this._writeRoom({ v: SCHEMA, moved: true, at });
   }
 
   /** Mutate the room doc and persist it. */

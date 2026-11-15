@@ -52,3 +52,15 @@ test("join link over an existing room asks first; declining keeps the room, acce
   expect(await page.evaluate(() => localStorage.getItem("mabalach_room"))).toBe("abcdefghij1234567890abcd");
   expect(await page.evaluate(() => localStorage.getItem("mabalach_prev_room"))).toBe(mine);
 });
+
+test("rotate key: the old link shows 'this link was replaced', not empty data", async ({ page }) => {
+  await page.goto(seedResult("m1"));
+  await expect(page.locator(".tiles")).toBeVisible();
+  const oldRoom = await page.evaluate(() => localStorage.getItem("mabalach_room"));
+  await page.locator('.tile[data-arg="settings"]').click();
+  page.on("dialog", (d) => d.accept());
+  await page.locator('[data-on="rotate"]').click();
+  await expect(page.locator(".tiles")).toBeVisible();
+  await page.goto(`/?store=local#q=${oldRoom}`);
+  await expect(page.getByRole("alert")).toContainText("הוחלף בקישור חדש");
+});

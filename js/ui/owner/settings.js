@@ -8,6 +8,7 @@ import { ROOM_KEY, openStore } from "../../store/open.js";
 import { render, html, raw, toast, copy } from "../dom.js";
 import { addSub, removeSub, hasSub, pushSupport, subscribeThisDevice, currentSub, unsubscribeThisDevice, notifyAll } from "../../push.js";
 import { installKind, installHelp } from "../../pwa.js";
+import { withTimeout } from "../guest/session.js";
 
 const G = STR.settings;
 /**
@@ -33,13 +34,21 @@ export const BACKUP_EVERY = 30 * 864e5;
 
 export const backupDue = (settings, now = Date.now()) => !settings.lastBackup || now - new Date(settings.lastBackup) >= BACKUP_EVERY;
 
-/** Copy everything to a fresh room id and switch to it (old links stop working). */
-export async function moveToNewRoom(store, { keepData = true, storage = localStorage, mode } = {}) {
+/** A write that never gets its server ack (offline) must not leave the screen hanging: reject with Error("timeout"). */
+export const WRITE_TIMEOUT = 10000;
+
+/**
+ * Copy everything to a fresh room id and switch to it (old links stop working). With keepData the old room is
+ * then blanked and marked moved, so an old link shows "this link was replaced" instead of stale data.
+ * Throws Error("timeout") when the copy gets no server ack in time (nothing is switched then).
+ */
+export async function moveToNewRoom(store, { keepData = true, storage = localStorage, mode, open = openStore, timeout = WRITE_TIMEOUT } = {}) {
   const id = newId(24, () => crypto.getRandomValues(new Uint32Array(1))[0] / 2 ** 32);
-  const next = await openStore(id, { mode });
-  if (keepData) await next.importJSON(store.exportJSON());
-  else await next.update((db) => (db.settings = { ...store.get().settings, ntfy: "" }));
+  const next = await withTimeout(open(id, { mode }), timeout);
+  if (keepData) await withTimeout(next.importJSON(store.exportJSON()), timeout);
+  else await withTimeout(next.update((db) => (db.settings = { ...store.get().settings, ntfy: "" })), timeout);
   storage.setItem(ROOM_KEY, id);
+  if (keepData) await withTimeout(store.retire(), timeout).catch((e) => console.error("retire old room", e)); // best effort: the move already happened
   return id;
 }
 
@@ -153,13 +162,21 @@ export function settingsViews({ root, store, views, back, common, base, mode }) 
       },
       rotate: async () => {
         if (!confirm(G.rotateAsk)) return;
-        await moveToNewRoom(store, { keepData: true, mode });
+        try {
+          await moveToNewRoom(store, { keepData: true, mode });
+        } catch (e) {
+          return toast(e?.message === "timeout" ? G.offline : G.saveFail);
+        }
         toast(G.rotated);
         location.reload();
       },
       reset: async () => {
         if (!confirm(G.resetAsk)) return;
-        await moveToNewRoom(store, { keepData: false, mode });
+        try {
+          await moveToNewRoom(store, { keepData: false, mode });
+        } catch (e) {
+          return toast(e?.message === "timeout" ? G.offline : G.saveFail);
+        }
         location.reload();
       },
     });
