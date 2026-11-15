@@ -42,3 +42,6 @@ export function foodLabel(food, size = "sm") {
   const p = food && have.has(food.id) ? pic(food, size) : html`<span class="em">${food.emoji ?? "🍽️"}</span>`;
   return html`${raw(p)}<span class="fname">${food.name}</span><small class="cat">${catLabel(food)}</small>`;
 }
+
+/** True when a photo file exists for this food id. */
+export const hasPic = (id) => have.has(id);

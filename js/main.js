@@ -4,6 +4,7 @@ import { openStore, ownerRoomId, ROOM_KEY } from "./store/open.js";
 import { runGuest, withTimeout } from "./ui/guest/session.js";
 import { runOwner } from "./ui/owner/app.js";
 import { runSweep } from "./ui/guest/sweep.js";
+import { runWrapped } from "./ui/guest/wrapped.js";
 import { render, html, raw, toast } from "./ui/dom.js";
 import { STR } from "./data/strings.js";
 import { loadPics } from "./ui/pics.js";
@@ -22,6 +23,7 @@ async function boot() {
   render(root, html`<p class="sub">${STR.loading}</p>`);
   await pics;
   if (route.kind === "bad") return fail(STR.errors.badLink);
+  if (route.kind === "w") return runWrapped(root, route.payload);
   if (route.kind === "q") {
     const store = await openStore(route.room, { mode: route.mode });
     return runGuest(root, store);

@@ -106,6 +106,7 @@ export const STR = {
       brain: { e: "🧠", t: "המוח שלה" },
       places: { e: "📍", t: "מקומות" },
       sweep: { e: "🃏", t: "היכרות" },
+      wrapped: { e: "🎁", t: "סיכום חודשי" },
       settings: { e: "⚙️", t: "הגדרות" },
     },
     soon: "בקרוב",
@@ -311,5 +312,44 @@ export const STR = {
     badLink: "הקישור הזה נראה שבור 😕 אולי תבקשי ממני חדש?",
     offline: "אין אינטרנט כרגע. ננסה שוב כשיחזור?",
     retry: "🔄 לנסות שוב",
+  },
+  wrapped: {
+    tile: { e: "🎁", t: "לשלוח סיכום חודשי" },
+    ownerTitle: (her) => `הסיכום החודשי של ${her}`,
+    ownerFor: (month) => `סיכום ${month}`,
+    ownerN: (n) => `${n} ארוחות בחודש הזה`,
+    ownerFew: "יש מעט נתונים לחודש הזה. אפשר לשלוח, היא תקבל כרטיס קצר וחמוד.",
+    firstBadge: "היום הזמן לסיכום 🎉",
+    sendText: (her, me, month) => `היי ${her}, הכנתי לך סיכום אוכל של ${month} 🎁 — ${me}`,
+    month: (mo) => {
+      const [y, m] = String(mo).split("-").map(Number);
+      try {
+        return new Date(y, m - 1, 1).toLocaleDateString("he-IL", { month: "long", year: "numeric" });
+      } catch {
+        return mo;
+      }
+    },
+    introTitle: (her, month) => `${month} של ${her} באוכל`,
+    introSub: (n) => `${n} ארוחות, ועוד כמה הפתעות. מחליקה הלאה?`,
+    topTitle: "שלושת האהובים שלך",
+    topCount: (c) => (c === 1 ? "פעם אחת" : `${c} פעמים`),
+    hitTitle: "ניחשתי נכון בניסיון הראשון",
+    hitSub: (p) => (p >= 70 ? "מכיר אותך טוב, אה?" : p >= 40 ? "כמעט קורא אותך מהמחשבה." : "את עדיין מצליחה להפתיע אותי."),
+    qTitle: "השאלה שתמיד תופסת אותך",
+    qSub: "תמיד נתקעים עליה, ואני אוהב את זה.",
+    placeTitle: "המקום האהוב עלייך החודש",
+    placeSub: "שם נפגשים שוב ושוב.",
+    fewTitle: "עוד לא הצטבר מספיק",
+    fewSub: (month) => `ב${month} אכלנו מעט יחד. החודש הבא נעשה סיכום גדול יותר, מבטיח.`,
+    shareTitle: "רוצה לשתף?",
+    shareBtn: "📤 שיתוף כתמונה",
+    saveBtn: "💾 שמירת התמונה",
+    next: "הבא",
+    prev: "הקודם",
+    dots: (i, n) => `כרטיס ${i} מתוך ${n}`,
+    shareText: (month) => `הסיכום שלי של ${month} 🍽️`,
+    shareFail: "לא הצלחתי ליצור תמונה. אפשר לצלם מסך?",
+    imgTitle: (month) => month,
+    imgBrand: "מה בא לך?",
   },
 };

@@ -125,3 +125,20 @@ p.cat { text-align: center; margin: -4px 0 8px; display: block; }
 .btn:focus-visible, input:focus-visible, textarea:focus-visible { outline-color: var(--fg); }
 .hours-row { display: flex; gap: 8px; align-items: center; }
 .hours-row b { min-width: 2ch; }
+
+/* Food wrapped (#w=) */
+.wr { display: flex; flex-direction: column; gap: var(--gap); }
+.wr-card { min-height: 60vh; display: flex; flex-direction: column; justify-content: center; gap: var(--gap); text-align: center; touch-action: pan-y; animation: pop .4s var(--ease) both; }
+.wr-c { text-align: center; }
+.wr-num { color: var(--accent); font-weight: var(--heavy); }
+.wr-text { font-size: 1.5rem; font-weight: var(--heavy); margin: 0; }
+.wr-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px; }
+.wr-top { display: grid; grid-template-columns: 32px 64px 1fr auto; align-items: center; gap: 10px; background: var(--accent2); color: var(--on-accent2); border: var(--border); border-radius: var(--radius-sm); padding: 8px 12px; text-align: start; }
+.wr-pic { font-size: 2.4rem; line-height: 1; display: flex; justify-content: center; }
+.wr-pic .pic { width: 64px; height: 64px; object-fit: cover; border-radius: var(--radius-sm); border: var(--border); }
+.wr-rank { font-weight: var(--heavy); font-size: 1.4rem; color: var(--accent); }
+.wr-nav { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.wr-dots { display: flex; gap: 6px; }
+.wr-dots i { width: 10px; height: 10px; border-radius: 50%; background: var(--accent2); border: 1px solid var(--ink); }
+.wr-dots i.on { background: var(--accent); }
+.tile.hot { background: var(--accent); color: var(--on-accent); }

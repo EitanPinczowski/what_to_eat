@@ -11,6 +11,7 @@ import { brainViews } from "./brain.js";
 import { statsFrom, nudgeExp } from "../../engine/learn.js";
 import { QUESTIONS } from "../../data/questions.js";
 import { sweepViews } from "./send-sweep.js";
+import { wrappedViews, isFirstOfMonth } from "./send-wrapped.js";
 import { placesViews } from "./places.js";
 import { ACK_CODES } from "../../store/store.js";
 import { settingsViews, backupDue } from "./settings.js";
@@ -101,7 +102,7 @@ export async function runOwner(root, store, { base = location.origin + location.
 
   views.home = () => {
     const last = store.list("history")[0];
-    const tiles = ["send", "local", "history", "picker", "brain", "places", "sweep", "settings"];
+    const tiles = ["send", "local", "history", "picker", "brain", "places", "sweep", "wrapped", "settings"];
     render(root, html`
       <section class="card last">
         <div class="sub">${T.lastMeal}</div>
@@ -111,7 +112,7 @@ export async function runOwner(root, store, { base = location.origin + location.
       ${raw(howCard())}
       ${store.list("history").length && backupDue(S()) ? raw(html`<button class="card btn remind" data-on="go" data-arg="settings" data-testid="backup">💾 ${STR.settings.remind}</button>`) : ""}
       <p class="sub" data-testid="live">${liveStatus(store.doc("live", "quiz"), S().her)}</p>
-      <div class="tiles">${tiles.map((k) => raw(html`<button class="btn tile${views[k] ? "" : " soon"}" data-on="go" data-arg="${k}"><span class="em">${T.tiles[k].e}</span>${T.tiles[k].t}</button>`))}</div>`, { ...common, how, ack: (c) => store.setAck(store.doc("live", "quiz")?.ack === c ? null : c).catch(() => {}) });
+      <div class="tiles">${tiles.map((k) => raw(html`<button class="btn tile${views[k] ? "" : " soon"}${k === "wrapped" && isFirstOfMonth() ? " hot" : ""}" data-on="go" data-arg="${k}"><span class="em">${T.tiles[k].e}</span>${T.tiles[k].t}${k === "wrapped" && isFirstOfMonth() ? raw(html`<small>${STR.wrapped.firstBadge}</small>`) : ""}</button>`))}</div>`, { ...common, how, ack: (c) => store.setAck(store.doc("live", "quiz")?.ack === c ? null : c).catch(() => {}) });
   };
 
   views.send = () => {
@@ -164,6 +165,7 @@ export async function runOwner(root, store, { base = location.origin + location.
 
   brainViews({ root, store, stack, views, back, common });
   sweepViews({ root, store, views, back, common, base });
+  wrappedViews({ root, store, views, back, common, base });
   placesViews({ root, store, stack, views, back, common, ctx });
   settingsViews({ root, store, views, back, common, base, mode });
   stack.reset("home");
