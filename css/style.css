@@ -27,7 +27,7 @@ h1 { margin: 24px 0 8px; font-size: 2rem; font-weight: var(--heavy); color: var(
 .sub { text-align: center; color: var(--muted); }
 .title { font-size: 2rem; font-weight: var(--heavy); text-align: center; }
 .big { font-size: 6rem; text-align: center; line-height: 1.1; }
-.mood { align-self: center; background: var(--accent2); color: #14231b; padding: 6px 14px; border-radius: 99px; font-weight: var(--heavy); }
+.mood { align-self: center; background: var(--accent2); color: var(--on-accent2); padding: 6px 14px; border-radius: 99px; font-weight: var(--heavy); }
 .card { background: var(--card); border: var(--border); border-radius: var(--radius); padding: 24px 16px; box-shadow: var(--shadow); }
 
 .meter { height: 8px; border-radius: 99px; background: var(--card); overflow: hidden; border: 1px solid var(--muted); }
@@ -64,7 +64,7 @@ input:focus-visible, textarea:focus-visible { outline: 3px solid var(--accent2);
 .confetti { position: fixed; inset: 0; pointer-events: none; overflow: hidden; z-index: 20; }
 .confetti span { position: absolute; top: -2rem; font-size: 1.6rem; animation: fall 2.2s ease-in forwards; }
 @keyframes fall { to { transform: translateY(110vh) rotate(540deg); } }
-.choose .btn[aria-pressed="true"] { background: var(--accent2); color: #14231b; }
+.choose .btn[aria-pressed="true"] { background: var(--accent2); color: var(--on-accent2); }
 a.btn { text-decoration: none; }
 .tiles { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 .tile { flex-direction: column; justify-content: center; text-align: center; min-height: 92px; }
@@ -82,7 +82,7 @@ code.link { display: block; padding: 8px; font-size: .8rem; word-break: break-al
   min-height: 40px; min-width: 40px; padding: 6px 10px; border: var(--border); border-radius: 99px; background: var(--card);
   color: var(--fg); font: inherit; font-size: .95rem; cursor: pointer;
 }
-.chip[aria-pressed="true"] { background: var(--accent2); color: #14231b; }
+.chip[aria-pressed="true"] { background: var(--accent2); color: var(--on-accent2); }
 .chips, .stats { display: flex; flex-wrap: wrap; gap: 6px; margin: 4px 0; }
 .foods { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
 .food-row { display: flex; align-items: center; gap: 8px; padding: 6px 0; border-bottom: 1px solid color-mix(in srgb, var(--muted) 30%, transparent); }

@@ -1,4 +1,4 @@
-/* Design tokens — direction A, Rubik "pop" (design/mockup.html). Revision 1.6: fresh green on near-white, no orange. */
+/* Design tokens — direction A, Rubik "pop" (design/mockup.html). Palette B "berry" (owner pick 2026-11-14): near-white pink bg, plum ink, berry accent, soft pink pop. */
 :root {
   --font: "Rubik", system-ui, sans-serif;
   --heavy: 800;
@@ -7,16 +7,17 @@
   --gap: 12px;
   --tap: 56px;
 
-  --bg: #f7fbf8;
-  --fg: #14231b;
+  --bg: #FBF6FA;
+  --fg: #3A1630;
   --card: #ffffff;
-  --muted: #5d7468;
-  --accent: #12855a;
-  --accent2: #ffd23f;
+  --muted: #7A4F68;
+  --accent: #B0306E;
+  --accent2: #F3D7E6;
+  --on-accent2: #3A1630;
   --on-accent: #ffffff;
   --ok: #2fa86b;
   --danger: #d63b3b;
-  --ink: #14231b;
+  --ink: #3A1630;
 
   --border: 2px solid var(--ink);
   --shadow: 3px 4px 0 var(--ink);
@@ -26,11 +27,11 @@
 
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
-    --bg: #0f1813; --fg: #e8f5ee; --card: #1a261f; --muted: #93ad9f;
-    --accent: #3ccf86; --on-accent: #0b1a12; --ink: #000000;
+    --bg: #1F0F1B; --fg: #FBE8F2; --card: #2D1828; --muted: #C9A0B8;
+    --accent: #E8629A; --accent2: #5A2745; --on-accent2: #FBE8F2; --on-accent: #2A0A1C; --ink: #000000;
   }
 }
 :root[data-theme="dark"] {
-  --bg: #0f1813; --fg: #e8f5ee; --card: #1a261f; --muted: #93ad9f;
-  --accent: #3ccf86; --on-accent: #0b1a12; --ink: #000000;
+  --bg: #1F0F1B; --fg: #FBE8F2; --card: #2D1828; --muted: #C9A0B8;
+    --accent: #E8629A; --accent2: #5A2745; --on-accent2: #FBE8F2; --on-accent: #2A0A1C; --ink: #000000;
 }
