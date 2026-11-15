@@ -82,11 +82,10 @@ service cloud.firestore {
         || col in ['feedback', 'errors'];
     }
 
-    // The room doc itself: only the keys the app stores, typed.
+    // The room doc itself: the keys the app stores must be typed. No key whitelist: migrate() keeps legacy keys
+    // from older rooms, and a whitelist would refuse every save of such a room (smallDoc caps the key count).
     function roomDocOk() {
-      let d = request.resource.data;
       return smallDoc()
-        && d.keys().hasOnly(['v', 'settings', 'ratings', 'custom', 'inbox', 'learned', 'exp', 'imported', 'moved', 'at'])
         && num('v') && obj('settings') && obj('ratings') && obj('learned') && obj('exp')
         && lst('custom', 300) && lst('inbox', 300) && lst('imported', 200) && flag('moved') && str('at', 40);
     }

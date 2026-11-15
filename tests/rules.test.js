@@ -11,7 +11,9 @@ test("rules: subcollection writes need a live room, a bounded room id and typed 
   assert.match(rules, /exists\(p\) && !\('moved' in get\(p\)\.data\)/);
   assert.match(rules, /roomId\.size\(\) >= 20 && roomId\.size\(\) <= 40 && roomId\.matches\('\[a-z0-9\]\+'\)/);
   assert.match(rules, /&& idOk\(\) && docId\.size\(\) <= 64 && roomLive\(\)/);
-  assert.match(rules, /hasOnly\(\['v', 'settings'/);
+  // Room doc is typed but has no key whitelist: migrate() keeps legacy keys, and a whitelist would refuse their saves.
+  assert.match(rules, /function roomDocOk\(\)[\s\S]*?num\('v'\)[\s\S]*?obj\('settings'\)/);
+  assert.doesNotMatch(rules, /hasOnly\(/);
 });
 
 test("rules: generated room ids satisfy the id rule", () => {
