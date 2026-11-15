@@ -158,7 +158,7 @@ export async function runSweep(root, store, { base = location.origin + location.
         try {
           await withTimeout(
             Promise.all([
-              x.length ? store.update((db) => (db.inbox = [...new Set([...db.inbox, ...x])].slice(-100))) : Promise.resolve(),
+              x.length ? store.update((db) => (db.inbox = [...new Set([...db.inbox, ...x])].slice(-300))) : Promise.resolve(),
               store.put("live", "sweep", { mode: st.mode, order: [], i: 0, skipped: [], given: {}, n: st.order.length, done: Object.keys(st.given).length, finished: true, at: new Date().toISOString() }),
             ]),
             8000,

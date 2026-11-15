@@ -67,3 +67,46 @@ test("strings: moods use known tags", () => {
   for (const m of STR.moods) for (const t of m.tags) assert.ok(TAGS[t], t);
   assert.equal(typeof STR.progress(1, 10), "string");
 });
+
+test("every food is reachable at noise 0 (result or top 3 in some trial); no identical tag sets", async () => {
+  const { FOODS } = await import("../js/data/foods.js");
+  const { QUESTIONS } = await import("../js/data/questions.js");
+  const { buildFoods } = await import("../js/engine/foods.js");
+  const { jaccard } = await import("../js/engine/similarity.js");
+  const { FoodQuiz } = await import("../js/engine/quiz.js");
+  const foods = buildFoods(FOODS);
+  const keys = new Set();
+  for (const f of foods) {
+    const k = [...f.tags].sort().join(" ");
+    assert.ok(!keys.has(k), `identical tags: ${f.id}`);
+    keys.add(k);
+  }
+  const judge = new FoodQuiz(foods, QUESTIONS);
+  const rng = (seed) => () => ((seed = (seed * 16807) % 2147483647) / 2147483647);
+  const reach = (t, seed) => {
+    const z = new FoodQuiz(foods, QUESTIONS, {}, { rnd: rng(seed) });
+    const sim = (f) => (f.id === t.id ? 1 : jaccard(f.tags, t.tags));
+    const offered = [];
+    for (let i = 0; i < 40; i++) {
+      const s = z.next();
+      if (s.type === "done") break;
+      if (s.type === "q") {
+        const ds = s.q.answers.map((a) => judge.delta(t, s.q, a));
+        const max = Math.max(...ds);
+        z.answer(s.q, ds.indexOf(max));
+      } else if (s.type === "grid") z.grid(s.items, s.items.filter((f) => f.id !== t.id && sim(f) < 0.15).map((f) => f.id));
+      else if (s.type === "duel") z.duel(s.a, s.b, Math.max(sim(s.a), sim(s.b)) < 0.15 ? "none" : sim(s.a) >= sim(s.b) ? "a" : "b");
+      else if (s.type === "guess") {
+        offered.push(s.f.id);
+        z.guessResult(s.f, s.f.id === t.id ? "yes" : sim(s.f) >= 0.5 ? "close" : "no");
+      } else if (s.type === "pick") {
+        offered.push(...s.items.map((f) => f.id));
+        break;
+      }
+    }
+    return z.result?.f === t.id || offered.slice(0, 3).includes(t.id) || offered.includes(t.id);
+  };
+  const NEW = ["tiramisu", "panna_cotta", "choco_mousse", "cookies", "sorbet", "cinnamon_roll", "baklava", "gnocchi", "quiche", "greek_salad", "sandwich", "tomato_soup"];
+  const missed = NEW.filter((id) => !Array.from({ length: 5 }, (_, k) => k + 1).some((k) => reach(foods.find((f) => f.id === id), k * 977 + 3)));
+  assert.deepEqual(missed, []);
+});

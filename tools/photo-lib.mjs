@@ -2,6 +2,8 @@
 
 // English search terms for Wikimedia Commons; default = id with spaces.
 export const QUERY = {
+  tiramisu: "tiramisu", panna_cotta: "panna cotta", choco_mousse: "chocolate mousse", cookies: "chocolate chip cookies", sorbet: "sorbet", cinnamon_roll: "cinnamon roll", baklava: "baklava",
+  gnocchi: "gnocchi", quiche: "quiche", greek_salad: "Greek salad", sandwich: "sandwich", tomato_soup: "tomato soup",
   bamba: "Bamba peanut snack", bissli: "Bissli", klik: "Klik chocolate Israel", krembo: "Krembo",
   milky: "Milky pudding Strauss", wafers: "wafer biscuits", tapuchips: "potato chips", pesek_zman: "Pesek Zman",
   kif_kef: "Kif Kef chocolate", doritos: "Doritos", pretzels: "pretzel sticks", seeds: "sunflower seeds snack",

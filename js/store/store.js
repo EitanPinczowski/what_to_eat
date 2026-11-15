@@ -273,6 +273,7 @@ export class Store {
           if (p.n?.[id]) db.ratings[id].n = String(p.n[id]).slice(0, 200);
         }
         for (const t of p.x ?? []) if (t && !db.inbox.includes(t)) db.inbox.push(String(t).slice(0, 40));
+        db.inbox = db.inbox.slice(-300);
         db.imported = [p.id, ...db.imported].slice(0, MAX_IMPORTED);
       });
       return { fresh: true };
@@ -292,6 +293,7 @@ export class Store {
     await this.update((db) => {
       db.imported = [p.id, ...db.imported].slice(0, MAX_IMPORTED);
       if (!entry.f && entry.fn && !db.inbox.includes(entry.fn)) db.inbox.push(entry.fn);
+      db.inbox = db.inbox.slice(-300);
     });
     return { fresh: true };
   }
