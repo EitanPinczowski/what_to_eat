@@ -5,6 +5,10 @@ export const SCHEMA = 1;
 export const COLLECTIONS = ["history", "places", "live", "feedback", "errors"];
 /** Eitan's one-tap replies to her sent result. Stored as a short code in live/quiz.ack (no rules change needed). */
 export const ACK_CODES = ["seen", "ordered", "onway", "there"];
+/** Her place vote (live/vote): Eitan offers 2-3 place ids, she picks one or this "neither" code. Short fields only. */
+export const VOTE_NONE = "x";
+export const VOTE_MIN = 2;
+export const VOTE_MAX = 3;
 const MAX_IMPORTED = 200;
 const MAX_ERRORS = 50;
 
@@ -100,6 +104,34 @@ export class Store {
     const { id: _id, ack: _old, ...rest } = cur;
     await this.put("live", "quiz", code ? { ...rest, ack: code, ackAt: new Date().toISOString() } : rest);
     return true;
+  }
+
+  /** The current place vote as {ids, names, pick, at, pickAt} or null. pick: a place id, VOTE_NONE or null (not answered yet). */
+  vote() {
+    const d = this.doc("live", "vote");
+    if (!d || !Array.isArray(d.o) || !d.o.length) return null;
+    const pick = d.p === VOTE_NONE || d.o.includes(d.p) ? d.p : null;
+    return { ids: d.o, names: d.n ?? [], pick, at: d.at ?? "", pickAt: d.pAt ?? "" };
+  }
+
+  /** Eitan sends 2-3 of his saved places for her to vote on. Replaces any earlier vote. Returns false when the ids are not 2-3 known places. */
+  async sendVote(placeIds) {
+    const ids = [...new Set(placeIds ?? [])].filter((id) => this.cols.places[id]);
+    if (ids.length < VOTE_MIN || ids.length > VOTE_MAX) return false;
+    await this.put("live", "vote", { o: ids, n: ids.map((id) => String(this.cols.places[id].name ?? "").slice(0, 40)), at: new Date().toISOString() });
+    return true;
+  }
+
+  /** Her answer: one of the offered place ids, or VOTE_NONE. She may change her mind. */
+  async castVote(code) {
+    const v = this.vote();
+    if (!v || (code !== VOTE_NONE && !v.ids.includes(code))) return false;
+    await this.put("live", "vote", { o: v.ids, n: v.names, at: v.at, p: code, pAt: new Date().toISOString() });
+    return true;
+  }
+
+  async clearVote() {
+    if (this.cols.live.vote) await this.remove("live", "vote");
   }
 
   async remove(col, id) {

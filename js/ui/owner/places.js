@@ -6,6 +6,7 @@ import { buildFoods } from "../../engine/foods.js";
 import { newId } from "../../share/codec.js";
 import { scorePlaces, weightedPick, navLinks, mapsUrl, kioskUrl, recipeUrl, woltUrl, tenbisUrl } from "../../places/picker.js";
 import { parsePlaceLink } from "../../places/links.js";
+import { VOTE_MAX, VOTE_MIN, VOTE_NONE } from "../../store/store.js";
 import { render, html, raw, toast } from "../dom.js";
 
 const L = STR.places;
@@ -144,6 +145,30 @@ export function placesViews({ root, store, stack, views, back, common, ctx }) {
     draw();
   };
 
+  // ---------- her place vote ----------
+  const her = () => store.get().settings.her;
+  // Re-draw the picker when her answer lands live (not while the nav screen or the roll animation is up).
+  let seenPick = store.vote()?.pick ?? null;
+  store.subscribe((what) => {
+    const p = store.vote()?.pick ?? null;
+    if (what !== "live" || p === seenPick) return;
+    seenPick = p;
+    if (p && stack.top === "picker" && !ctx.navTo) views.picker();
+  });
+  const voteCard = (st) => {
+    const v = store.vote();
+    const sel = st.sel ?? [];
+    const send = sel.length >= VOTE_MIN
+      ? html`<button class="btn btn-primary" data-on="voteSend" data-testid="vote-send">${K.voteSend(her(), sel.length)}</button>`
+      : html`<p class="sub">${K.voteNeed(her())}</p>`;
+    if (!v) return sel.length ? send : "";
+    const idx = v.ids.indexOf(v.pick);
+    const line = v.pick === VOTE_NONE ? K.voteNone(her()) : idx >= 0 ? K.votePicked(her(), v.names[idx]) : K.voteSent(her());
+    return html`<section class="card chosen" data-testid="vote-status"><h3 class="title" role="status">${line}</h3>
+      ${idx >= 0 && store.doc("places", v.pick) ? raw(html`<button class="btn btn-primary" data-on="go" data-arg="${v.pick}" data-testid="vote-go">${K.go}</button>`) : ""}
+      <button class="btn btn-ghost" data-on="voteClear">${K.voteClear}</button></section>${sel.length ? raw(send) : ""}`;
+  };
+
   // ---------- picker ----------
   views.picker = () => {
     if (ctx.navTo) {
@@ -176,10 +201,11 @@ export function placesViews({ root, store, stack, views, back, common, ctx }) {
       <div class="field">${K.mode}<div class="chips">${PLACE_MODES.map((m) => chip("mode", m, STR.modeLabel[m], st.mode === m))}${chip("mode", "home", STR.modeLabel.home, st.mode === "home")}</div></div>
       <div class="field"><div class="chips">${chip("novel", "", K.novel, !!st.novel)}</div></div>
       <div class="field">${K.city}<div class="chips">${chip("city", "", K.anyCity, !st.city)}${cities().map((c) => chip("city", c, c, st.city === c))}</div></div>
+      ${raw(voteCard(st))}
       ${st.chosen ? raw(html`<section class="card chosen" data-testid="chosen"><div class="big" aria-hidden="true">🎯</div><h3 class="title">${st.chosen}</h3>
           <button class="btn btn-primary" data-on="go" data-arg="${st.chosen}">${K.go}</button></section>`) : ""}
       ${scored.length && st.mode !== "home" ? raw(html`<button class="btn btn-primary" data-on="roll">${K.roll}</button>
-        <ul class="foods">${scored.map((r) => raw(html`<li class="food-row"><button class="linkish" data-on="choose" data-arg="${r.place.id}"><b>${r.place.name}</b> <span class="sub">${reasonText(r, food)}</span> ${r.closesIn ? raw(html`<span class="sub" data-testid="closes-soon">⏰ ${closesText(r)}</span>`) : ""}</button><span class="sub">${r.score}</span></li>`))}</ul>`) : raw(html`<p class="sub">${st.mode === "home" ? "" : K.none}</p>`)}
+        <ul class="foods">${scored.map((r) => raw(html`<li class="food-row"><button class="linkish" data-on="choose" data-arg="${r.place.id}"><b>${r.place.name}</b> <span class="sub">${reasonText(r, food)}</span> ${r.closesIn ? raw(html`<span class="sub" data-testid="closes-soon">⏰ ${closesText(r)}</span>`) : ""}</button><button class="chip" data-on="voteToggle" data-arg="${r.place.id}" aria-pressed="${(st.sel ?? []).includes(r.place.id)}">${(st.sel ?? []).includes(r.place.id) ? K.voteIn : K.voteAdd}</button><span class="sub">${r.score}</span></li>`))}</ul>`) : raw(html`<p class="sub">${st.mode === "home" ? "" : K.none}</p>`)}
       <div class="stack fallbacks">
         ${st.mode === "home" ? raw(html`<a class="btn" href="${recipeUrl(label || "")}" target="_blank" rel="noopener" data-on="fallback">${K.recipe}</a>`) : raw(html`<a class="btn" href="${mapsUrl(q || "אוכל")}" target="_blank" rel="noopener" data-on="fallback">${K.maps(q)}</a>`)}
         ${st.mode === "delivery" && !scored.length ? raw(html`<a class="btn" href="${woltUrl(label || "אוכל")}" target="_blank" rel="noopener" data-on="fallback">${K.wolt(label || "אוכל")}</a>
@@ -197,7 +223,21 @@ export function placesViews({ root, store, stack, views, back, common, ctx }) {
       city: (c) => ((st.city = c || null), (st.chosen = null), views.picker()),
       choose: (id) => ((st.chosen = store.doc("places", id)?.name ?? null), (st.chosenId = id), views.picker()),
       roll: () => roll(scored, st),
-      go: () => goTo(st.chosenId, st),
+      go: (id) => goTo(id || st.chosenId, st),
+      voteToggle: (id) => {
+        const sel = (st.sel ??= []);
+        const i = sel.indexOf(id);
+        if (i >= 0) sel.splice(i, 1);
+        else if (sel.length < VOTE_MAX) sel.push(id);
+        views.picker();
+      },
+      // Firestore writes resolve only on server ack: start them, never await (the local copy is updated synchronously).
+      voteSend: () => {
+        store.sendVote(st.sel ?? []).catch(() => {});
+        ((st.sel = []), (seenPick = null));
+        views.picker();
+      },
+      voteClear: () => (store.clearVote().catch(() => {}), (st.sel = []), (seenPick = null), views.picker()),
       // Opening a fallback link counts as "we're going"; then ask where, to save the place in two taps.
       fallback: (_a, e, el) => {
         window.open(el.href, "_blank", "noopener");

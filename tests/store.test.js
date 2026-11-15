@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { emptyRoom, migrate, COLLECTIONS } from "../js/store/store.js";
+import { emptyRoom, migrate, COLLECTIONS, VOTE_NONE } from "../js/store/store.js";
 import { MemoryStore } from "../js/store/memory.js";
 import { LocalStore } from "../js/store/local.js";
 import { FirebaseStore } from "../js/store/firebase.js";
@@ -142,4 +142,45 @@ test("firebase: reads and writes through the SDK (fake)", async () => {
   assert.deepEqual(docs.get("rooms/" + ROOM).inbox, ["x"]);
   s.close();
   assert.equal(calls.filter((c) => c === "unsub").length, 1 + COLLECTIONS.length);
+});
+
+for (const [name, make] of [
+  ["memory", () => new MemoryStore(ROOM)],
+  ["local", () => new LocalStore(ROOM, { storage: fakeStorage(), win: fakeWin() })],
+]) {
+  test(`${name}: her place vote — send 2-3 places, she picks or says neither`, async () => {
+    const s = await make().ready();
+    for (const id of ["a", "b", "c", "d"]) await s.put("places", id, { name: `מקום ${id}` });
+    assert.equal(s.vote(), null);
+    assert.equal(await s.sendVote(["a"]), false, "needs at least 2");
+    assert.equal(await s.sendVote(["a", "b", "c", "d"]), false, "at most 3");
+    assert.equal(await s.sendVote(["a", "zzz"]), false, "unknown ids are dropped");
+    assert.equal(await s.sendVote(["a", "a"]), false, "duplicates collapse");
+    assert.equal(await s.sendVote(["a", "b", "c"]), true);
+    let v = s.vote();
+    assert.deepEqual(v.ids, ["a", "b", "c"]);
+    assert.deepEqual(v.names, ["מקום a", "מקום b", "מקום c"]);
+    assert.equal(v.pick, null);
+    assert.equal(await s.castVote("d"), false, "not offered");
+    assert.equal(await s.castVote("b"), true);
+    assert.equal(s.vote().pick, "b");
+    assert.equal(await s.castVote(VOTE_NONE), true);
+    assert.equal(s.vote().pick, VOTE_NONE);
+    assert.equal(s.doc("live", "quiz"), null, "the quiz doc is untouched");
+    await s.sendVote(["c", "d"]); // a new offer clears the old answer
+    assert.equal(s.vote().pick, null);
+    await s.clearVote();
+    assert.equal(s.vote(), null);
+    assert.equal(await s.castVote("c"), false);
+  });
+}
+
+test("vote doc stays small (fits the room rules' caps)", async () => {
+  const s = await new MemoryStore(ROOM).ready();
+  for (const id of ["a", "b"]) await s.put("places", id, { name: "ש".repeat(100) });
+  await s.sendVote(["a", "b"]);
+  await s.castVote("a");
+  const d = s.doc("live", "vote");
+  assert.ok(Object.keys(d).length <= 6);
+  assert.ok(d.n.every((n) => n.length <= 40));
 });

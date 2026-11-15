@@ -6,6 +6,7 @@ import { waUrl } from "../../share/whatsapp.js";
 import { pic, catLabel, foodLabel } from "../pics.js";
 import { render, html, raw, confetti } from "../dom.js";
 import { startGuestQuiz } from "./quiz.js";
+import { VOTE_NONE } from "../../store/store.js";
 import { fetchWeather } from "../../weather.js";
 
 const SEND_TIMEOUT = 8000;
@@ -156,8 +157,10 @@ export async function runGuest(root, store, { base = location.origin + location.
     render(root, html`<div class="big reveal" aria-hidden="true">💌</div>
       <h2 class="title" role="status">${STR.result.sent(s.me)}</h2>
       <p class="sub">${STR.result.sentSub}</p>
-      <p class="sub ack" data-testid="ack" role="status" aria-live="polite"></p>`);
+      <p class="sub ack" data-testid="ack" role="status" aria-live="polite"></p>
+      <section data-testid="vote"></section>`);
     watchAck();
+    watchVote();
   };
 
   // Eitan's reply lands in the same live doc; update the line in place (no re-render, no repeat confetti).
@@ -177,6 +180,37 @@ export async function runGuest(root, store, { base = location.origin + location.
     unAck = store.subscribe((what) => what === "live" && screen === "sent" && showAck(store.doc("live", "quiz")?.ack));
   };
 
+  // Eitan's place vote (live/vote): drawn into its own section so the rest of the screen stays put.
+  let unVote = null;
+  const drawVote = () => {
+    const el = root.querySelector?.("[data-testid=vote]");
+    const v = store.vote();
+    if (!el) return;
+    if (!v) return void (el.innerHTML = "");
+    const opts = v.ids.map((id, i) => html`<button class="btn" data-on="vote" data-arg="${id}" aria-pressed="${v.pick === id}">${v.names[i] ?? ""}</button>`);
+    const none = html`<button class="btn btn-ghost" data-on="vote" data-arg="${VOTE_NONE}" aria-pressed="${v.pick === VOTE_NONE}">${STR.vote.neither}</button>`;
+    const name = v.names[v.ids.indexOf(v.pick)] ?? "";
+    const line = v.pick === VOTE_NONE ? STR.vote.pickedNone : v.pick ? STR.vote.picked(name) : STR.vote.sub;
+    el.innerHTML = html`<h3 class="q">${STR.vote.title}</h3><p class="sub" role="status" aria-live="polite">${line}</p>
+      <div class="stack">${raw(opts.join(""))}${raw(none)}</div>`;
+  };
+  const watchVote = () => {
+    unVote?.();
+    drawVote();
+    unVote = store.subscribe((what) => what === "live" && (screen === "sent" || screen === "already") && drawVote());
+    const sec = root.querySelector?.("[data-testid=vote]");
+    if (sec && !sec.__vote) {
+      sec.__vote = true;
+      sec.addEventListener?.("click", (e) => {
+        const b = e.target.closest?.("[data-on=vote]");
+        const code = b?.dataset.arg;
+        if (!code || !(code === VOTE_NONE || store.vote()?.ids.includes(code))) return;
+        store.castVote(code).catch(() => {}); // local copy updates synchronously; the write may wait on the network
+        ping(s.ntfy, STR.vote.ntfy(s.her));
+      });
+    }
+  };
+
   const fallback = (payload) => {
     screen = "fallback";
     const link = buildResultLink(base, payload);
@@ -189,6 +223,8 @@ export async function runGuest(root, store, { base = location.origin + location.
     screen = "already";
     render(root, html`<div class="big" aria-hidden="true">💌</div>
       <h2 class="title">${STR.result.already(s.me)}</h2>
+      <section data-testid="vote"></section>
       <button class="btn btn-primary" data-on="again" autofocus>${STR.result.again}</button>`, { again: () => start(null) });
+    watchVote();
   } else start(live?.actions?.length ? live.actions : null);
 }
