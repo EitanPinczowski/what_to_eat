@@ -9,6 +9,7 @@ import { buildResultLink } from "../../share/links.js";
 import { waUrl } from "../../share/whatsapp.js";
 import { pic, catLabel, foodLabel } from "../pics.js";
 import { render, html, raw, confetti } from "../dom.js";
+import { BackLayer } from "../../router.js";
 import { withTimeout, ping, installErrorLog } from "./session.js";
 
 const W = STR.sweep;
@@ -53,7 +54,9 @@ export async function runSweep(root, store, { base = location.origin + location.
       .put("live", "sweep", { mode: st.mode, order: st.order, i: st.i, skipped: st.skipped, given: st.given, n: st.order.length, finished: false, at: new Date().toISOString(), ...extra })
       .catch(() => {});
 
+  const layer = new BackLayer();
   const rate = (id, r) => {
+    layer.push(undoOne);
     st.undo.push({ i: st.i, skipped: [...st.skipped], id, before: store.get().ratings[id] ?? null });
     if (r) {
       st.given[id] = r;
@@ -64,11 +67,7 @@ export async function runSweep(root, store, { base = location.origin + location.
     card();
   };
 
-  const handlers = {
-    go: () => card(),
-    rate: (r) => rate(st.order[st.i], Number(r)),
-    skip: () => rate(st.order[st.i], 0),
-    undo: () => {
+  const undoOne = () => {
       const u = st.undo.pop();
       if (!u) return;
       st.i = u.i;
@@ -77,7 +76,13 @@ export async function runSweep(root, store, { base = location.origin + location.
       store.update((db) => (u.before ? (db.ratings[u.id] = u.before) : delete db.ratings[u.id])).catch(() => {});
       save();
       card();
-    },
+    };
+
+  const handlers = {
+    go: () => card(),
+    rate: (r) => rate(st.order[st.i], Number(r)),
+    skip: () => rate(st.order[st.i], 0),
+    undo: () => (layer.depth ? layer.back() : undoOne()),
     note: () => {
       const id = st.order[st.i];
       const box = root.querySelector(".note-box");
@@ -98,7 +103,7 @@ export async function runSweep(root, store, { base = location.origin + location.
       save();
       card();
     },
-    finish: () => extras(),
+    finish: () => (layer.clear(), extras()),
   };
 
   function card() {

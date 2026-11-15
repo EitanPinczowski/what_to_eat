@@ -10,6 +10,7 @@ import { moodFor } from "../../engine/mood.js";
 import { FoodQuiz } from "../../engine/quiz.js";
 import { learnFrom } from "../../engine/learn.js";
 import { pic, catLabel, foodLabel } from "../pics.js";
+import { BackLayer } from "../../router.js";
 import { weatherKind } from "../../engine/weather.js";
 import { render, html, raw } from "../dom.js";
 
@@ -53,6 +54,22 @@ export function startGuestQuiz(root, opts) {
   const me = room.settings?.me ?? "";
   let gridVeto = new Set();
   let step = null;
+  // Back gesture = the in-app back: one answer back, or close the escape/feedback screen.
+  const layer = new BackLayer(opts.win);
+  let overlay = false;
+  const closeOverlay = () => (overlay = false);
+  const undoOne = () => {
+    if (!z.undo()) return;
+    actions.pop();
+    gridVeto = new Set();
+    onProgress?.({ n: z.n, p1: z.ranked()[0]?.p ?? 0, trail: [...z.trail], actions: [...actions] });
+    show();
+  };
+  const onBack = () => (overlay ? (closeOverlay(), show()) : undoOne());
+  const openOverlay = () => {
+    overlay = true;
+    layer.push(onBack);
+  };
 
   const meter = () => {
     const p1 = z.ranked()[0]?.p ?? 0;
@@ -68,6 +85,8 @@ export function startGuestQuiz(root, opts) {
   const act = (a) => {
     applyAction(z, a);
     actions.push(a);
+    if (overlay) (closeOverlay(), layer.replaceTop(onBack)); // the escape screen's entry becomes this answer's
+    else layer.push(onBack);
     onProgress?.({ n: z.n, p1: z.ranked()[0]?.p ?? 0, trail: [...z.trail], actions: [...actions] });
     show();
   };
@@ -75,13 +94,7 @@ export function startGuestQuiz(root, opts) {
   const handlers = {
     go: () => show(),
     ans: (i) => act({ k: "a", q: step.q.id, i: Number(i) }),
-    undo: () => {
-      if (!z.undo()) return;
-      actions.pop();
-      gridVeto = new Set();
-      onProgress?.({ n: z.n, p1: z.ranked()[0]?.p ?? 0, trail: [...z.trail], actions: [...actions] });
-      show();
-    },
+    undo: () => (layer.depth && !overlay ? layer.back() : undoOne()),
     duel: (c) => act({ k: "d", a: step.a.id, b: step.b.id, c }),
     veto: (id, _e, el) => {
       gridVeto.has(id) ? gridVeto.delete(id) : gridVeto.add(id);
@@ -94,15 +107,15 @@ export function startGuestQuiz(root, opts) {
     },
     guess: (r) => act({ k: "x", f: step.f.id, r }),
     pick: (id) => act({ k: "c", f: id }),
-    escape: () => showEscape(),
+    escape: () => (openOverlay(), showEscape()),
     free: (fd) => {
       const t = String(fd.get("food") ?? "").trim().slice(0, 80);
       if (!t) return;
       const f = z.match(t);
       act(f ? { k: "c", f: f.id } : { k: "c", t });
     },
-    back: () => show(),
-    feedback: () => onFeedback?.(() => show()),
+    back: () => (overlay ? layer.back() : show()),
+    feedback: () => (openOverlay(), onFeedback?.(() => (overlay ? layer.back() : show()))),
   };
 
   function showEscape() {
@@ -169,6 +182,7 @@ export function startGuestQuiz(root, opts) {
     const stats = { hit: actions.at(-1)?.k === "x", steps: z.n, guesses: actions.filter((a) => a.k === "x").length, skips: answered.filter((a) => a.i < 0).map((a) => a.q) };
     const ans = answered.filter((a) => a.i >= 0).map((a) => [a.q, a.i]);
     const out = { result: r, food, mood: moodFor(food), trail: [...z.trail], top: z.ranked().slice(0, 5).map((x) => x.f.id), ans, stats };
+    layer.clear(); // after the result there is nothing to step back into
     if (onFinish) return onFinish(out);
     render(root, html`<div class="mood">${out.mood}</div>
       <div class="big">${raw(pic(food))}</div>

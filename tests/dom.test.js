@@ -34,3 +34,58 @@ test("makeQuiz uses ratings and lowers foods eaten in the last 3 days", () => {
   assert.equal(z.s.score.pizza, -1.5);
   assert.ok(z.s.score.burger > -1.5);
 });
+
+function fakeWin() {
+  const listeners = [];
+  const entries = [{}];
+  let at = 0;
+  return {
+    entries,
+    addEventListener: (_t, fn) => listeners.push(fn),
+    history: {
+      pushState: (s) => (entries.splice(at + 1), entries.push(s), at++),
+      back: () => {
+        if (at > 0) (at--, listeners.forEach((f) => f()));
+      },
+    },
+    gesture() {
+      this.history.back();
+    },
+    get at() {
+      return at;
+    },
+  };
+}
+
+test("ViewStack: every push adds a history entry; the back gesture and the back button do one step", () => {
+  const w = fakeWin();
+  const shown = [];
+  const v = new ViewStack((x) => shown.push(x), w);
+  v.reset("home");
+  v.push("brain");
+  v.push("form");
+  assert.equal(w.at, 2);
+  w.gesture(); // phone back gesture
+  assert.equal(v.top, "brain");
+  v.back(); // in-app button: no double pop
+  assert.equal(v.top, "home");
+  assert.equal(w.at, 0);
+  v.back(); // at the root nothing is popped
+  assert.equal(v.top, "home");
+});
+
+test("BackLayer: closer may keep its entry, clear() entries are skipped on the way back", async () => {
+  const { BackLayer } = await import("../js/router.js");
+  const w = fakeWin();
+  const l = new BackLayer(w);
+  let closed = 0;
+  l.push(() => (closed++, "stay"));
+  w.gesture();
+  assert.equal(closed, 1);
+  assert.equal(l.depth, 1);
+  l.clear();
+  assert.equal(l.depth, 0);
+  assert.equal(w.at, 1);
+  w.gesture(); // stale entry: skipped, history.back() runs again
+  assert.equal(w.at, 0);
+});
