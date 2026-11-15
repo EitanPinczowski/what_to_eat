@@ -100,7 +100,7 @@ test("need: spice question is skipped when nothing spicy is in play", () => {
 });
 
 test("grid comes at step 5 and vetoes spread to similar foods", () => {
-  const z = quiz();
+  const z = new FoodQuiz(foods, QUESTIONS, {}, { rnd: seeded(), pickBelow: 0 }); // single guesses, not the unsure pick of 3
   let s;
   for (let i = 0; i < 20; i++) {
     s = z.next();
@@ -215,4 +215,34 @@ test("🦖 express quiz: ends on a pick-one-of-3 shortlist by step 5", () => {
   assert.equal(s.express, true);
   assert.equal(s.items.length, 3);
   assert.ok(z.n <= 5);
+});
+
+test("item 13: unsure at guess time → 3 distinct options; sure → one guess; none → they are out and the quiz goes on", () => {
+  const z = quiz();
+  const low = z.guessStep(z.ranked());
+  assert.equal(low.type, "pick");
+  assert.equal(low.unsure, true);
+  assert.equal(new Set(low.items.map((f) => f.id)).size, 3);
+  const zd = new FoodQuiz(foods, QUESTIONS, {}, { rnd: seeded(), pickDistinct: true });
+  const dist = zd.guessStep(zd.ranked());
+  for (const a of dist.items) for (const b of dist.items) if (a !== b) assert.ok(jaccard(zd.byId.get(a.id).set, zd.byId.get(b.id).set) < 0.6, `${a.id}/${b.id} are near-twins`);
+  const sure = quiz({ pizza: 30 });
+  const g = sure.guessStep(sure.ranked());
+  assert.equal(g.type, "guess");
+  assert.equal(g.f.id, "pizza");
+  assert.ok(g.p >= 0.5);
+
+  const n0 = z.n;
+  z.rejectPick(low.items);
+  assert.equal(z.n, n0 + 1);
+  const live = new Set(z.live().map((f) => f.id));
+  for (const f of low.items) assert.ok(!live.has(f.id), `${f.id} is penalised out`);
+  const s = z.next();
+  assert.notEqual(s.type, "done");
+  if (s.type === "pick") for (const f of s.items) assert.ok(!low.items.some((x) => x.id === f.id));
+  assert.ok(z.undo());
+  assert.equal(z.n, n0);
+  assert.equal(z.live().length, foods.length);
+  z.choose(low.items[1]); // tapping one option = the result
+  assert.equal(z.result.f, low.items[1].id);
 });

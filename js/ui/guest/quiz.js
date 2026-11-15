@@ -30,6 +30,7 @@ export function applyAction(z, a) {
   else if (a.k === "d") z.duel(z.food(a.a), z.food(a.b), a.c);
   else if (a.k === "g") z.grid([], a.v ?? []);
   else if (a.k === "x") z.guessResult(z.food(a.f), a.r);
+  else if (a.k === "n") z.rejectPick((a.f ?? []).map((id) => z.food(id)).filter(Boolean));
   else if (a.k === "c") z.choose(a.f ? z.food(a.f) : a.t);
 }
 
@@ -132,6 +133,7 @@ export function startGuestQuiz(root, opts) {
     },
     guess: (r) => act({ k: "x", f: step.f.id, r }),
     pick: (id) => act({ k: "c", f: id }),
+    pickNone: () => act({ k: "n", f: step.items.map((f) => f.id) }),
     escape: () => (openOverlay(), showEscape()),
     free: (fd) => {
       const t = String(fd.get("food") ?? "").trim().slice(0, 80);
@@ -193,8 +195,9 @@ export function startGuestQuiz(root, opts) {
         </div>
         ${raw(footer())}`;
     } else if (step.type === "pick") {
-      body = html`<h2 class="q">${step.express ? STR.pick.express : STR.pick.text}</h2>
+      body = html`<h2 class="q">${step.express ? STR.pick.express : step.unsure ? STR.pick.unsure : STR.pick.text}</h2>
         <div class="grid">${step.items.map((f) => raw(html`<button class="btn food" data-on="pick" data-arg="${f.id}">${raw(foodLabel(f))}</button>`))}</div>
+        ${step.unsure ? raw(html`<button class="btn" data-on="pickNone">${STR.pick.none}</button>`) : ""}
         <button class="btn btn-ghost" data-on="escape">${STR.pick.free}</button>`;
     }
     render(root, backBar(canBack() || !!opts.onExit) + meter() + body, handlers);

@@ -11,7 +11,7 @@ import { emptyRoom } from "../js/store/store.js";
 const foods = buildFoods(FOODS);
 const seeded = (seed = 7) => () => ((seed = (seed * 16807) % 2147483647) / 2147483647);
 const mk = (big = false) => {
-  const z = new FoodQuiz(foods, QUESTIONS, {}, { rnd: seeded() });
+  const z = new FoodQuiz(foods, QUESTIONS, {}, { rnd: seeded(), pickBelow: 0 }); // these walks cover the single-guess screen; the unsure pick has its own tests
   if (big) z.s.big = true;
   return z;
 };
@@ -145,10 +145,11 @@ test("back from the result screen un-chooses it and the live progress shrinks; s
   assert.ok(out, "reached the result");
   const n = z.n;
   const acts = progress.at(-1).actions.length;
+  const viaGuess = progress.at(-1).actions.at(-1).k === "x"; // a yes counts as a step, choosing from a pick does not
   assert.equal(z.result.f != null, true);
   out.back();
   assert.equal(z.result, null);
-  assert.equal(z.n, n - 1);
+  assert.equal(z.n, n - (viaGuess ? 1 : 0));
   assert.equal(progress.at(-1).actions.length, acts - 1); // the live doc shows the shorter list
 });
 
@@ -167,4 +168,22 @@ test("first question back does nothing; with an intro it returns to the intro", 
   assert.ok(root.innerHTML.includes('data-on="go"'));
   root.click("qback"); // intro: nothing before it
   assert.ok(root.innerHTML.includes('data-on="go"'));
+});
+
+test("item 13: the unsure pick of 3: one tap and 'none of these' both undo to the same 3", () => {
+  const z = new FoodQuiz(foods, QUESTIONS, {}, { rnd: seeded() });
+  let s;
+  for (let i = 0; i < 30; i++) {
+    s = z.next();
+    if (s.type === "pick") break;
+    if (s.type === "q") z.answer(s.q, s.order[0]);
+    else if (s.type === "grid") z.grid(s.items, []);
+    else if (s.type === "duel") z.duel(s.a, s.b, "a");
+  }
+  assert.equal(s.type, "pick");
+  assert.equal(s.unsure, true);
+  assert.equal(s.items.length, 3);
+  roundTrip(z, (x) => x.choose(s.items[2]));
+  roundTrip(z, (x) => x.rejectPick(s.items));
+  assert.deepEqual(z.next().items.map((f) => f.id), s.items.map((f) => f.id));
 });

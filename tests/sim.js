@@ -13,16 +13,19 @@ const VERBOSE = process.argv.includes("--verbose");
 const NOISE = 0.15;
 const TARGETS = { found: 0.945, steps: 10, express: 0.25 };
 // Honest accuracy (docs/REVIEW.md): regression floors = measured value rounded down to 5 points; PRODUCT = report-only goals.
-const FLOORS = { first: 0.15, top3: 0.65 }; // at noise 0.15, tired, learned history
+const FLOORS = { first: 0.15, top3: 0.75 }; // at noise 0.15, tired, learned history
 const PRODUCT = { first: 0.45, top3: 0.85, steps: 9 };
 const LEVELS = [0, 0.15, 0.3];
 const TIRED_AFTER = 8, TIRED_ADD = 0.1; // found was 0.95; no-skip rule (1.6) costs ~1 trial in 475 — see docs/REVIEW.md
 
+const TUNE = {}; // tuning only: PICK_BELOW=0.4 PICK_DISTINCT=0 node tests/sim.js
+if (process.env.PICK_BELOW) TUNE.pickBelow = Number(process.env.PICK_BELOW);
+if (process.env.PICK_DISTINCT) TUNE.pickDistinct = process.env.PICK_DISTINCT !== "0";
 const foods = buildFoods(FOODS);
 const rng = (seed) => () => ((seed = (seed * 16807) % 2147483647) / 2147483647);
 
 function play(target, rnd, learned = {}, noiseAt = () => NOISE) {
-  const z = new FoodQuiz(foods, QUESTIONS, {}, { rnd, learned });
+  const z = new FoodQuiz(foods, QUESTIONS, {}, { rnd, learned, ...TUNE });
   const ans = [];
   const judge = new FoodQuiz(foods, QUESTIONS); // the simulated user judges by the raw answer effects
   const offered = []; // food ids shown as guesses / picks, in order
@@ -62,8 +65,12 @@ function play(target, rnd, learned = {}, noiseAt = () => NOISE) {
       first ??= s.items[0]?.id === target.id;
       inPick = !!hit;
       offered.push(...s.items.map((f) => f.id));
+      if (s.unsure && !hit) {
+        z.rejectPick(s.items); // "none of these": the quiz goes on
+        continue;
+      }
       z.choose(hit ?? "—");
-      return { exact: false, found: !!hit, steps: z.n + 1, ans, express: !!s.express, first, top3: inPick || offered.slice(0, 3).includes(target.id), guesses };
+      return { exact: false, found: !!hit, steps: z.n + 1, ans, express: !!s.express || (!!s.unsure && z.s.big), first, top3: inPick || offered.slice(0, 3).includes(target.id), guesses };
     }
   }
   const ok = z.result?.f === target.id;

@@ -12,6 +12,7 @@ const EXPRESS_AT = 5; // 🦖 starving: end on a shortlist after ~5 steps
 const SHORTLIST_SIZE = 3;
 const MAX_DUELS = 1;
 const NEED_MASS = 0.15;
+export const PICK_BELOW = 0.9; // item 13: at guess time, a top food under this probability ends on 3 options instead of one guess (tuned in tests/sim.js, docs/REVIEW.md)
 
 function shuffle(arr, rnd) {
   const a = [...arr];
@@ -36,6 +37,8 @@ export class FoodQuiz {
     this.rnd = opts.rnd ?? Math.random;
     this.learned = opts.learned ?? {};
     this.doShuffle = opts.shuffle ?? true;
+    this.pickBelow = opts.pickBelow ?? PICK_BELOW;
+    this.pickDistinct = opts.pickDistinct ?? false; // true: shortlist() (not near-twins); false: plain top 3, measured 1-2 points better top-3
     this.starters = questions.filter((q) => q.start).sort((a, b) => a.start - b.start);
     this.s = {
       score: Object.fromEntries(this.foods.map((f) => [f.id, prior[f.id] ?? 0])),
@@ -166,6 +169,14 @@ export class FoodQuiz {
     return out.map((x) => x.f);
   }
 
+  /** Time to guess: one food when sure, else 3 options she picks from (or none of them, and the quiz goes on). */
+  guessStep(ranked) {
+    if (ranked[0].p >= this.pickBelow || ranked.length < SHORTLIST_SIZE)
+      return { type: "guess", f: ranked[0].f, p: ranked[0].p };
+    const items = this.pickDistinct ? this.shortlist(ranked) : ranked.slice(0, SHORTLIST_SIZE).map((x) => x.f);
+    return { type: "pick", unsure: true, items };
+  }
+
   qStep(q) {
     const idx = q.answers.map((_, i) => i);
     const order = q.ordered || !this.doShuffle ? idx : shuffle(idx, this.rnd);
@@ -195,8 +206,7 @@ export class FoodQuiz {
     if (n >= GRID_AT && !this.s.gridDone) return { type: "grid", items: ranked.slice(0, GRID_SIZE).map((x) => x.f) };
 
     const best = this.bestQuestion(ranked);
-    if ((this.confident(ranked) || !best) && n - this.s.lastGuessAt >= 1)
-      return { type: "guess", f: ranked[0].f, p: ranked[0].p };
+    if ((this.confident(ranked) || !best) && n - this.s.lastGuessAt >= 1) return this.guessStep(ranked);
 
     if (n % 4 === 3 && this.s.duels < MAX_DUELS && ranked.length >= 3) {
       const a = this.byId.get(ranked[0].f.id);
@@ -205,7 +215,7 @@ export class FoodQuiz {
       return { type: "duel", a: this.food(a.id), b: this.food(b.id) };
     }
     if (best) return this.qStep(best);
-    return { type: "guess", f: ranked[0].f, p: ranked[0].p };
+    return this.guessStep(ranked);
   }
 
   // ---------- answers ----------
@@ -280,6 +290,20 @@ export class FoodQuiz {
     this.s.rejected.push(food.id);
     this.spread(food, res === "close" ? 1.5 : -2);
     this.trail.push(`${food.name}? → ${res === "close" ? "קרוב" : "לא"}`);
+  }
+
+  /** "None of these" on the 3 options: all three are out (like a rejected guess) and the quiz goes on. */
+  rejectPick(foods) {
+    this.snap();
+    this.s.n++;
+    this.s.lastGuessAt = this.s.n;
+    this.s.wrong++;
+    for (const f of foods) {
+      this.s.rejected.push(f.id);
+      this.s.score[f.id] -= 2;
+      this.spread(f, -1);
+    }
+    this.trail.push(`${foods.map((f) => f.name).join(" / ")}? → אף אחד`);
   }
 
   /** Finish with a food from the pick list / autocomplete, or free text. */

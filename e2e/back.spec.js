@@ -51,7 +51,37 @@ test("every screen type: back button and phone back each undo exactly one step",
     await page.locator(NEXT).first().click();
     await expect.poll(() => liveN(page, id)).toBe(i + 1);
   }
-  for (const k of ["ans", "gridDone", "guess"]) expect(seen, `reached ${k}`).toContain(k);
+  for (const k of ["ans", "gridDone", "pick"]) expect(seen, `reached ${k}`).toContain(k);
+  expect(errors).toEqual([]);
+});
+
+test("unsure pick of 3: 'none of these' continues the quiz, back undoes it, one tap on an option finishes", async ({ page }) => {
+  const id = "e2eback0000000000000000d";
+  const errors = [];
+  await open(page, id, errors);
+  const pickNone = page.locator('[data-on="pickNone"]');
+  const advance = async () => {
+    for (let i = 0; i < 30 && !(await pickNone.count()); i++) {
+      const n = await liveN(page, id);
+      await page.locator(NEXT).first().click();
+      await expect.poll(() => liveN(page, id)).toBe(n + 1);
+    }
+  };
+  await advance();
+  await expect(pickNone).toHaveText("אף אחת מאלה");
+  expect(await page.locator('[data-on="pick"]').count()).toBe(3);
+  const first = await screen(page);
+  const n = await liveN(page, id);
+  await pickNone.click();
+  await expect.poll(() => liveN(page, id)).toBe(n + 1);
+  await page.locator('[data-on="qback"]').click(); // back from "none of these" shows the same 3
+  await expect.poll(() => liveN(page, id)).toBe(n);
+  expect(await screen(page)).toBe(first);
+  await pickNone.click(); // and the quiz goes on, with different options eventually
+  await expect.poll(() => liveN(page, id)).toBe(n + 1);
+  await advance();
+  await page.locator('[data-on="pick"]').nth(1).click();
+  await expect(page.locator(".mood")).toBeVisible();
   expect(errors).toEqual([]);
 });
 

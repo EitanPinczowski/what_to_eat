@@ -101,7 +101,8 @@ test("every food is reachable at noise 0 (result or top 3 in some trial); no ide
         z.guessResult(s.f, s.f.id === t.id ? "yes" : sim(s.f) >= 0.5 ? "close" : "no");
       } else if (s.type === "pick") {
         offered.push(...s.items.map((f) => f.id));
-        break;
+        if (s.unsure && !s.items.some((f) => f.id === t.id)) z.rejectPick(s.items); // "none of these": the quiz goes on
+        else break;
       }
     }
     return z.result?.f === t.id || offered.slice(0, 3).includes(t.id) || offered.includes(t.id);
