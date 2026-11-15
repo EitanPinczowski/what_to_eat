@@ -5,6 +5,7 @@ import { TAGS } from "../../data/tags.js";
 import { buildFoods } from "../../engine/foods.js";
 import { newId } from "../../share/codec.js";
 import { scorePlaces, weightedPick, navLinks, mapsUrl, kioskUrl, recipeUrl, woltUrl, tenbisUrl } from "../../places/picker.js";
+import { parsePlaceLink } from "../../places/links.js";
 import { render, html, raw, toast } from "../dom.js";
 
 const L = STR.places;
@@ -13,6 +14,7 @@ const PLACE_MODES = ["sit", "take", "delivery"];
 const norm = (s) => String(s ?? "").replace(/[\s״׳"'\-]/g, "").toLowerCase();
 
 export function reasonText(r, food) {
+  if (r.reason === "new") return K.isNew;
   if (r.reason === "serves") return K.serves(food?.name ?? "");
   if (r.reason.startsWith("style:")) return K.style(r.reason.slice(6).split(",").map((t) => TAGS[t]).join(", "));
   return "";
@@ -32,13 +34,49 @@ export function placesViews({ root, store, stack, views, back, common, ctx }) {
     render(root, html`${raw(back)}
       <h2 class="q">${L.title}</h2>
       <button class="btn" data-on="add">${L.add}</button>
+      <button class="btn" data-on="tryAdd" data-testid="try-add">${L.tryAdd}</button>
       ${list.length ? "" : raw(html`<p class="sub">${L.empty}</p>`)}
       ${Object.entries(byCity).map(([city, ps]) => raw(html`<section><h3 class="sub">${city}</h3>
-        ${ps.map((p) => raw(html`<button class="btn place-row" data-on="edit" data-arg="${p.id}"><b>${p.name}</b><span class="sub">${"₪".repeat(p.price || 0)} ${"❤️".repeat(Math.round(p.rating || 0))}</span></button>`))}</section>`))}`, {
+        ${ps.map((p) => raw(html`<button class="btn place-row" data-on="edit" data-arg="${p.id}"><b>${p.name}</b>${p.wantTry && !(p.visits ?? []).length ? raw(html`<span class="sub">${L.tryBadge}</span>`) : ""}<span class="sub">${"₪".repeat(p.price || 0)} ${"❤️".repeat(Math.round(p.rating || 0))}</span></button>`))}</section>`))}`, {
       ...common,
       add: () => ((ctx.place = { name: "", city: store.get().settings.city, modes: [], foods: [], price: 2, rating: 3, link: "", note: "", shabbat: false, hours: [], visits: [] }), stack.push("placeForm")),
       edit: (id) => ((ctx.place = store.doc("places", id)), stack.push("placeForm")),
+      tryAdd: () => ((ctx.tryDraft = { link: "", name: "" }), stack.push("tryForm")),
     });
+  };
+
+  // "Want to try": paste a Google Maps / Instagram link, name is prefilled from the text when it carries one.
+  views.tryForm = () => {
+    const d = ctx.tryDraft;
+    let ask = false;
+    const draw = () =>
+      render(root, html`${raw(back)}
+        <h2 class="q">${L.tryTitle}</h2>
+        <label class="field">${L.tryLink}<input data-input="link" value="${d.link}" maxlength="300" dir="ltr" inputmode="url" data-testid="try-link"></label>
+        <label class="field">${ask ? L.tryAsk : L.tryName}<input data-input="name" value="${d.name}" maxlength="60" data-testid="try-name"></label>
+        <button class="btn btn-primary" data-on="save" data-testid="try-save">${L.save}</button>`, {
+        ...common,
+        link: (v, _e, el) => {
+          d.link = v.trim();
+          const r = parsePlaceLink(d.link);
+          if (r?.name && !d.nameTouched) {
+            d.name = r.name;
+            const n = root.querySelector('[data-input="name"]');
+            if (n) n.value = r.name;
+          }
+        },
+        name: (v) => ((d.name = v), (d.nameTouched = true)),
+        save: () => {
+          const r = parsePlaceLink(d.link);
+          if (!r) return toast(L.tryBad);
+          const name = d.name.trim().slice(0, 60);
+          if (!name) return ((ask = true), draw(), toast(L.tryAsk));
+          store.put("places", newId(12), { name, city: store.get().settings.city ?? "", modes: ["sit", "take"], foods: [], price: 2, rating: 3, link: r.url, note: "", shabbat: false, hours: [], visits: [], wantTry: true }).catch(() => {});
+          toast(STR.owner.saved);
+          stack.back();
+        },
+      });
+    draw();
   };
 
   views.placeForm = () => {
@@ -129,13 +167,14 @@ export function placesViews({ root, store, stack, views, back, common, ctx }) {
     });
     const food = all.find((f) => f.id === st.food) ?? null;
     const label = food?.name ?? st.free;
-    const scored = scorePlaces(store.list("places"), all, { food, mode: st.mode, city: st.city, budget: st.budget });
+    const scored = scorePlaces(store.list("places"), all, { food, mode: st.mode, city: st.city, budget: st.budget, novel: !!st.novel });
     const chip = (on, arg, text, pressed) => raw(html`<button class="chip" data-on="${on}" data-arg="${arg}" aria-pressed="${pressed}">${text}</button>`);
     const q = [label, st.city].filter(Boolean).join(" ");
     render(root, html`${raw(back)}
       <h2 class="q">${K.title}</h2>
       <label class="field">${K.food}<select data-input="food"><option value="">${K.anyFood}</option>${all.map((f) => raw(html`<option value="${f.id}" ${f.id === st.food ? "selected" : ""}>${f.emoji} ${f.name}</option>`))}</select></label>
       <div class="field">${K.mode}<div class="chips">${PLACE_MODES.map((m) => chip("mode", m, STR.modeLabel[m], st.mode === m))}${chip("mode", "home", STR.modeLabel.home, st.mode === "home")}</div></div>
+      <div class="field"><div class="chips">${chip("novel", "", K.novel, !!st.novel)}</div></div>
       <div class="field">${K.city}<div class="chips">${chip("city", "", K.anyCity, !st.city)}${cities().map((c) => chip("city", c, c, st.city === c))}</div></div>
       ${st.chosen ? raw(html`<section class="card chosen" data-testid="chosen"><div class="big" aria-hidden="true">🎯</div><h3 class="title">${st.chosen}</h3>
           <button class="btn btn-primary" data-on="go" data-arg="${st.chosen}">${K.go}</button></section>`) : ""}
@@ -154,6 +193,7 @@ export function placesViews({ root, store, stack, views, back, common, ctx }) {
       ...common,
       food: (v) => ((st.food = v || null), (st.free = ""), (st.chosen = null), views.picker()),
       mode: (m) => ((st.mode = st.mode === m ? null : m), (st.chosen = null), views.picker()),
+      novel: () => ((st.novel = !st.novel), (st.chosen = null), views.picker()),
       city: (c) => ((st.city = c || null), (st.chosen = null), views.picker()),
       choose: (id) => ((st.chosen = store.doc("places", id)?.name ?? null), (st.chosenId = id), views.picker()),
       roll: () => roll(scored, st),

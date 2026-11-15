@@ -2,6 +2,7 @@
 Every decision made without asking, newest last. Format: **what** — why — how to change it.
 
 ## Decisions
+- **"Want to try" places + "משהו חדש" bonus** — owner-approved. js/places/links.js `parsePlaceLink` reads URL text only (no network): Maps `/place/NAME` or `?q=`/`?query=` gives a name, Instagram profile gives the handle, short Maps links and IG posts/reels give none so the form asks. The link is stored in `place.link` (navLinks keeps working for Maps; Instagram links just fall back to a name search), `wantTry: true`, `visits: []`, modes sit+take, no foods. Picker toggle `novel` adds `NOVEL_BONUS` (3, js/places/picker.js) to places with no visits and keeps food-less ones eligible when a food is chosen; off by default so the sim is unchanged. UI: places.js `tryForm`, strings in STR.places/STR.picker — change the bonus constant, the default modes, or the allowed hosts in links.js.
 - **Food seed v1: 94 foods** (js/data/foods.js) — drafted per spec-foods; seasons on krembo (Nov–Mar), artik (May–Sep), sufganiya (Nov–Dec), watermelon-feta (Jun–Sep) — edit the array; ids must stay stable.
 - **Food format adds an optional 5th field** (season months) to `[id, name, emoji, tags]` — keeps the seed compact — engine reads it.
 - **No "fresh" tag**; fresh foods use light+healthy+cold — vocab = PLAN §4 + comfort, thai — add tags in js/data/tags.js.

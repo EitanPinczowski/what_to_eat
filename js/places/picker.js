@@ -6,6 +6,7 @@ import { CUISINE } from "../data/constants.js";
 const WEEK = 7 * 864e5;
 export const CLOSING_SOON_MIN = 45;
 const DAY_MIN = 1440;
+export const NOVEL_BONUS = 3; // "something new" toggle: bonus for places with no visits
 
 const toMin = (t) => {
   const m = /^(\d{1,2}):(\d{2})$/.exec(String(t ?? ""));
@@ -45,10 +46,10 @@ export function isShabbat(now = new Date()) {
 /**
  * @param {object[]} places  Place[] ({id, name, city, modes, foods, price, rating, visits, shabbat})
  * @param {Map<string,object>|object[]} foods  all foods (to read cuisine tags of what a place serves)
- * @param {{food?: object, mode?: string, city?: string, now?: Date, budget?: number|null}} q
+ * @param {{food?: object, mode?: string, city?: string, now?: Date, budget?: number|null, novel?: boolean}} q
  * @returns {{place, score, reason, closesIn?}[]} best first; closed places are dropped, closesIn is set when closing within 45 min
  */
-export function scorePlaces(places, foods, { food = null, mode = null, city = null, now = new Date(), budget = null } = {}) {
+export function scorePlaces(places, foods, { food = null, mode = null, city = null, now = new Date(), budget = null, novel = false } = {}) {
   const byId = foods instanceof Map ? foods : new Map(foods.map((f) => [f.id, f]));
   const want = new Set((food?.tags ?? []).filter((t) => CUISINE.includes(t)));
   const shabbat = isShabbat(now);
@@ -61,7 +62,10 @@ export function scorePlaces(places, foods, { food = null, mode = null, city = nu
     if (!hrs.open) continue;
     let score = 0;
     let reason = "";
-    if (food && (p.foods ?? []).includes(food.id)) {
+    const isNew = novel && !(p.visits ?? []).length;
+    if (food && isNew && !(p.foods ?? []).length) {
+      reason = "new"; // a "want to try" place with no foods yet stays eligible
+    } else if (food && (p.foods ?? []).includes(food.id)) {
       score = 10;
       reason = "serves";
     } else if (food) {
@@ -72,6 +76,8 @@ export function scorePlaces(places, foods, { food = null, mode = null, city = nu
       reason = `style:${shared.join(",")}`;
     }
     score += 0.8 * (p.rating ?? 0);
+    if (isNew) score += NOVEL_BONUS;
+    if (isNew && !reason) reason = "new";
     const lastVisit = Math.max(0, ...(p.visits ?? []).map((v) => +new Date(v) || 0));
     if (lastVisit && now - lastVisit < WEEK) score -= 3;
     if (budget && p.price > budget) score -= 2 * (p.price - budget);
