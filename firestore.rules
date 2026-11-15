@@ -3,6 +3,11 @@ rules_version = '2';
 // Everything lives under rooms/{roomId}. The room id is a long random string
 // that only travels inside the links the owner sends, so holding the id is
 // what grants access. Nobody can list rooms, so ids cannot be discovered.
+//
+// Writes are bounded so a holder of one link (or any signed-in stranger) cannot burn quota:
+// room ids must look like the ones the app generates (js/store/open.js: 24 chars of a-z0-9),
+// a subcollection doc can only be written inside an existing room that has not been retired
+// ("moved", see rotate key in settings), and every field the app writes has a type and a size cap.
 service cloud.firestore {
   match /databases/{database}/documents {
 
@@ -14,20 +19,92 @@ service cloud.firestore {
       return request.resource.data.keys().size() <= 60;
     }
 
-    // String-length caps for guest-written fields (spec §2.2). Matches the cuts in js/ui/guest/session.js.
-    function cap(f, n) {
+    // ---- typed field checks on the incoming doc: absent is fine, present must have the type and size ----
+    function str(f, n) {
       let d = request.resource.data;
-      return !(f in d) || !(d[f] is string) || d[f].size() <= n;
+      return !(f in d) || (d[f] is string && d[f].size() <= n);
     }
 
+    function lst(f, n) {
+      let d = request.resource.data;
+      return !(f in d) || (d[f] is list && d[f].size() <= n);
+    }
+
+    function num(f) {
+      let d = request.resource.data;
+      return !(f in d) || d[f] is number;
+    }
+
+    function flag(f) {
+      let d = request.resource.data;
+      return !(f in d) || d[f] is bool;
+    }
+
+    function obj(f) {
+      let d = request.resource.data;
+      return !(f in d) || d[f] is map;
+    }
+
+    // String-length caps for guest-written fields (spec §2.2). Matches the cuts in js/ui/guest/session.js.
     function capped() {
-      return cap('fn', 80) && cap('fe', 32) && cap('note', 300) && cap('text', 500)
-        && cap('msg', 300) && cap('recipe', 80) && cap('stack', 1500) && cap('screen', 40) && cap('ua', 200);
+      return str('fn', 80) && str('fe', 32) && str('note', 300) && str('text', 500)
+        && str('msg', 300) && str('recipe', 100) && str('stack', 1500) && str('screen', 40) && str('ua', 200)
+        && str('at', 40);
+    }
+
+    function historyOk() {
+      return str('f', 40) && str('m', 12) && str('src', 12) && str('place', 40) && str('goAt', 40)
+        && num('price') && num('how') && lst('trail', 60) && lst('top', 10) && lst('ans', 40) && obj('stats');
+    }
+
+    function placeOk() {
+      return str('name', 120) && str('city', 80) && str('link', 2000) && lst('modes', 8) && lst('foods', 100)
+        && lst('hours', 30) && lst('visits', 60) && num('price') && num('rating') && flag('shabbat') && flag('wantTry');
+    }
+
+    function liveOk(docId) {
+      return str('opened', 40) && str('resultId', 40) && str('ack', 20) && str('ackAt', 40)
+        && (docId == 'vote'
+          ? lst('o', 3) && lst('n', 3) && str('p', 40) && str('pAt', 40)
+          : str('mode', 20) && num('n') && num('i') && num('done') && flag('finished') && obj('given')
+            && lst('actions', 300) && lst('trail', 60) && lst('order', 600) && lst('skipped', 600));
+    }
+
+    function shoppingOk() {
+      return str('addedAt', 40) && flag('done');
+    }
+
+    function docOk(col, docId) {
+      return (col == 'history' && historyOk())
+        || (col == 'places' && placeOk())
+        || (col == 'live' && docId in ['quiz', 'sweep', 'vote'] && liveOk(docId))
+        || (col == 'shopping' && shoppingOk())
+        || col in ['feedback', 'errors'];
+    }
+
+    // The room doc itself: only the keys the app stores, typed.
+    function roomDocOk() {
+      let d = request.resource.data;
+      return smallDoc()
+        && d.keys().hasOnly(['v', 'settings', 'ratings', 'custom', 'inbox', 'learned', 'exp', 'imported', 'moved', 'at'])
+        && num('v') && obj('settings') && obj('ratings') && obj('learned') && obj('exp')
+        && lst('custom', 300) && lst('inbox', 300) && lst('imported', 200) && flag('moved') && str('at', 40);
     }
 
     match /rooms/{roomId} {
+      // The id has the shape the app generates (24 chars, a-z 0-9); links accept up to 40.
+      function idOk() {
+        return roomId.size() >= 20 && roomId.size() <= 40 && roomId.matches('[a-z0-9]+');
+      }
+
+      // A room that exists and was not retired by "rotate key".
+      function roomLive() {
+        let p = /databases/$(database)/documents/rooms/$(roomId);
+        return exists(p) && !('moved' in get(p).data);
+      }
+
       allow get: if signedIn();
-      allow create, update: if signedIn() && roomId.size() >= 20 && smallDoc();
+      allow create, update: if signedIn() && idOk() && roomDocOk();
       allow list, delete: if false;
 
       match /{col}/{docId} {
@@ -35,7 +112,8 @@ service cloud.firestore {
           && col in ['history', 'places', 'live', 'feedback', 'errors', 'shopping'];
         allow create, update: if signedIn()
           && col in ['history', 'places', 'live', 'feedback', 'errors', 'shopping']
-          && smallDoc() && capped();
+          && idOk() && docId.size() <= 64 && roomLive()
+          && smallDoc() && capped() && docOk(col, docId);
         allow delete: if signedIn()
           && col in ['history', 'places', 'live', 'shopping'];
       }

@@ -26,6 +26,12 @@ if (auth.idToken) {
   record("other collections are refused", other.status === 403, `status ${other.status}`);
   const sub = await fetch(`${base}/rooms/${randomId}/history`, { headers: h });
   record("listing a room's history is allowed", sub.status === 200, `status ${sub.status}`);
+  // Tightened rules: no writes into a room that does not exist, and room ids must look like the app's (a-z0-9, 20-40).
+  const wr = (id, path) => fetch(`${base}/rooms/${id}${path}`, { method: "PATCH", headers: { ...h, "content-type": "application/json" }, body: JSON.stringify({ fields: { text: { stringValue: "x" } } }) });
+  const w1 = await wr(randomId, "/feedback/check");
+  record("writing into a room that does not exist is refused", w1.status === 403, `status ${w1.status}`);
+  const w2 = await wr("SHORT", "");
+  record("a malformed room id is refused", w2.status === 403, `status ${w2.status}`);
   const bad = await fetch(`${base}/rooms/${randomId}/secrets`, { headers: h });
   record("unknown subcollections are refused", bad.status === 403, `status ${bad.status}`);
 }
