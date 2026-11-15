@@ -37,7 +37,7 @@ async function stepAndBack(page, id, how) {
   if (how === "button") await page.locator('[data-on="qback"]').click();
   else await page.goBack();
   await expect.poll(() => liveN(page, id)).toBe(nBefore);
-  expect(await screen(page)).toBe(before);
+  await expect.poll(() => screen(page)).toBe(before);
   expect(new URL(page.url()).origin).toBe("http://localhost:8000");
   return k;
 }
@@ -84,7 +84,7 @@ test("unsure pick of 3: 'none of these' continues the quiz, back undoes it, one 
   await expect.poll(() => liveN(page, id)).toBe(n + 1);
   await page.locator('[data-on="qback"]').click(); // back from "none of these" shows the same 3
   await expect.poll(() => liveN(page, id)).toBe(n);
-  expect(await screen(page)).toBe(first);
+  await expect.poll(() => screen(page)).toBe(first);
   await pickNone.click(); // and the quiz goes on, with different options eventually
   await expect.poll(() => liveN(page, id)).toBe(n + 1);
   await advance();
@@ -110,13 +110,13 @@ test("hungry express shortlist: back from the pick of 3 and from the finish scre
   await page.locator('[data-on="mode"]').first().click();
   await page.locator('[data-on="qback"]').click();
   await expect.poll(() => liveN(page, id)).toBe(n);
-  expect(await screen(page)).toBe(pickScreen);
+  await expect.poll(() => screen(page)).toBe(pickScreen);
   // again with the phone back
   await page.locator('[data-on="pick"]').nth(1).click();
   await expect(page.locator(".mood")).toBeVisible();
   await page.goBack();
   await expect.poll(() => liveN(page, id)).toBe(n);
-  expect(await screen(page)).toBe(pickScreen);
+  await expect.poll(() => screen(page)).toBe(pickScreen);
   // back from the very first question stays; the app is never left
   for (let i = 0; i < 40 && (await liveN(page, id)) > 0; i++) await page.locator('[data-on="qback"]').click();
   expect(await liveN(page, id)).toBe(0);
@@ -139,10 +139,10 @@ test("escape screen, free-text finish, sent screen: back closes, un-chooses, and
   const q1 = await screen(page);
   await page.locator('[data-on="escape"]').click();
   await page.locator('[data-on="qback"]').click(); // escape screen -> question
-  expect(await screen(page)).toBe(q1);
+  await expect.poll(() => screen(page)).toBe(q1);
   await page.locator('[data-on="escape"]').click();
   await page.goBack(); // phone back closes it as well
-  expect(await screen(page)).toBe(q1);
+  await expect.poll(() => screen(page)).toBe(q1);
   await page.locator('[data-on="escape"]').click();
   await page.locator('input[name="food"]').fill("פיצה");
   await page.getByRole("button", { name: "זה!" }).click();
@@ -150,7 +150,7 @@ test("escape screen, free-text finish, sent screen: back closes, un-chooses, and
   await page.locator('[data-on="mode"][data-arg="delivery"]').click();
   await page.locator('[data-on="price"][data-arg="2"]').click(); // mode -> budget are on one screen: still one back = un-choose
   await page.locator('[data-on="qback"]').click();
-  expect(await screen(page)).toBe(q1);
+  await expect.poll(() => screen(page)).toBe(q1);
   expect(await liveN(page, id)).toBe(0);
   // send for real, then back must not undo or duplicate anything
   await page.locator('[data-on="escape"]').click();
