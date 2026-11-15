@@ -9,6 +9,25 @@ import { render, html, raw, toast, copy } from "../dom.js";
 import { installKind, installHelp } from "../../pwa.js";
 
 const G = STR.settings;
+/**
+ * Site address as typed on a phone: Android keyboards capitalise ("Https://"), add spaces or invisible
+ * RTL marks, and people leave out the scheme. Returns "" for empty input, null when it is not an address.
+ */
+export function normBase(raw) {
+  let t = String(raw ?? "").replace(/[‎‏‪-‮⁦-⁩﻿\s]/g, "");
+  if (!t) return "";
+  if (!/^[a-z][a-z0-9+.-]*:\/\//i.test(t)) t = "https://" + t;
+  let u;
+  try {
+    u = new URL(t);
+  } catch {
+    return null;
+  }
+  if (!/^https?:$/.test(u.protocol) || (!u.hostname.includes(".") && u.hostname !== "localhost")) return null;
+  const path = u.pathname.replace(/index\.html$/i, "").replace(/\/?$/, "/");
+  return u.origin + path;
+}
+
 export const BACKUP_EVERY = 30 * 864e5;
 
 export const backupDue = (settings, now = Date.now()) => !settings.lastBackup || now - new Date(settings.lastBackup) >= BACKUP_EVERY;
@@ -33,7 +52,7 @@ export function settingsViews({ root, store, views, back, common, base, mode }) 
       <form data-submit="save" class="stack">
         ${field("her", G.her, 'maxlength="30"')}${field("me", G.me, 'maxlength="30"')}
         ${field("herPhone", G.herPhone, 'inputmode="tel" dir="ltr" maxlength="20"')}${field("myPhone", G.myPhone, 'inputmode="tel" dir="ltr" maxlength="20"')}
-        ${field("city", G.city, 'maxlength="40"')}${field("base", G.base, 'dir="ltr" inputmode="url" maxlength="200"')}
+        ${field("city", G.city, 'maxlength="40"')}${field("base", G.base, 'dir="ltr" inputmode="url" autocapitalize="off" autocorrect="off" spellcheck="false" maxlength="200"')}
         <button class="btn btn-primary" type="submit">${G.save}</button>
       </form>
       <section class="card stack"><b>${G.ntfy}</b><span class="sub">${G.ntfyHelp}</span>
@@ -57,9 +76,14 @@ export function settingsViews({ root, store, views, back, common, base, mode }) 
         await p?.prompt?.();
         views.settings();
       },
-      save: (fd) => {
+      save: async (fd) => {
         const v = (k, n) => String(fd.get(k) ?? "").trim().slice(0, n);
-        store
+        const baseUrl = normBase(fd.get("base"));
+        if (baseUrl === null) return toast(G.badBase);
+        // Offline-first: a write only queued (no server ack in 6 s) still counts as saved; a refusal shows an error.
+        const queued = Symbol();
+        const res = await Promise.race([
+          store
           .update((db) =>
             Object.assign(db.settings, {
               her: v("her", 30) || db.settings.her,
@@ -67,10 +91,13 @@ export function settingsViews({ root, store, views, back, common, base, mode }) 
               herPhone: normPhone(v("herPhone", 20)),
               myPhone: normPhone(v("myPhone", 20)),
               city: v("city", 40),
-              base: /^https?:\/\//.test(v("base", 200)) ? v("base", 200) : "",
+              base: baseUrl,
             }),
           )
-          .catch(() => {});
+          .catch((e) => (console.error("settings save failed", e), new Error(String(e)))),
+          new Promise((r) => setTimeout(r, 6000, queued)),
+        ]);
+        if (res instanceof Error) return toast(G.saveFail);
         toast(STR.owner.saved);
         views.settings();
       },
