@@ -1,9 +1,10 @@
 // Starting scores: ratings, recent meals (R2), time of day and season (R12).
 import { jaccard } from "./similarity.js";
+import { weatherBump } from "./weather.js";
 
 export const RATING_PRIOR = { 4: 2.5, 3: 1, 2: -0.8, 1: -8 };
 
-export function priorFrom(foods, { ratings = {}, recent = [], now = new Date(), exp = {} } = {}) {
+export function priorFrom(foods, { ratings = {}, recent = [], now = new Date(), exp = {}, weather = null } = {}) {
   const prior = {};
   const recentFoods = foods.filter((f) => recent.includes(f.id));
   const hour = now.getHours();
@@ -18,6 +19,7 @@ export function priorFrom(foods, { ratings = {}, recent = [], now = new Date(), 
     if (late && (f.tags[0] === "snack" || f.tags[0] === "dessert")) s += 0.5;
     if (f.season && !f.season.includes(month)) s -= 1.5;
     if (exp[f.id] && !ratings[f.id]?.r) s += exp[f.id]; // "how was it?" never overrides her own rating
+    if (weather) s += weatherBump(f.tags, weather); // small, capped; null = unchanged
     prior[f.id] = s;
   }
   return prior;

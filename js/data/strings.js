@@ -11,6 +11,7 @@ export const STR = {
     text: (me) => `${me} כאן. נשחק? את עונה, ואני מנחש מה בא לך לאכול.`,
     go: "יאללה, תנחש",
   },
+  weatherTease: { rain: "גשם בחוץ… מרק?", cold: "קר בחוץ… משהו חם?", hot: "חם בחוץ… משהו קר?" },
   meter: "כמה אני בטוח",
   loading: "רגע…",
   escapeScreen: {

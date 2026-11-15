@@ -10,15 +10,16 @@ import { moodFor } from "../../engine/mood.js";
 import { FoodQuiz } from "../../engine/quiz.js";
 import { learnFrom } from "../../engine/learn.js";
 import { pic, catLabel, foodLabel } from "../pics.js";
+import { weatherKind } from "../../engine/weather.js";
 import { render, html, raw } from "../dom.js";
 
 const DAY = 864e5;
 
 /** Foods, prior and engine for a room. */
-export function makeQuiz(room, historyList, { now = new Date(), rnd } = {}) {
+export function makeQuiz(room, historyList, { now = new Date(), rnd, weather = null } = {}) {
   const foods = buildFoods(FOODS, room.custom ?? []);
   const recent = historyList.filter((h) => h.f && now - new Date(h.at) <= 3 * DAY).map((h) => h.f);
-  const prior = priorFrom(foods, { ratings: room.ratings ?? {}, recent, now, exp: room.exp ?? {} });
+  const prior = priorFrom(foods, { ratings: room.ratings ?? {}, recent, now, exp: room.exp ?? {}, weather });
   return new FoodQuiz(foods, QUESTIONS, prior, { rnd, learned: learnFrom(historyList, foods) });
 }
 
@@ -37,7 +38,8 @@ export function applyAction(z, a) {
  */
 export function startGuestQuiz(root, opts) {
   const { room, history = [], onProgress, onFinish, onFeedback, intro = true } = opts;
-  const z = opts.quiz ?? makeQuiz(room, history);
+  const z = opts.quiz ?? makeQuiz(room, history, { weather: opts.weather });
+  const tease = STR.weatherTease[weatherKind(opts.weather)] ?? "";
   const actions = [];
   for (const a of opts.actions ?? []) {
     try {
@@ -176,6 +178,7 @@ export function startGuestQuiz(root, opts) {
   if (intro && !actions.length)
     render(root, html`<h2 class="title">${STR.intro.hi(her)}</h2>
       <p class="sub">${STR.intro.text(me)}</p>
+      ${tease ? raw(html`<p class="sub">${tease}</p>`) : ""}
       <button class="btn btn-primary" data-on="go" autofocus>${STR.intro.go}</button>`, handlers);
   else show();
   return z;

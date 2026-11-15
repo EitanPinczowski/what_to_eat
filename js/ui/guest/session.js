@@ -6,6 +6,7 @@ import { waUrl } from "../../share/whatsapp.js";
 import { pic, catLabel, foodLabel } from "../pics.js";
 import { render, html, raw, confetti } from "../dom.js";
 import { startGuestQuiz } from "./quiz.js";
+import { fetchWeather } from "../../weather.js";
 
 const SEND_TIMEOUT = 8000;
 const cut = (s, n) => String(s ?? "").slice(0, n);
@@ -109,11 +110,13 @@ export async function runGuest(root, store, { base = location.origin + location.
     });
   };
 
-  const start = (actions) => {
+  const start = async (actions) => {
     screen = actions?.length ? "quiz" : "intro";
     const opened = live?.opened && actions ? live.opened : new Date().toISOString();
     saveLive({ opened, n: actions?.length ?? 0, actions: actions ?? [], trail: [], finished: false });
+    const weather = actions?.length ? null : await Promise.race([fetchWeather(room.settings?.city), new Promise((r) => setTimeout(() => r(null), 3500))]).catch(() => null);
     startGuestQuiz(root, {
+      weather,
       room,
       history: store.list("history"),
       actions,
