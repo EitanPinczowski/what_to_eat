@@ -2,6 +2,8 @@ import { test, expect } from "@playwright/test";
 
 // F1: back at every quiz stage — the on-screen arrow AND the phone's back (page.goBack) undo one step, engine state included.
 const START = { name: "יאללה, תנחש" };
+// Same path on every machine: fixed timezone and clock (the prior leans on the hour) plus a seeded Math.random below.
+test.use({ timezoneId: "Asia/Jerusalem" });
 const NEXT = '[data-on="ans"], [data-on="gridDone"], [data-on="duel"][data-arg="a"], [data-on="guess"][data-arg="no"], [data-on="pick"]';
 
 const room = (page, id) => page.evaluate((r) => JSON.parse(localStorage.getItem(`mabalach_v1:${r}`)), id);
@@ -12,8 +14,14 @@ const kind = async (page) => {
   return (await page.locator(".mood").count()) ? "finish" : "other";
 };
 
-async function open(page, id, errors) {
+async function open(page, id, errors, seed = Number(process.env.BACK_SEED || 7)) {
   page.on("pageerror", (e) => errors.push(e.message));
+  // The quiz shuffles with Math.random: seed it so the path (and which screen types it reaches) is the same on every run.
+  await page.clock.setFixedTime(new Date("2026-11-15T19:30:00+02:00"));
+  await page.addInitScript((s0) => {
+    let s = s0;
+    Math.random = () => ((s = (s * 16807) % 2147483647) / 2147483647);
+  }, seed);
   await page.goto("about:blank");
   await page.goto(`/?store=local#q=${id}`);
   await page.getByRole("button", START).click();
@@ -43,7 +51,7 @@ test("every screen type: back button and phone back each undo exactly one step",
   expect(tapSize.height).toBeGreaterThanOrEqual(48);
   await expect(page.locator('[data-on="qback"]')).toHaveAttribute("aria-label", "חזרה למסך הקודם");
   const seen = new Set();
-  for (let i = 0; i < 14; i++) {
+  for (let i = 0; i < 20; i++) {
     const k = await kind(page);
     if (k === "finish") break;
     seen.add(await stepAndBack(page, id, i % 2 ? "button" : "back"));
