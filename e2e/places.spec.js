@@ -24,9 +24,15 @@ test("places: add a place, then pick it for a result and log the visit", async (
   await page.locator('[data-on="roll"]').click();
   await expect(page.getByTestId("chosen")).toContainText("פיצה של רפי");
   await page.getByTestId("chosen").locator('[data-on="go"]').click();
+  // "Going" now shows the directions card (Waze / Google Maps) before returning home.
+  await expect(page.getByTestId("nav")).toContainText("פיצה של רפי");
+  await expect(page.getByTestId("nav-waze")).toHaveAttribute("href", /waze\.com/);
+  await page.getByTestId("nav").locator('[data-on="navDone"]').click();
   await expect(page.locator(".tiles")).toBeVisible();
   const room = await page.evaluate(() => localStorage.getItem("mabalach_room"));
-  const d = await page.evaluate((r) => JSON.parse(localStorage.getItem(`mabalach_v1:${r}`)), room);
+  const readRoom = () => page.evaluate((r) => JSON.parse(localStorage.getItem(`mabalach_v1:${r}`)), room);
+  await expect.poll(async () => Object.values((await readRoom()).cols.places)[0]?.visits?.length).toBe(1);
+  const d = await readRoom();
   const place = Object.values(d.cols.places)[0];
   expect(place).toMatchObject({ name: "פיצה של רפי", city: "רעננה", modes: ["delivery"], foods: ["pizza"], rating: 5, shabbat: false });
   expect(place.visits.length).toBe(1);
