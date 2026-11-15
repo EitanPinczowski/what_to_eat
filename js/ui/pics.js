@@ -19,7 +19,7 @@ export const setPics = (ids) => (have = new Set(ids));
 /** Photo when we have one, emoji otherwise. size: "big" (160) or "sm" (thumb). */
 export function pic(food, size = "big") {
   const px = size === "sm" ? 64 : 160;
-  if (food && have.has(food.id)) return html`<img class="pic" src="img/foods/${food.id}.jpg" alt="" width="${px}" height="${px}" loading="lazy" data-size="${size}">`;
+  if (food && have.has(food.id)) return html`<img class="pic" src="img/foods/${food.id}.jpg" alt="" draggable="false" width="${px}" height="${px}" loading="lazy" data-size="${size}">`;
   return html`${food?.emoji ?? "🍽️"}`;
 }
 

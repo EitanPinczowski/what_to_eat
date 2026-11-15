@@ -135,6 +135,7 @@ export async function runSweep(root, store, { base = location.origin + location.
     let x0 = null;
     el.addEventListener("pointerdown", (e) => ((x0 = e.clientX), el.setPointerCapture?.(e.pointerId)));
     el.addEventListener("pointermove", (e) => x0 !== null && (el.style.transform = `translateX(${e.clientX - x0}px) rotate(${(e.clientX - x0) / 20}deg)`));
+    el.addEventListener("pointercancel", () => ((x0 = null), (el.style.transform = "")));
     el.addEventListener("pointerup", (e) => {
       const dx = e.clientX - (x0 ?? e.clientX);
       x0 = null;
