@@ -14,50 +14,122 @@ export function clearHash() {
 }
 
 /**
- * Browser-history layer: each push() adds one history entry with a closer. The phone's back gesture
- * (popstate) runs the top closer, exactly like the in-app back button, which calls back() = history.back().
- * A closer may return "stay" to keep its entry (it only closed an overlay). Without a window (unit tests)
- * everything runs directly.
+ * Browser-history layer: ONE per window (BackLayer.shared) with a stack of entries. Each push() adds one history
+ * entry with a closer; the phone's back gesture (popstate) runs the top closer, exactly like the in-app back
+ * button, which calls back() = history.back(). A closer may return "stay" to keep its entry (it only closed an
+ * overlay). Screens that come and go (a quiz, a sweep) take a scope() so that leaving them drops only their own
+ * entries and never adds another popstate listener. Without a window (unit tests) everything runs directly.
  */
+const shared = new WeakMap();
+const BACK_LOCK_MS = 500;
+
 export class BackLayer {
   constructor(win = globalThis) {
     this.win = win?.history && win.addEventListener ? win : null;
-    this.closers = [];
-    this.stale = 0; // entries whose screens are gone: skipped on the way back
-    this.n = 0;
-    this.win?.addEventListener("popstate", () => this._pop());
+    this.entries = []; // {fn, stale, owner}; entries.length is the history position above the base entry
+    this.base = this.win?.history.state?.vs ?? 0; // after a reload the entry we start on still carries an old number
+    this.busy = false; // a history.back() is in flight: a second tap must not go back twice (and out of the app)
+    this.listener = (e) => this._pop(e);
+    this.win?.addEventListener("popstate", this.listener);
   }
-  get depth() {
-    return this.closers.length;
+  /** The one layer of this window. */
+  static shared(win = globalThis) {
+    if (!win?.history || !win.addEventListener) return new BackLayer(null);
+    if (!shared.has(win)) shared.set(win, new BackLayer(win));
+    return shared.get(win);
   }
+  /** A view of this layer that owns only the entries it pushes. */
+  scope() {
+    return new BackScope(this);
+  }
+  /** Push as the layer's own default scope (single-screen users). */
   push(fn) {
-    this.closers.push(fn);
-    this.win?.history.pushState({ vs: ++this.n }, "");
+    this._push(fn, this);
   }
-  /** The top entry now means something else (same history entry, new closer). */
   replaceTop(fn) {
-    this.closers[this.closers.length - 1] = fn;
+    const e = this._top(this);
+    if (e) e.fn = fn;
+  }
+  /** Live (not stale) entries. */
+  get depth() {
+    return this.entries.filter((e) => !e.stale).length;
+  }
+  destroy() {
+    this.win?.removeEventListener?.("popstate", this.listener);
+  }
+  _push(fn, owner) {
+    const e = { fn, stale: false, owner };
+    this.entries.push(e);
+    this.win?.history.pushState({ vs: this.base + this.entries.length }, "");
+    return e;
+  }
+  _top(owner) {
+    for (let i = this.entries.length - 1; i >= 0; i--) if (!this.entries[i].stale && (!owner || this.entries[i].owner === owner)) return this.entries[i];
+    return null;
   }
   /** Go one step back: via history when there is an entry, else false (caller decides). */
   back() {
-    if (!this.closers.length) return false;
-    if (this.win) this.win.history.back();
-    else this._pop();
+    if (!this.depth) return false;
+    if (!this.win) return (this._pop(), true);
+    if (this.busy) return true; // double tap
+    this.busy = true;
+    const t = setTimeout(() => (this.busy = false), BACK_LOCK_MS);
+    t.unref?.();
+    this.win.history.back();
     return true;
   }
   /** Screens were replaced wholesale: the entries stay in the browser but are skipped. */
   clear() {
-    this.stale += this.closers.length;
-    this.closers = [];
+    for (const e of this.entries) e.stale = true;
   }
-  _pop() {
-    const fn = this.closers.pop();
-    if (!fn) {
-      if (this.stale > 0) (this.stale--, this.win?.history.back());
+  _pop(ev) {
+    this.busy = false;
+    const cur = this.entries.length;
+    if (!cur) return;
+    // A real event says where we landed: below us = back (maybe several steps), above us = a forward press.
+    const landed = ev && "state" in ev ? Math.max(0, (ev.state?.vs ?? 0) - this.base) : cur - 1;
+    if (landed > cur - 1) {
+      if (landed > cur) this.win?.history.go(cur - landed); // forward navigation is not a back: undo it
       return;
     }
-    this.n = Math.max(0, this.n - 1);
-    if (fn() === "stay") this.push(fn);
+    const popped = this.entries.splice(landed, cur - landed).reverse();
+    const top = popped[0];
+    if (top.stale) {
+      // Its screen is gone: step over it (the next popstate pops the entry below).
+      if (this.win && landed > 0) this.win.history.back();
+      return;
+    }
+    for (const e of popped) {
+      if (e.stale) continue;
+      if (e.fn() === "stay") (this.entries.push(e), this.win?.history.pushState({ vs: this.base + this.entries.length }, ""));
+    }
+  }
+}
+
+class BackScope {
+  constructor(layer) {
+    this.layer = layer;
+  }
+  get depth() {
+    return this.layer.entries.filter((e) => !e.stale && e.owner === this).length;
+  }
+  push(fn) {
+    this.layer._push(fn, this);
+  }
+  /** The top entry now means something else (same history entry, new closer). */
+  replaceTop(fn) {
+    const e = this.layer._top(this);
+    if (e) e.fn = fn;
+  }
+  back() {
+    return this.depth ? this.layer.back() : false;
+  }
+  /** Leaving the screen: its entries stay in the browser but are skipped on the way back. */
+  clear() {
+    for (const e of this.layer.entries) if (e.owner === this) e.stale = true;
+  }
+  destroy() {
+    this.clear();
   }
 }
 
@@ -65,7 +137,8 @@ export class ViewStack {
   constructor(show, win = globalThis) {
     this.show = show; // (view) => void
     this.stack = [];
-    this.layer = new BackLayer(win);
+    this.shared = BackLayer.shared(win);
+    this.layer = this.shared.scope();
   }
   push(view) {
     this.stack.push(view);
@@ -82,7 +155,7 @@ export class ViewStack {
   }
   reset(view) {
     this.stack = [view];
-    this.layer.clear();
+    this.shared.clear(); // wholesale: also any quiz entries still above
     this.show(view);
   }
   get top() {

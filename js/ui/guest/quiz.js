@@ -55,7 +55,7 @@ export function startGuestQuiz(root, opts) {
   let gridVeto = new Set();
   let step = null;
   // Back gesture = the in-app back: one answer back, or close the escape/feedback screen.
-  const layer = new BackLayer(opts.win);
+  const layer = BackLayer.shared(opts.win).scope();
   let overlay = false;
   const closeOverlay = () => (overlay = false);
   const undoOne = () => {

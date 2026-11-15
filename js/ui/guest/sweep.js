@@ -55,7 +55,7 @@ export async function runSweep(root, store, { base = location.origin + location.
       .put("live", "sweep", { mode: st.mode, order: st.order, i: st.i, skipped: st.skipped, given: st.given, n: st.order.length, finished: false, at: new Date().toISOString(), ...extra })
       .catch(() => {});
 
-  const layer = new BackLayer();
+  const layer = BackLayer.shared().scope();
   const rate = (id, r) => {
     layer.push(undoOne);
     st.undo.push({ i: st.i, skipped: [...st.skipped], id, before: store.get().ratings[id] ?? null });

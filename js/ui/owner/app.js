@@ -45,7 +45,9 @@ export async function runOwner(root, store, { base = location.origin + location.
   // Firestore writes resolve only once the server acks, so never await them on the owner path (offline-first).
   if (!store.get().settings.ntfy) store.update((db) => (db.settings.ntfy = `mabalach-${newId(16)}`)).catch(() => {});
   const views = {};
-  const stack = new ViewStack((v) => views[v]());
+  const ctx = {};
+  // Changing screen drops the picker's navigation card and stops a running roll (they must not come back after going back).
+  const stack = new ViewStack((v) => ((ctx.navTo = null), (ctx.rollId = (ctx.rollId ?? 0) + 1), views[v]()));
   const S = () => store.get().settings;
 
   // Toast when a new result lands live.
@@ -62,7 +64,6 @@ export async function runOwner(root, store, { base = location.origin + location.
   });
 
   const back = html`<button class="btn back" data-on="back">${T.back}</button>`;
-  const ctx = {};
   const common = {
     back: () => stack.back(),
     go: (v) => (v === "picker" && ((ctx.entryId = null), (ctx.pick = null)), views[v] ? stack.push(v) : toast(T.soon)),

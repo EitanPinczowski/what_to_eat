@@ -267,12 +267,14 @@ export function placesViews({ root, store, stack, views, back, common, ctx }) {
     const names = scored.map((r) => r.place.name);
     const final = weightedPick(scored);
     let i = 0;
+    const rollId = ctx.rollId;
     const box = document.createElement("div");
     box.className = "card chosen slot";
     box.setAttribute("aria-hidden", "true");
     root.querySelector(".q").after(box);
     const reduce = globalThis.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
     const tick = () => {
+      if (ctx.rollId !== rollId || !box.isConnected) return; // left the screen: the roll must not pull her back
       box.textContent = names[i++ % names.length];
       if (!reduce && i < 14) setTimeout(tick, 40 + i * 12);
       else ((st.chosen = final.place.name), (st.chosenId = final.place.id), views.picker());

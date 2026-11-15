@@ -204,3 +204,18 @@ for (const [state, setup, text, perm] of [
     expect(calls).toEqual([]);
   });
 }
+
+test("back gesture: opening and leaving the 'she's next to me' quiz repeatedly keeps one step per back", async ({ page }) => {
+  await page.goto("/?store=local");
+  for (let k = 0; k < 3; k++) {
+    await page.locator('.tile[data-arg="local"]').click();
+    const q1 = await page.locator(".q").first().textContent();
+    await page.locator('[data-on="ans"]').first().click();
+    await expect(page.locator(".q").first()).not.toHaveText(q1);
+    await page.goBack(); // one answer back
+    await expect(page.locator(".q").first()).toHaveText(q1);
+    await page.goBack(); // out of the quiz, home
+    await expect(page.locator(".tiles")).toBeVisible();
+    expect(page.url()).toContain("localhost:8000");
+  }
+});
