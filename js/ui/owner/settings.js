@@ -138,7 +138,11 @@ export function settingsViews({ root, store, views, back, common, base, mode }) 
       paste: async (fd) => {
         const r = parseHash(String(fd.get("link") ?? "").replace(/^[^#]*/, ""));
         if (r.kind !== "r") return toast(G.badPaste);
-        const { fresh } = await store.importResult(r.payload);
+        const chk = store.checkResult(r.payload);
+        if (chk.bad) return toast(STR.importBad);
+        if (chk.dup) return toast(STR.importedOld);
+        if (!confirm(STR.importAsk(chk.clean))) return;
+        const { fresh } = await withTimeout(store.importResult(r.payload), WRITE_TIMEOUT).catch(() => ({ fresh: true })); // no ack in time: it is applied locally and syncs later
         toast(fresh ? STR.imported : STR.importedOld);
       },
       export: () => {

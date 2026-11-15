@@ -42,6 +42,11 @@ export function installErrorLog(store, screen, win = globalThis.window) {
   win?.addEventListener("unhandledrejection", (e) => log(e.reason?.message ?? e.reason, e.reason?.stack));
 }
 
+/** The #r= link must stay short enough for WhatsApp: only what the importer uses, trail cut to the last 8 steps. */
+export function fallbackPayload(id, e) {
+  return { t: "quiz", id, at: e.at, f: e.f, fn: cut(e.fn, 80), fe: cut(e.fe, 32), m: e.m, price: e.price, note: cut(e.note, 200), trail: (e.trail ?? []).slice(-8).map((s) => cut(s, 60)) };
+}
+
 /** Build the history entry + #r= payload for a finished quiz. */
 export function resultEntry(out, form, at = new Date().toISOString()) {
   const { result, food, trail, top } = out;
@@ -150,7 +155,7 @@ export async function runGuest(root, store, { base = location.origin + location.
           notifyAll(s, "quiz");
           sent();
         } catch {
-          fallback({ t: "quiz", id, ...entry });
+          fallback(fallbackPayload(id, entry));
         }
     });
   };

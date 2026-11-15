@@ -3,6 +3,7 @@ import { test, expect } from "@playwright/test";
 test("brain: rate, filter, note, inbox → custom food", async ({ page }) => {
   // Seed an inbox item through a #r= free-text result.
   const p = { v: 1, t: "quiz", id: "brain1", f: null, fn: "מרק של סבתא", fe: "🍲", trail: [] };
+  page.on("dialog", (d) => d.accept()); // #r= imports ask first
   await page.goto(`/?store=local#r=${Buffer.from(JSON.stringify(p)).toString("base64url")}`);
   await page.locator('[data-on="go"][data-arg="brain"]').click();
   await expect(page.locator(".inbox")).toContainText("מרק של סבתא");

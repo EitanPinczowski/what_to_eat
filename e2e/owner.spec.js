@@ -45,6 +45,7 @@ test("owner: she's-next-to-me quiz saves to history", async ({ page }) => {
 test("owner: #r= fallback link imports once", async ({ page }) => {
   const payload = { v: 1, t: "quiz", id: "fallback1", at: "2026-11-01T12:00:00Z", f: "falafel", fn: "פלאפל", fe: "🧆", m: "take", trail: [] };
   const enc = Buffer.from(JSON.stringify(payload)).toString("base64url");
+  page.on("dialog", (d) => d.accept()); // #r= imports ask first
   await page.goto(`/?store=local#r=${enc}`);
   await expect(page.locator(".toast")).toContainText("נקלטה");
   await expect(page.locator(".last .title")).toHaveText("פלאפל");

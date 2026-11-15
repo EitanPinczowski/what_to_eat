@@ -89,6 +89,8 @@ export const STR = {
     ntfy: (her) => `${her} ענתה על המקומות 📍 — פתח את האפליקציה`, // public topic: no place names
   },
   ntfy: (her) => `${her} סיימה 🎉 — פתח את האפליקציה`,
+  importAsk: (c) => (c.t === "rate" ? `לקלוט ${Object.keys(c.r).length} דירוגים מהקישור? הם יחליפו דירוגים קיימים.` : `לקלוט את התוצאה „${c.fn}” מהקישור?`),
+  importBad: "הקישור הזה לא נראה כמו תוצאה תקינה, אז לא קלטתי אותו 🤔",
   imported: "התוצאה נקלטה 🎉",
   importedOld: "את התוצאה הזאת כבר קלטנו 👍",
 

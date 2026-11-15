@@ -1,6 +1,8 @@
 // Store interface (PLAN.md §5.3, spec-flow-firebase.md §2.2). UI and engine reach data only through a Store.
 // Room doc = settings, ratings, custom foods, inbox, learned weights, imported ids.
 // Subcollections: history, places, live, feedback, errors, shopping.
+import { FOODS } from "../data/foods.js";
+import { MODES } from "../data/constants.js";
 export const SCHEMA = 1;
 export const COLLECTIONS = ["history", "places", "live", "feedback", "errors", "shopping"];
 /** Eitan's one-tap replies to her sent result. Stored as a short code in live/quiz.ack (no rules change needed). */
@@ -36,6 +38,44 @@ export function migrate(room) {
 
 /** Subcollections whose docs the rules do not let a client delete: "rotate key" overwrites them with a tombstone instead. */
 export const NO_DELETE = ["feedback", "errors"];
+
+const isStr = (x, n) => typeof x === "string" && x.length <= n;
+const MAX_RATES = 400;
+
+/**
+ * Strict check of a #r= payload (it comes from a link anyone can craft). Returns a cleaned copy holding only
+ * the fields the importer uses, or null when anything is off: unknown food ids, ratings outside 1-4,
+ * wrong types, too many or too long entries. knownIds = seed food ids + this room's custom food ids.
+ */
+export function cleanResult(p, knownIds = new Set(FOODS.map((f) => f[0]))) {
+  if (!p || typeof p !== "object" || !isStr(p.id, 40) || !/^[A-Za-z0-9_-]+$/.test(p.id)) return null;
+  if (p.t === "rate") {
+    if (!p.r || typeof p.r !== "object" || Array.isArray(p.r)) return null;
+    const ids = Object.keys(p.r);
+    if (!ids.length || ids.length > MAX_RATES) return null;
+    for (const id of ids) if (!knownIds.has(id) || !Number.isInteger(p.r[id]) || p.r[id] < 1 || p.r[id] > 4) return null;
+    const n = {};
+    if (p.n !== undefined) {
+      if (!p.n || typeof p.n !== "object" || Array.isArray(p.n)) return null;
+      for (const [id, t] of Object.entries(p.n)) {
+        if (!(id in p.r) || !isStr(t, 200)) return null;
+        if (t) n[id] = t;
+      }
+    }
+    const x = p.x ?? [];
+    if (!Array.isArray(x) || x.length > 30 || x.some((t) => !isStr(t, 40))) return null;
+    return { t: "rate", id: p.id, r: { ...p.r }, n, x: x.filter(Boolean) };
+  }
+  if (p.f != null && (!isStr(p.f, 40) || !knownIds.has(p.f))) return null;
+  if (!isStr(p.fn, 80) || (p.fe !== undefined && !isStr(p.fe, 32))) return null;
+  if (p.at !== undefined && (!isStr(p.at, 40) || Number.isNaN(Date.parse(p.at)))) return null;
+  if (p.m !== undefined && !MODES.includes(p.m)) return null;
+  if (p.price != null && (!Number.isInteger(p.price) || p.price < 1 || p.price > 4)) return null;
+  if (p.note !== undefined && !isStr(p.note, 300)) return null;
+  const trail = p.trail ?? [];
+  if (!Array.isArray(trail) || trail.length > 40 || trail.some((s) => !isStr(s, 120))) return null;
+  return { t: "quiz", id: p.id, at: p.at, f: p.f ?? null, fn: p.fn, fe: p.fe ?? "", m: p.m, price: p.price ?? null, note: p.note ?? "", trail };
+}
 
 const clone = (x) => (x === undefined ? x : JSON.parse(JSON.stringify(x)));
 
@@ -212,9 +252,20 @@ export class Store {
     return () => this.subs.delete(cb);
   }
 
-  /** Import a #r= fallback payload. Dedupe by payload.id. */
-  async importResult(p) {
-    if (!p?.id || this.room.imported.includes(p.id) || this.cols.history[p.id]) return { fresh: false };
+  /** Look at a #r= payload before applying it: {clean} (validated copy), {dup:true} (already imported) or {bad:true}. */
+  checkResult(p) {
+    const known = new Set([...FOODS.map((f) => f[0]), ...(this.room.custom ?? []).map((c) => c?.id).filter(Boolean)]);
+    const clean = cleanResult(p, known);
+    if (!clean) return { bad: true };
+    if (this.room.imported.includes(clean.id) || this.cols.history[clean.id]) return { dup: true };
+    return { clean };
+  }
+
+  /** Import a #r= fallback payload (validated again here). Dedupe by payload.id. */
+  async importResult(raw) {
+    const chk = this.checkResult(raw);
+    if (!chk.clean) return { fresh: false };
+    const p = chk.clean;
     if (p.t === "rate") {
       await this.update((db) => {
         for (const [id, r] of Object.entries(p.r ?? {})) {

@@ -52,9 +52,15 @@ async function boot() {
   if (guardMoved(store)) return;
   if (route.kind === "r") {
     // #r= fallback result from WhatsApp → import into the owner's room, then clear the hash.
-    const { fresh } = await withTimeout(store.importResult(route.payload), 4000).catch(() => ({ fresh: true }));
+    // The link can be crafted by anyone: validate strictly, and only apply after a confirm.
+    const chk = store.checkResult(route.payload);
     clearHash();
-    toast(fresh ? STR.imported : STR.importedOld);
+    if (chk.bad) toast(STR.importBad);
+    else if (chk.dup) toast(STR.importedOld);
+    else if (confirm(STR.importAsk(chk.clean))) {
+      const { fresh } = await withTimeout(store.importResult(route.payload), 4000).catch(() => ({ fresh: true }));
+      toast(fresh ? STR.imported : STR.importedOld);
+    }
   }
   return runOwner(root, store, { mode: route.mode });
 }

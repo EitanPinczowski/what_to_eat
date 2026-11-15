@@ -168,7 +168,7 @@ export async function runSweep(root, store, { base = location.origin + location.
           confetti();
           render(root, html`<div class="big reveal" aria-hidden="true">💌</div><h2 class="title" role="status">${STR.result.sent(s.me)}</h2>`);
         } catch {
-          const link = buildResultLink(base, { t: "rate", id, r: st.given, n: st.notes, x });
+          const link = buildResultLink(base, { t: "rate", id, r: st.given, n: Object.fromEntries(Object.entries(st.notes).filter(([k, t]) => t && k in st.given).slice(0, 20).map(([k, t]) => [k, t.slice(0, 80)])), x: (x ?? []).slice(0, 10).map((t) => String(t).slice(0, 40)) });
           render(root, html`<p class="sub" role="alert">${STR.result.failed}</p>
             <a class="btn btn-primary" href="${waUrl(link, s.myPhone)}" target="_blank" rel="noopener">${STR.result.wa}</a>`);
         }

@@ -2,6 +2,7 @@ import { test, expect } from "@playwright/test";
 
 test("places: add a place, then pick it for a result and log the visit", async ({ page }) => {
   const p = { v: 1, t: "quiz", id: "pick1", f: "pizza", fn: "פיצה", fe: "🍕", m: "delivery", price: 2, trail: [] };
+  page.on("dialog", (d) => d.accept()); // #r= imports ask first
   await page.goto(`/?store=local#r=${Buffer.from(JSON.stringify(p)).toString("base64url")}`);
   await page.locator('[data-on="go"][data-arg="places"]').click();
   await page.locator('[data-on="add"]').click();

@@ -6,6 +6,7 @@ const seedResult = (id) => {
 };
 
 test("settings: names and phones, paste a result link, backup reminder + export, rotate key", async ({ page }) => {
+  page.on("dialog", (d) => d.accept()); // #r= imports and rotate ask first
   await page.goto(seedResult("s1"));
   await expect(page.getByTestId("backup")).toBeVisible();
   await page.getByTestId("backup").click();
@@ -24,7 +25,6 @@ test("settings: names and phones, paste a result link, backup reminder + export,
   expect((await download).suggestedFilename()).toMatch(/^mabalach-backup-\d{4}-\d\d-\d\d\.json$/);
 
   const oldRoom = await page.evaluate(() => localStorage.getItem("mabalach_room"));
-  page.on("dialog", (d) => d.accept());
   await page.locator('[data-on="rotate"]').click();
   await expect(page.locator(".tiles")).toBeVisible();
   const newRoom = await page.evaluate(() => localStorage.getItem("mabalach_room"));
@@ -54,13 +54,26 @@ test("join link over an existing room asks first; declining keeps the room, acce
 });
 
 test("rotate key: the old link shows 'this link was replaced', not empty data", async ({ page }) => {
+  page.on("dialog", (d) => d.accept());
   await page.goto(seedResult("m1"));
   await expect(page.locator(".tiles")).toBeVisible();
   const oldRoom = await page.evaluate(() => localStorage.getItem("mabalach_room"));
   await page.locator('.tile[data-arg="settings"]').click();
-  page.on("dialog", (d) => d.accept());
   await page.locator('[data-on="rotate"]').click();
   await expect(page.locator(".tiles")).toBeVisible();
   await page.goto(`/?store=local#q=${oldRoom}`);
   await expect(page.getByRole("alert")).toContainText("הוחלף בקישור חדש");
+});
+
+test("#r= link: declined import changes nothing; a crafted payload is refused without a prompt", async ({ page }) => {
+  let asked = 0;
+  page.on("dialog", (d) => (asked++, d.dismiss()));
+  await page.goto(seedResult("d1"));
+  await expect(page.locator(".tiles")).toBeVisible();
+  expect(asked).toBe(1);
+  await expect(page.locator(".last .title")).toHaveCount(0);
+  const bad = { v: 1, t: "rate", id: "evil", r: { not_a_food: 4, pizza: 99 } };
+  await page.goto(`/?store=local#r=${Buffer.from(JSON.stringify(bad)).toString("base64url")}`);
+  await expect(page.locator(".toast").last()).toContainText("לא נראה כמו תוצאה תקינה");
+  expect(asked).toBe(1);
 });

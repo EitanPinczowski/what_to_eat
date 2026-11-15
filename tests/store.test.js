@@ -184,3 +184,47 @@ test("vote doc stays small (fits the room rules' caps)", async () => {
   assert.ok(Object.keys(d).length <= 6);
   assert.ok(d.n.every((n) => n.length <= 40));
 });
+
+import { cleanResult } from "../js/store/store.js";
+import { fallbackPayload } from "../js/ui/guest/session.js";
+import { buildResultLink } from "../js/share/links.js";
+
+test("cleanResult: strict shape, known foods only, ratings 1-4, size caps", () => {
+  const ok = { v: 1, t: "rate", id: "a1", r: { pizza: 4, sushi: 1 }, n: { sushi: "אולי" }, x: ["מרק"] };
+  assert.deepEqual(cleanResult(ok), { t: "rate", id: "a1", r: { pizza: 4, sushi: 1 }, n: { sushi: "אולי" }, x: ["מרק"] });
+  for (const bad of [
+    { ...ok, r: { nope: 4 } },
+    { ...ok, r: { pizza: 5 } },
+    { ...ok, r: { pizza: "4" } },
+    { ...ok, r: { pizza: 2.5 } },
+    { ...ok, r: {} },
+    { ...ok, id: "bad id!" },
+    { ...ok, n: { bamba: "x" } },
+    { ...ok, n: { sushi: "x".repeat(201) } },
+    { ...ok, x: Array(31).fill("a") },
+    { ...ok, id: undefined },
+    null,
+  ])
+    assert.equal(cleanResult(bad), null, JSON.stringify(bad)?.slice(0, 60));
+  const q = { v: 1, t: "quiz", id: "q1", f: "pizza", fn: "פיצה", fe: "🍕", m: "take", price: 2, trail: ["a"], extra: "dropped" };
+  assert.equal(cleanResult(q).fn, "פיצה");
+  assert.equal("extra" in cleanResult(q), false);
+  for (const bad of [{ ...q, f: "nope" }, { ...q, m: "teleport" }, { ...q, price: 9 }, { ...q, fn: "x".repeat(81) }, { ...q, trail: Array(41).fill("a") }, { ...q, at: "garbage" }, { ...q, fn: 5 }])
+    assert.equal(cleanResult(bad), null);
+  assert.ok(cleanResult({ ...q, f: "mycustom" }, new Set(["mycustom"])));
+});
+
+test("importResult refuses a crafted rating payload and leaves ratings alone", async () => {
+  const s = await new MemoryStore(ROOM).ready();
+  await s.update((db) => (db.ratings.pizza = { r: 3 }));
+  assert.deepEqual(await s.importResult({ v: 1, t: "rate", id: "evil", r: { pizza: 1, ghost: 4 } }), { fresh: false });
+  assert.equal(s.get().ratings.pizza.r, 3);
+  assert.equal(s.checkResult({ v: 1, t: "rate", id: "evil", r: { ghost: 4 } }).bad, true);
+});
+
+test("the #r= fallback payload stays small", () => {
+  const entry = { at: "2026-01-01T00:00:00Z", f: "pizza", fn: "פ".repeat(80), fe: "🍕", m: "take", price: 2, note: "נ".repeat(300), trail: Array.from({ length: 40 }, () => "ש".repeat(120)), top: Array(5).fill("pizza"), ans: Array(30).fill("q:1"), stats: { hit: true } };
+  const link = buildResultLink("https://x.io/app/", fallbackPayload("id1", entry));
+  assert.ok(link.length < 2500, `link ${link.length}`);
+  assert.ok(cleanResult(fallbackPayload("id1", entry)));
+});
