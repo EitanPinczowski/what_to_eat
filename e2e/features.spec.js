@@ -3,14 +3,16 @@ import { test, expect } from "@playwright/test";
 const ROOM_KEY = "mabalach_room";
 const readRoom = (page) =>
   page.evaluate(([k]) => JSON.parse(localStorage.getItem(`mabalach_v1:${localStorage.getItem(k)}`)), [ROOM_KEY]);
-const seedPlaces = (page) =>
-  page.evaluate(([k]) => {
+const seedPlaces = async (page) => {
+  await page.waitForFunction((k) => localStorage.getItem(`mabalach_v1:${localStorage.getItem(k)}`), ROOM_KEY);
+  await page.evaluate(([k]) => {
     const key = `mabalach_v1:${localStorage.getItem(k)}`;
     const d = JSON.parse(localStorage.getItem(key));
     for (const [id, name] of [["pa", "פיצה של רפי"], ["pb", "סושי בר"], ["pc", "בורגר סלון"]])
       d.cols.places[id] = { id, name, city: "", modes: ["sit", "take", "delivery"], foods: [], price: 2, rating: 4, link: "", note: "", shabbat: false, hours: [], visits: [] };
     localStorage.setItem(key, JSON.stringify(d));
   }, [ROOM_KEY]);
+};
 
 // Never touch the real network: anything that is not our own server is stubbed or refused.
 test.beforeEach(async ({ context }) => {
@@ -179,15 +181,21 @@ test("settings: a pasted site address is normalised, saved and survives a reload
   await expect(page.locator('input[name="base"]')).toHaveValue("not an address"); // refused, not saved
 });
 
-for (const [state, setup, text] of [
+const supported = (perm) => {
+  if (!window.PushManager) window.PushManager = function () {};
+  if (!window.Notification) window.Notification = function () {};
+  if (!navigator.serviceWorker) Object.defineProperty(navigator, "serviceWorker", { value: { getRegistration: async () => null }, configurable: true });
+  Object.defineProperty(window.Notification, "permission", { get: () => perm, configurable: true });
+};
+for (const [state, setup, text, perm] of [
   ["unsupported", () => { delete window.PushManager; }, "לא תומך"],
-  ["blocked", () => { Object.defineProperty(Notification, "permission", { get: () => "denied", configurable: true }); }, "חסומות"],
-  ["off", () => { Object.defineProperty(Notification, "permission", { get: () => "default", configurable: true }); }, "כבויות"],
+  ["blocked", supported, "חסומות", "denied"],
+  ["off", supported, "כבויות", "default"],
 ]) {
   test(`settings: notifications card says "${state}" with no network call`, async ({ page }) => {
     const calls = [];
     page.on("request", (r) => /ntfy|wte-push|fcm|push/.test(r.url()) && !r.url().includes("localhost") && calls.push(r.url()));
-    await page.addInitScript(setup);
+    await page.addInitScript(setup, perm);
     await page.goto("/?store=local");
     await page.locator('.tile[data-arg="settings"]').click();
     await expect(page.getByTestId("push-state")).toContainText(text);
