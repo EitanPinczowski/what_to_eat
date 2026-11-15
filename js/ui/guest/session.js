@@ -100,7 +100,7 @@ export async function runGuest(root, store, { base = location.origin + location.
         <textarea name="t" rows="4" maxlength="500" placeholder="${STR.feedback.placeholder}" autofocus></textarea>
         <button class="btn btn-primary" type="submit">${STR.feedback.send}</button>
       </form>
-      <button class="btn btn-ghost" data-on="back">${STR.feedback.back}</button>`, {
+      <button class="btn back" data-on="back">${STR.feedback.back}</button>`, {
       send: async (fd) => {
         const t = cut(fd.get("t"), 500).trim();
         if (t) await withTimeout(store.put("feedback", newId(12), { at: new Date().toISOString(), text: t, screen: prev, ua: ua() }), 4000).catch(() => {});

@@ -127,7 +127,7 @@ export function startGuestQuiz(root, opts) {
         <datalist id="food-list">${list}</datalist>
         <button class="btn btn-primary" type="submit">${STR.escapeScreen.send}</button>
       </form>
-      <button class="btn btn-ghost" data-on="back">${STR.escapeScreen.back}</button>`, handlers);
+      <button class="btn back" data-on="back">${STR.escapeScreen.back}</button>`, handlers);
   }
 
   function show() {

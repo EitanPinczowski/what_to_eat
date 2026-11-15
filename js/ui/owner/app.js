@@ -59,7 +59,7 @@ export async function runOwner(root, store, { base = location.origin + location.
     if (["history", "live", "room"].includes(what) && ["home", "send", "history", "sweep"].includes(stack.top)) views[stack.top]();
   });
 
-  const back = html`<button class="btn btn-ghost back" data-on="back">${T.back}</button>`;
+  const back = html`<button class="btn back" data-on="back">${T.back}</button>`;
   const ctx = {};
   const common = {
     back: () => stack.back(),
