@@ -4,6 +4,7 @@ export const STR = {
   cats: { snack: "חטיף", sweet: "מתוק", meal: "ארוחה", street: "אוכל רחוב", breakfast: "ארוחת בוקר", home: "בישול ביתי", fresh: "טרי" },
   escape: "🤫 אני כבר יודעת מה בא לי",
   back: "רגע, אחורה",
+  backAria: "חזרה למסך הקודם",
   progress: (n, total) => `שאלה ${n} מתוך ~${total}`,
 
   intro: {

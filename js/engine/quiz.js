@@ -51,6 +51,7 @@ export class FoodQuiz {
     };
     this.trail = [];
     this.stack = [];
+    this.memo = new Map(); // state → the step shown there: undo lands on the very same screen (same question order, same duel)
   }
 
   // ---------- state ----------
@@ -173,6 +174,12 @@ export class FoodQuiz {
 
   // ---------- schedule (§6.4) ----------
   next() {
+    const key = JSON.stringify(this.s);
+    let st = this.memo.get(key);
+    if (!st) this.memo.set(key, (st = this.nextStep()));
+    return st;
+  }
+  nextStep() {
     if (this.s.result) return { type: "done", result: this.s.result };
     const ranked = this.ranked();
     if (ranked.length <= 1 && ranked[0]) return { type: "guess", f: ranked[0].f, p: ranked[0].p };

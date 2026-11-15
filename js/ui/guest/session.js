@@ -6,7 +6,7 @@ import { buildResultLink } from "../../share/links.js";
 import { waUrl } from "../../share/whatsapp.js";
 import { pic, catLabel, foodLabel } from "../pics.js";
 import { render, html, raw, confetti } from "../dom.js";
-import { startGuestQuiz } from "./quiz.js";
+import { startGuestQuiz, backBar } from "./quiz.js";
 import { VOTE_NONE } from "../../store/store.js";
 import { fetchWeather } from "../../weather.js";
 
@@ -77,17 +77,19 @@ export function resultEntry(out, form, at = new Date().toISOString()) {
 export function finishForm(root, out, sendLabel, onSend) {
   const form = { m: null, price: null, note: "" };
   const handlers = {
+    qback: () => out.back?.(),
     mode: (m) => ((form.m = form.m === m ? null : m), draw()),
     price: (p) => ((form.price = form.price === Number(p) ? null : Number(p)), draw()),
     note: (v) => (form.note = v),
     send: async (_a, _e, btn) => {
       btn.disabled = true;
       btn.textContent = STR.result.sending;
+      out.seal?.(); // while the send runs, back must not undo the result under it
       await onSend({ ...form });
     },
   };
   const draw = () =>
-    render(root, html`<div class="mood">${out.mood}</div>
+    render(root, html`${out.back ? raw(backBar()) : ""}<div class="mood">${out.mood}</div>
       <div class="big reveal" aria-hidden="true">${raw(pic(out.food))}</div>
       <h2 class="title">${out.food?.name ?? out.result.free}</h2>${out.food ? raw(html`<p class="cat">${catLabel(out.food)}</p>`) : ""}
       <p class="sub">${STR.result.how}</p>
@@ -112,7 +114,7 @@ export async function runGuest(root, store, { base = location.origin + location.
   const feedback = (back) => {
     const prev = screen;
     screen = "feedback";
-    render(root, html`<h2 class="q">${STR.feedback.text}</h2>
+    render(root, html`${raw(backBar())}<h2 class="q">${STR.feedback.text}</h2>
       <form data-submit="send" class="stack">
         <textarea name="t" rows="4" maxlength="500" placeholder="${STR.feedback.placeholder}" autofocus></textarea>
         <button class="btn btn-primary" type="submit">${STR.feedback.send}</button>
@@ -125,6 +127,7 @@ export async function runGuest(root, store, { base = location.origin + location.
           <button class="btn" data-on="back" autofocus>${STR.feedback.back}</button>`, { back: () => ((screen = prev), back()) });
       },
       back: () => ((screen = prev), back()),
+      qback: () => ((screen = prev), back()),
     });
   };
 
@@ -134,6 +137,7 @@ export async function runGuest(root, store, { base = location.origin + location.
     saveLive({ opened, n: actions?.length ?? 0, actions: actions ?? [], trail: [], finished: false });
     const weather = actions?.length ? null : await Promise.race([fetchWeather(room.settings?.city), new Promise((r) => setTimeout(() => r(null), 3500))]).catch(() => null);
     startGuestQuiz(root, {
+      baseEntry: true,
       weather,
       room,
       history: store.list("history"),
@@ -162,9 +166,11 @@ export async function runGuest(root, store, { base = location.origin + location.
           );
           ping(s.ntfy, STR.ntfy(s.her));
           notifyAll(s, "quiz", undefined, { food: pushFood(out.food) });
-          sent();
+          sent(); // stays sealed: back on the sent screen never undoes or resends the result
         } catch {
-          fallback(fallbackPayload(id, entry));
+          out.seal?.(false);
+          out.step?.(() => finishScreen(out, opened)); // back from the WhatsApp fallback = the finish screen again
+          fallback(fallbackPayload(id, entry), out);
         }
     });
   };
@@ -232,12 +238,12 @@ export async function runGuest(root, store, { base = location.origin + location.
     }
   };
 
-  const fallback = (payload) => {
+  const fallback = (payload, out) => {
     screen = "fallback";
     const link = buildResultLink(base, payload);
     const url = waUrl(`${STR.result.waText(payload.fn)}\n${link}`, s.myPhone);
-    render(root, html`<p class="sub" role="alert">${STR.result.failed}</p>
-      <a class="btn btn-primary" href="${url}" target="_blank" rel="noopener">${STR.result.wa}</a>`);
+    render(root, html`${out?.back ? raw(backBar()) : ""}<p class="sub" role="alert">${STR.result.failed}</p>
+      <a class="btn btn-primary" href="${url}" target="_blank" rel="noopener">${STR.result.wa}</a>`, { qback: () => out?.back?.() });
   };
 
   if (live?.finished) {

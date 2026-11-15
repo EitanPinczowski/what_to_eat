@@ -149,15 +149,17 @@ export async function runOwner(root, store, { base = location.origin + location.
 
   // "She's next to me": the same quiz on this phone, saved straight to history.
   views.local = () => {
-    render(root, html`${raw(back)}<div class="sub-root stack"></div>`, common);
+    render(root, html`<div class="sub-root stack"></div>`, common);
     const inner = root.querySelector(".sub-root");
     startGuestQuiz(inner, {
       room: store.get(),
       history: store.list("history"),
       intro: false,
+      onExit: () => stack.back(), // first question: her back bar leaves this view like the old owner button did
       onFinish: (out) =>
         finishForm(inner, out, T.localSend, async (form) => {
           const entry = resultEntry(out, form);
+          out.seal?.();
           store.put("history", newId(16), { ...entry, src: "local" }).catch(() => {});
           toast(T.saved);
           stack.reset("home");

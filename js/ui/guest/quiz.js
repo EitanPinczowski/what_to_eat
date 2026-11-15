@@ -33,6 +33,9 @@ export function applyAction(z, a) {
   else if (a.k === "c") z.choose(a.f ? z.food(a.f) : a.t);
 }
 
+/** The back bar at the top of every quiz screen (RTL: the arrow points right). */
+export const backBar = (enabled = true) => html`<div class="qbar"><button class="btn back" data-on="qback" aria-label="${STR.backAria}"${enabled ? "" : raw(' aria-disabled="true"')}>→</button></div>`;
+
 /**
  * startGuestQuiz(root, {room, history, actions?, onProgress?, onFinish?, onFeedback?, intro?})
  * onProgress({n, p1, trail, actions}) after every step · onFinish({result, food, mood, trail, top}) when done.
@@ -54,22 +57,43 @@ export function startGuestQuiz(root, opts) {
   const me = room.settings?.me ?? "";
   let gridVeto = new Set();
   let step = null;
-  // Back gesture = the in-app back: one answer back, or close the escape/feedback screen.
+  // Back gesture = the in-app back: the step that was taken last is undone (engine state included), the escape/feedback
+  // screen is closed, a finish-side screen steps back to the one before it, and the first question goes back to the intro.
+  // History: one entry per step (+1 base entry so back on the first screen stays), all owned by this scope.
   const layer = BackLayer.shared(opts.win).scope();
+  const introShown = intro && !actions.length;
+  let onIntro = introShown;
   let overlay = false;
+  let sealed = false; // after the result was sent: back never undoes it (and never resends)
+  const uiSteps = []; // screens the caller shows after the quiz ends (e.g. a failed send); each closer restores the one before
   const closeOverlay = () => (overlay = false);
+  const progress = () => onProgress?.({ n: z.n, p1: z.ranked()[0]?.p ?? 0, trail: [...z.trail], actions: [...actions] });
   const undoOne = () => {
     if (!z.undo()) return;
     actions.pop();
     gridVeto = new Set();
-    onProgress?.({ n: z.n, p1: z.ranked()[0]?.p ?? 0, trail: [...z.trail], actions: [...actions] });
+    progress();
     show();
   };
-  const onBack = () => (overlay ? (closeOverlay(), show()) : undoOne());
+  const canBack = () => !sealed && (overlay || uiSteps.length > 0 || actions.length > 0 || (introShown && !onIntro));
+  const onBack = () => {
+    if (sealed) return "stay";
+    if (overlay) return void (closeOverlay(), show());
+    if (uiSteps.length) return void uiSteps.pop()();
+    if (actions.length) return void undoOne();
+    if (introShown && !onIntro) return void showIntro();
+    return "stay";
+  };
+  const goBack = () => {
+    if (!canBack()) return void opts.onExit?.();
+    if (!layer.back()) onBack();
+  };
   const openOverlay = () => {
     overlay = true;
     layer.push(onBack);
   };
+  if (opts.baseEntry) layer.push(onBack); // guest page (nothing below it): back on the very first screen stays instead of leaving the app
+  for (let i = 0; i < actions.length; i++) layer.push(onBack); // a resumed quiz: one entry per replayed step
 
   const meter = () => {
     const p1 = z.ranked()[0]?.p ?? 0;
@@ -87,14 +111,15 @@ export function startGuestQuiz(root, opts) {
     actions.push(a);
     if (overlay) (closeOverlay(), layer.replaceTop(onBack)); // the escape screen's entry becomes this answer's
     else layer.push(onBack);
-    onProgress?.({ n: z.n, p1: z.ranked()[0]?.p ?? 0, trail: [...z.trail], actions: [...actions] });
+    progress();
     show();
   };
 
   const handlers = {
-    go: () => show(),
+    go: () => ((onIntro = false), layer.push(onBack), show()),
+    qback: () => goBack(),
     ans: (i) => act({ k: "a", q: step.q.id, i: Number(i) }),
-    undo: () => (layer.depth && !overlay ? layer.back() : undoOne()),
+    undo: () => goBack(),
     duel: (c) => act({ k: "d", a: step.a.id, b: step.b.id, c }),
     veto: (id, _e, el) => {
       gridVeto.has(id) ? gridVeto.delete(id) : gridVeto.add(id);
@@ -114,13 +139,13 @@ export function startGuestQuiz(root, opts) {
       const f = z.match(t);
       act(f ? { k: "c", f: f.id } : { k: "c", t });
     },
-    back: () => (overlay ? layer.back() : show()),
-    feedback: () => (openOverlay(), onFeedback?.(() => (overlay ? layer.back() : show()))),
+    back: () => goBack(),
+    feedback: () => (openOverlay(), onFeedback?.(() => goBack())),
   };
 
   function showEscape() {
     const list = z.foods.map((f) => raw(html`<option value="${f.name}"></option>`));
-    render(root, html`
+    render(root, html`${raw(backBar())}
       <h2 class="q">${STR.escapeScreen.text}</h2>
       <form data-submit="free" class="stack">
         <input name="food" list="food-list" autocomplete="off" maxlength="80" placeholder="${STR.escapeScreen.placeholder}" autofocus>
@@ -172,7 +197,7 @@ export function startGuestQuiz(root, opts) {
         <div class="grid">${step.items.map((f) => raw(html`<button class="btn food" data-on="pick" data-arg="${f.id}">${raw(foodLabel(f))}</button>`))}</div>
         <button class="btn btn-ghost" data-on="escape">${STR.pick.free}</button>`;
     }
-    render(root, meter() + body, handlers);
+    render(root, backBar(canBack() || !!opts.onExit) + meter() + body, handlers);
   }
 
   function finish() {
@@ -182,18 +207,24 @@ export function startGuestQuiz(root, opts) {
     const stats = { hit: actions.at(-1)?.k === "x", steps: z.n, guesses: actions.filter((a) => a.k === "x").length, skips: answered.filter((a) => a.i < 0).map((a) => a.q) };
     const ans = answered.filter((a) => a.i >= 0).map((a) => [a.q, a.i]);
     const out = { result: r, food, mood: moodFor(food), trail: [...z.trail], top: z.ranked().slice(0, 5).map((x) => x.f.id), ans, stats };
-    layer.clear(); // after the result there is nothing to step back into
+    // The result screen is a step like any other: back un-chooses it (engine undo), so the history entries stay.
+    out.back = goBack;
+    out.step = (fn) => (uiSteps.push(fn), layer.push(onBack));
+    out.seal = (on = true) => (sealed = on);
     if (onFinish) return onFinish(out);
     render(root, html`<div class="mood">${out.mood}</div>
       <div class="big">${raw(pic(food))}</div>
       <h2 class="title">${food?.name ?? r.free}</h2>`);
   }
 
-  if (intro && !actions.length)
+  function showIntro() {
+    onIntro = true;
     render(root, html`<h2 class="title">${STR.intro.hi(her)}</h2>
       <p class="sub">${STR.intro.text(me)}</p>
       ${tease ? raw(html`<p class="sub">${tease}</p>`) : ""}
       <button class="btn btn-primary" data-on="go" autofocus>${STR.intro.go}</button>`, handlers);
+  }
+  if (introShown) showIntro();
   else show();
   return z;
 }
