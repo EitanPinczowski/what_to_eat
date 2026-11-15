@@ -42,11 +42,13 @@ test("join link over an existing room asks first; declining keeps the room, acce
   const mine = await page.evaluate(() => localStorage.getItem("mabalach_room"));
   let dialogs = 0;
   page.once("dialog", (d) => (dialogs++, d.dismiss()));
+  await page.goto("about:blank"); // a hash-only goto is a same-document jump in WebKit; a real join link opens fresh
   await page.goto("/?store=local#join=abcdefghij1234567890abcd");
   await expect(page.locator(".tiles")).toBeVisible();
   expect(dialogs).toBe(1);
   expect(await page.evaluate(() => localStorage.getItem("mabalach_room"))).toBe(mine);
   page.once("dialog", (d) => d.accept());
+  await page.goto("about:blank");
   await page.goto("/?store=local#join=abcdefghij1234567890abcd");
   await expect(page.locator(".tiles")).toBeVisible();
   expect(await page.evaluate(() => localStorage.getItem("mabalach_room"))).toBe("abcdefghij1234567890abcd");
