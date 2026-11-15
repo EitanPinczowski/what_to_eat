@@ -20,6 +20,14 @@ export function withTimeout(p, ms) {
   return Promise.race([p, limit]).finally(() => clearTimeout(timer));
 }
 
+const VOTE_GAP = 800;
+/** A vote tap counts when it changes her pick and is not a rapid repeat (each counted tap pings Eitan). Mutates `last`. */
+export function voteTap(last, code, pick, now = Date.now()) {
+  if (code === pick || now - last.at < VOTE_GAP) return false;
+  last.at = now;
+  return true;
+}
+
 /** Minimal public ping (ntfy.sh is public: no food, no notes). */
 export async function ping(topic, text, f = globalThis.fetch) {
   if (!topic) return false;
@@ -203,6 +211,7 @@ export async function runGuest(root, store, { base = location.origin + location.
     el.innerHTML = html`<h3 class="q">${STR.vote.title}</h3><p class="sub" role="status" aria-live="polite">${line}</p>
       <div class="stack">${raw(opts.join(""))}${raw(none)}</div>`;
   };
+  const lastVote = { at: 0 };
   const watchVote = () => {
     unVote?.();
     drawVote();
@@ -214,6 +223,7 @@ export async function runGuest(root, store, { base = location.origin + location.
         const b = e.target.closest?.("[data-on=vote]");
         const code = b?.dataset.arg;
         if (!code || !(code === VOTE_NONE || store.vote()?.ids.includes(code))) return;
+        if (!voteTap(lastVote, code, store.vote()?.pick)) return;
         store.castVote(code).catch(() => {}); // local copy updates synchronously; the write may wait on the network
         ping(s.ntfy, STR.vote.ntfy(s.her));
         notifyAll(s, "vote");

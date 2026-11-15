@@ -86,10 +86,10 @@ export function settingsViews({ root, store, views, back, common, base, mode }) 
       pushOn: async () => {
         try {
           const sub = await subscribeThisDevice();
-          await store.update((db) => (db.settings.push = addSub(db.settings.push, sub)));
+          await withTimeout(store.update((db) => (db.settings.push = addSub(db.settings.push, sub))), WRITE_TIMEOUT);
           toast(G.push.done);
         } catch (e) {
-          toast(e?.message === "denied" ? G.push.denied : G.push.fail);
+          toast(e?.message === "denied" ? G.push.denied : e?.message === "timeout" ? G.offline : G.push.fail);
         }
         views.settings();
       },
@@ -158,10 +158,12 @@ export function settingsViews({ root, store, views, back, common, base, mode }) 
         const file = el.files?.[0];
         if (!file) return;
         try {
-          await store.importJSON(await file.text());
+          const text = await file.text();
+          JSON.parse(text);
+          await withTimeout(store.importJSON(text), WRITE_TIMEOUT);
           toast(G.restored);
-        } catch {
-          toast(G.badBackup);
+        } catch (e) {
+          toast(e?.message === "timeout" ? G.offline : G.badBackup);
         }
       },
       rotate: async () => {

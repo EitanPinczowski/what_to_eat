@@ -40,3 +40,12 @@ test("replaying recorded actions rebuilds the same engine state", () => {
   applyAction(b, { k: "c", t: "פיצה" });
   assert.deepEqual(b.result, { f: "pizza" });
 });
+
+import { voteTap } from "../js/ui/guest/session.js";
+test("voteTap: ignores the same pick and rapid repeats", () => {
+  const last = { at: 0 };
+  assert.equal(voteTap(last, "a", null, 10000), true);
+  assert.equal(voteTap(last, "b", "a", 10100), false); // double tap
+  assert.equal(voteTap(last, "a", "a", 12000), false); // already her pick
+  assert.equal(voteTap(last, "b", "a", 12000), true); // changed her mind later
+});

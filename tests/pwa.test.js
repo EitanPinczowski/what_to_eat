@@ -1,6 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync, existsSync } from "node:fs";
+import { posix } from "node:path";
 import { installKind, installHelp, registerSW } from "../js/pwa.js";
 import { png } from "../tools/make-icons.mjs";
 import { STR } from "../js/data/strings.js";
@@ -17,10 +18,12 @@ test("manifest: valid JSON, RTL Hebrew, icons exist (incl. maskable)", () => {
   assert.match(html, /apple-touch-icon/);
 });
 
+const shellOf = (sw) => JSON.parse(sw.slice(sw.indexOf("const SHELL = ") + 14, sw.indexOf("];", sw.indexOf("const SHELL = ")) + 1));
+
 test("sw.js: version placeholder for the deploy stamp, shell files exist", () => {
   const sw = readFileSync("sw.js", "utf8");
   assert.match(sw, /const VERSION = "__VERSION__"/);
-  const shell = JSON.parse(sw.match(/const SHELL = (\[.*\]);/)[1]);
+  const shell = shellOf(sw);
   for (const f of shell) if (f !== "./") assert.ok(existsSync(f), f);
   assert.match(readFileSync(".github/workflows/ci.yml", "utf8"), /__VERSION__/);
 });
@@ -67,4 +70,26 @@ test("icon PNG: signature and size", () => {
   assert.deepEqual([...b.subarray(0, 8)], [137, 80, 78, 71, 13, 10, 26, 10]);
   assert.equal(b.readUInt32BE(16), 48);
   assert.equal(b.readUInt32BE(20), 48);
+});
+
+test("sw.js: every module reachable from js/main.js is precached (one deploy = one version)", () => {
+  const shell = new Set(shellOf(readFileSync("sw.js", "utf8")));
+  const seen = new Set();
+  const walk = (f) => {
+    if (seen.has(f)) return;
+    seen.add(f);
+    const src = readFileSync(f, "utf8");
+    for (const m of src.matchAll(/(?:from\s+|import\s*\(\s*|^import\s+)["'](\.[^"']+)["']/gm)) walk(posix.join(posix.dirname(f), m[1]));
+  };
+  walk("js/main.js");
+  assert.ok(seen.size > 30);
+  assert.deepEqual([...seen].filter((f) => !shell.has(f)), [], "add these to SHELL in sw.js");
+});
+
+test("sw.js: only the app root and index.html map to the cached app shell", () => {
+  const sw = readFileSync("sw.js", "utf8");
+  const src = sw.split("\n").find((l) => l.includes("const appPage"));
+  const re = new Function("return " + src.slice(src.indexOf("&& ") + 3, src.indexOf(".test(")))();
+  for (const ok of ["/", "/what_to_eat/", "/what_to_eat/index.html", "/index.html"]) assert.ok(re.test(ok), ok);
+  for (const no of ["/photos.html", "/what_to_eat/photos.html", "/x/xindex.html"]) assert.ok(!re.test(no), no);
 });

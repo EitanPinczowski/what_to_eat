@@ -2,7 +2,58 @@
 // Same-origin GETs: stale-while-revalidate. Cross-origin (Firebase, ntfy, fonts) goes straight to the network.
 const VERSION = "__VERSION__";
 const CACHE = `wte-${VERSION}`;
-const SHELL = ["./", "index.html", "css/tokens.css", "css/style.css", "js/main.js", "manifest.webmanifest", "img/icons/icon-192.png"];
+// The app shell AND every module reachable from js/main.js, so one deploy is served as one version
+// (a test fails when a module imported from main.js is missing here). Regenerate the js/ part after adding a module.
+const SHELL = [
+  "./",
+  "index.html",
+  "css/tokens.css",
+  "css/style.css",
+  "manifest.webmanifest",
+  "img/icons/icon-192.png",
+  "js/data/constants.js",
+  "js/data/foods.js",
+  "js/data/questions.js",
+  "js/data/recipes.js",
+  "js/data/strings.js",
+  "js/data/tags.js",
+  "js/engine/foods.js",
+  "js/engine/learn.js",
+  "js/engine/mood.js",
+  "js/engine/prior.js",
+  "js/engine/quiz.js",
+  "js/engine/similarity.js",
+  "js/engine/weather.js",
+  "js/engine/wrapped.js",
+  "js/firebase-config.js",
+  "js/main.js",
+  "js/places/links.js",
+  "js/places/picker.js",
+  "js/push.js",
+  "js/pwa.js",
+  "js/router.js",
+  "js/share/codec.js",
+  "js/share/links.js",
+  "js/share/whatsapp.js",
+  "js/store/firebase.js",
+  "js/store/local.js",
+  "js/store/open.js",
+  "js/store/store.js",
+  "js/ui/dom.js",
+  "js/ui/guest/quiz.js",
+  "js/ui/guest/session.js",
+  "js/ui/guest/sweep.js",
+  "js/ui/guest/wrapped.js",
+  "js/ui/owner/app.js",
+  "js/ui/owner/brain.js",
+  "js/ui/owner/places.js",
+  "js/ui/owner/send-sweep.js",
+  "js/ui/owner/send-wrapped.js",
+  "js/ui/owner/settings.js",
+  "js/ui/owner/shopping.js",
+  "js/ui/pics.js",
+  "js/weather.js"
+];
 
 self.addEventListener("install", (e) => {
   e.waitUntil(caches.open(CACHE).then((c) => c.addAll(SHELL)));
@@ -26,10 +77,12 @@ self.addEventListener("fetch", (e) => {
   if (req.method !== "GET") return;
   const url = new URL(req.url);
   if (url.origin !== self.location.origin) return;
-  const key = req.mode === "navigate" ? "index.html" : req; // hash routes all load index.html
+  // Only the app root / index.html is the app shell (hash and ?store= routes all load it); photos.html etc. are their own pages.
+  const appPage = req.mode === "navigate" && /(^|\/)(index\.html)?$/.test(url.pathname);
+  const key = appPage ? "index.html" : req;
   e.respondWith(
     caches.open(CACHE).then(async (cache) => {
-      const hit = await cache.match(key, { ignoreSearch: req.mode === "navigate" });
+      const hit = await cache.match(key, { ignoreSearch: appPage });
       const net = fetch(req)
         .then((res) => {
           if (res.ok) cache.put(key, res.clone());
