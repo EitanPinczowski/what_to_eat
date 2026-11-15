@@ -11,6 +11,7 @@ Vanilla JS ES modules, no build step, nothing shipped from npm. Firebase Firesto
 
 ## Commands
 - `npm run test:unit` (node --test, dot reporter) · `npm run sim` · `npm run e2e` (Playwright, phase end only) · `npm test` (all)
+- `.githooks/pre-push` runs `npm run test:prepush` (unit + sim + Pixel e2e) before every push; activate once with `npm run prepare`.
 - `npm run serve` → http://localhost:8000 (tools/serve.mjs, zero deps). ES modules do not load from file://.
 - Node lives at `C:\Program Files\nodejs`; add it to PATH in the shell if `node` is not found.
 

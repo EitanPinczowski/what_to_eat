@@ -7,7 +7,9 @@
     "test:unit": "node --test --test-reporter=dot \"tests/**/*.test.js\"",
     "sim": "node tests/sim.js",
     "e2e": "playwright test --reporter=line",
-    "test": "npm run test:unit && npm run sim && npm run e2e"
+    "test": "npm run test:unit && npm run sim && npm run e2e",
+    "test:prepush": "npm run test:unit && npm run sim && playwright test --reporter=line --project=pixel",
+    "prepare": "git config core.hooksPath .githooks"
   },
   "devDependencies": {
     "@playwright/test": "^1.49.0"

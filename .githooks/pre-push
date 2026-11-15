@@ -1,0 +1,11 @@
+#!/bin/sh
+# Pre-push safety net: unit + sim + Pixel e2e. Enabled by `npm run prepare` (core.hooksPath).
+if ! command -v node >/dev/null 2>&1; then
+  for d in "/c/Program Files/nodejs" "/mnt/c/Program Files/nodejs" "C:/Program Files/nodejs"; do
+    [ -d "$d" ] && PATH="$d:$PATH" && break
+  done
+  export PATH
+fi
+cd "$(git rev-parse --show-toplevel)" || exit 1
+echo "pre-push: npm run test:prepush"
+npm run test:prepush --silent || { echo "pre-push: FAILED, push aborted"; exit 1; }
