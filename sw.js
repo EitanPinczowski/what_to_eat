@@ -51,9 +51,15 @@ const SHELL = [
   "js/ui/owner/send-wrapped.js",
   "js/ui/owner/settings.js",
   "js/ui/owner/shopping.js",
+  "js/sw-format.js",
+  "js/sw-names.js",
   "js/ui/pics.js",
   "js/weather.js"
 ];
+
+// Classic worker (works in every push-capable browser, unlike module workers): the food names and the text
+// formatter are plain scripts loaded here; tests/push.test.js keeps js/sw-names.js in sync with js/data/foods.js.
+importScripts("js/sw-names.js", "js/sw-format.js");
 
 self.addEventListener("install", (e) => {
   e.waitUntil(caches.open(CACHE).then((c) => c.addAll(SHELL)));
@@ -94,7 +100,7 @@ self.addEventListener("fetch", (e) => {
   );
 });
 
-// Web Push. The relay sends JSON {title, body, url}; nothing else is ever in the payload.
+// Web Push. The relay sends JSON {title, body, url, kind, food?}; a known food id turns the body into "<her> בחרה: <food> <emoji>".
 self.addEventListener("push", (e) => {
   let d = {};
   try {
@@ -102,15 +108,16 @@ self.addEventListener("push", (e) => {
   } catch {
     d = { body: e.data ? e.data.text() : "" };
   }
-  const title = typeof d.title === "string" && d.title ? d.title : "מה בא לך?";
+  const n = self.wteFormatPush(d, self.WTE_FOOD_NAMES);
   e.waitUntil(
-    self.registration.showNotification(title, {
-      body: typeof d.body === "string" ? d.body : "",
+    self.registration.showNotification(n.title, {
+      body: n.body,
       icon: "img/icons/icon-192.png",
       badge: "img/icons/icon-192.png",
       dir: "rtl",
       lang: "he",
-      tag: "wte-" + (d.tag || "msg"),
+      tag: n.tag, // one slot per kind; renotify makes a second result alert again instead of merging silently
+      renotify: true,
       data: { url: typeof d.url === "string" ? d.url : self.registration.scope },
     }),
   );

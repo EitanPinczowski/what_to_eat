@@ -1,5 +1,5 @@
 // Guest session: live doc + resume, finish/send, ntfy ping, feedback, error log, #r= WhatsApp fallback.
-import { notifyAll } from "../../push.js";
+import { notifyAll, notifyOpened, pushFood } from "../../push.js";
 import { STR } from "../../data/strings.js";
 import { newId } from "../../share/codec.js";
 import { buildResultLink } from "../../share/links.js";
@@ -104,6 +104,7 @@ export async function runGuest(root, store, { base = location.origin + location.
   const s = room.settings;
   let screen = "intro";
   installErrorLog(store, () => screen);
+  notifyOpened(s, { sent: false }); // once per page open (opt-in setting, off by default)
 
   const live = store.doc("live", "quiz");
   const saveLive = (data) => store.put("live", "quiz", { ...data, at: new Date().toISOString() }).catch(() => {});
@@ -160,7 +161,7 @@ export async function runGuest(root, store, { base = location.origin + location.
             SEND_TIMEOUT,
           );
           ping(s.ntfy, STR.ntfy(s.her));
-          notifyAll(s, "quiz");
+          notifyAll(s, "quiz", undefined, { food: pushFood(out.food) });
           sent();
         } catch {
           fallback(fallbackPayload(id, entry));

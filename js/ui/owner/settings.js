@@ -69,7 +69,9 @@ export function settingsViews({ root, store, views, back, common, base, mode }) 
         <code class="link" dir="ltr">https://ntfy.sh/${s.ntfy}</code></section>
       <section class="card stack" data-testid="push"><b>${G.push.title}</b><span class="sub">${G.push.help}</span>
         <span class="sub" data-testid="push-state" role="status"></span>
-        <div class="stack" data-testid="push-actions"></div></section>
+        <div class="stack" data-testid="push-actions"></div>
+        <label class="field row"><input type="checkbox" data-testid="notify-open" data-input="notifyOpen" ${s.notifyOpen ? "checked" : ""}> ${G.push.openedLabel}</label>
+        <span class="sub">${G.push.openedHelp}</span></section>
       <section class="card stack"><b>${G.join}</b><span class="sub">${G.joinHelp}</span>
         <code class="link" dir="ltr">${join}</code><button class="btn" data-on="copyJoin">${STR.owner.copy}</button></section>
       <form class="card stack" data-submit="paste"><b>${G.paste}</b>
@@ -92,6 +94,10 @@ export function settingsViews({ root, store, views, back, common, base, mode }) 
           toast(e?.message === "denied" ? G.push.denied : e?.message === "timeout" ? G.offline : G.push.fail);
         }
         views.settings();
+      },
+      notifyOpen: async (_v, _e, el) => {
+        const on = !!el?.checked;
+        await store.update((db) => (db.settings.notifyOpen = on)).catch(() => toast(G.saveFail));
       },
       pushTest: async () => {
         const res = await notifyAll({ push: [await currentSub()].filter(Boolean) }, "test");

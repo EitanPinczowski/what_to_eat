@@ -219,3 +219,14 @@ test("back gesture: opening and leaving the 'she's next to me' quiz repeatedly k
     expect(page.url()).toContain("localhost:8000");
   }
 });
+
+test("settings: the 'she opened the quiz' alert is off by default and the choice sticks", async ({ page }) => {
+  await page.goto("/?store=local");
+  await page.locator('.tile[data-arg="settings"]').click();
+  const box = page.getByTestId("notify-open");
+  await expect(box).not.toBeChecked();
+  await box.check();
+  await page.locator('[data-on="back"]').click();
+  await page.locator('.tile[data-arg="settings"]').click();
+  await expect(page.getByTestId("notify-open")).toBeChecked();
+});
