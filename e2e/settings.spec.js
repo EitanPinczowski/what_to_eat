@@ -35,3 +35,20 @@ test("settings: names and phones, paste a result link, backup reminder + export,
   await expect(page.locator("a.btn-primary")).toHaveAttribute("href", /wa\.me\/972500000000/);
   await expect(page.locator("code.link")).toContainText(newRoom);
 });
+
+test("join link over an existing room asks first; declining keeps the room, accepting keeps a backup key", async ({ page }) => {
+  await page.goto("/?store=local");
+  await expect(page.locator(".tiles")).toBeVisible();
+  const mine = await page.evaluate(() => localStorage.getItem("mabalach_room"));
+  let dialogs = 0;
+  page.once("dialog", (d) => (dialogs++, d.dismiss()));
+  await page.goto("/?store=local#join=abcdefghij1234567890abcd");
+  await expect(page.locator(".tiles")).toBeVisible();
+  expect(dialogs).toBe(1);
+  expect(await page.evaluate(() => localStorage.getItem("mabalach_room"))).toBe(mine);
+  page.once("dialog", (d) => d.accept());
+  await page.goto("/?store=local#join=abcdefghij1234567890abcd");
+  await expect(page.locator(".tiles")).toBeVisible();
+  expect(await page.evaluate(() => localStorage.getItem("mabalach_room"))).toBe("abcdefghij1234567890abcd");
+  expect(await page.evaluate(() => localStorage.getItem("mabalach_prev_room"))).toBe(mine);
+});

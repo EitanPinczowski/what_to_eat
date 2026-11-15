@@ -20,3 +20,19 @@ test("normBase accepts what a phone keyboard produces", () => {
   assert.equal(normBase("not an address"), null);
   assert.equal(normBase("ftp://x.y/"), null);
 });
+
+import { adoptRoom, ROOM_KEY, PREV_ROOM_KEY } from "../js/store/open.js";
+const mem = (o = {}) => ({ getItem: (k) => o[k] ?? null, setItem: (k, v) => void (o[k] = v), o });
+
+test("join link: adopts silently only when no other room is stored; otherwise asks and keeps the old id", () => {
+  let s = mem();
+  assert.equal(adoptRoom("newroom", { storage: s, ask: () => assert.fail("no ask") }), "new");
+  assert.equal(s.o[ROOM_KEY], "newroom");
+  assert.equal(adoptRoom("newroom", { storage: s, ask: () => assert.fail("no ask") }), "same");
+  assert.equal(adoptRoom("other", { storage: s, ask: () => false }), "declined");
+  assert.equal(s.o[ROOM_KEY], "newroom");
+  assert.equal(s.o[PREV_ROOM_KEY], undefined);
+  assert.equal(adoptRoom("other", { storage: s, ask: () => true }), "adopted");
+  assert.equal(s.o[ROOM_KEY], "other");
+  assert.equal(s.o[PREV_ROOM_KEY], "newroom");
+});

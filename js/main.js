@@ -1,6 +1,6 @@
 // Boot: parse the hash → route.
 import { currentRoute, clearHash } from "./router.js";
-import { openStore, ownerRoomId, ROOM_KEY } from "./store/open.js";
+import { openStore, ownerRoomId, adoptRoom } from "./store/open.js";
 import { runGuest, withTimeout } from "./ui/guest/session.js";
 import { runOwner } from "./ui/owner/app.js";
 import { runSweep } from "./ui/guest/sweep.js";
@@ -30,9 +30,10 @@ async function boot() {
   }
   if (route.kind === "join") {
     // Another of the owner's devices: adopt the room, then go home.
-    localStorage.setItem(ROOM_KEY, route.room);
+    // A different room already on this device is only replaced after a confirm (the old id is kept as a backup key).
+    const res = adoptRoom(route.room, { ask: () => confirm(STR.joinAsk) });
     clearHash();
-    toast(STR.joined);
+    if (res !== "same" && res !== "declined") toast(STR.joined);
   }
   if (route.kind === "s") {
     const store = await openStore(route.room, { mode: route.mode });
