@@ -59,6 +59,8 @@ input, textarea, select {
 input:focus-visible, textarea:focus-visible { outline: 3px solid var(--accent2); outline-offset: 1px; }
 .reveal { animation: pop .5s var(--ease) both; }
 @keyframes pop { from { transform: scale(.3) rotate(-12deg); opacity: 0; } to { transform: none; opacity: 1; } }
+.ack-in { animation: pop .5s var(--ease) both; font-size: 1.25rem; font-weight: 700; color: var(--fg); }
+.ackbar .grid { grid-template-columns: 1fr 1fr; }
 .confetti { position: fixed; inset: 0; pointer-events: none; overflow: hidden; z-index: 20; }
 .confetti span { position: absolute; top: -2rem; font-size: 1.6rem; animation: fall 2.2s ease-in forwards; }
 @keyframes fall { to { transform: translateY(110vh) rotate(540deg); } }

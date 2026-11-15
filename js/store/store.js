@@ -3,6 +3,8 @@
 // Subcollections: history, places, live, feedback, errors.
 export const SCHEMA = 1;
 export const COLLECTIONS = ["history", "places", "live", "feedback", "errors"];
+/** Eitan's one-tap replies to her sent result. Stored as a short code in live/quiz.ack (no rules change needed). */
+export const ACK_CODES = ["seen", "ordered", "onway", "there"];
 const MAX_IMPORTED = 200;
 const MAX_ERRORS = 50;
 
@@ -88,6 +90,16 @@ export class Store {
     this.cols[col][id] = data;
     this._emit(col);
     await this._writeDoc(col, id, data);
+  }
+
+  /** Set (or clear with null) Eitan's reply code on her finished live doc. Unknown codes are ignored. */
+  async setAck(code) {
+    if (code !== null && !ACK_CODES.includes(code)) return false;
+    const cur = this.doc("live", "quiz");
+    if (!cur?.finished) return false;
+    const { id: _id, ack: _old, ...rest } = cur;
+    await this.put("live", "quiz", code ? { ...rest, ack: code, ackAt: new Date().toISOString() } : rest);
+    return true;
   }
 
   async remove(col, id) {

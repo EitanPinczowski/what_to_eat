@@ -152,7 +152,26 @@ export async function runGuest(root, store, { base = location.origin + location.
     confetti();
     render(root, html`<div class="big reveal" aria-hidden="true">💌</div>
       <h2 class="title" role="status">${STR.result.sent(s.me)}</h2>
-      <p class="sub">${STR.result.sentSub}</p>`);
+      <p class="sub">${STR.result.sentSub}</p>
+      <p class="sub ack" data-testid="ack" role="status" aria-live="polite"></p>`);
+    watchAck();
+  };
+
+  // Eitan's reply lands in the same live doc; update the line in place (no re-render, no repeat confetti).
+  let unAck = null;
+  const showAck = (code) => {
+    const el = root.querySelector?.("[data-testid=ack]");
+    const line = STR.ack[code]?.line;
+    if (!el || !line || el.textContent === line) return;
+    el.textContent = line;
+    el.classList.remove("ack-in");
+    void el.offsetWidth; // restart the pop animation (CSS disables it under prefers-reduced-motion)
+    el.classList.add("ack-in");
+  };
+  const watchAck = () => {
+    unAck?.();
+    showAck(store.doc("live", "quiz")?.ack);
+    unAck = store.subscribe((what) => what === "live" && screen === "sent" && showAck(store.doc("live", "quiz")?.ack));
   };
 
   const fallback = (payload) => {

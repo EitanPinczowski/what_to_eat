@@ -12,6 +12,7 @@ import { statsFrom, nudgeExp } from "../../engine/learn.js";
 import { QUESTIONS } from "../../data/questions.js";
 import { sweepViews } from "./send-sweep.js";
 import { placesViews } from "./places.js";
+import { ACK_CODES } from "../../store/store.js";
 import { settingsViews, backupDue } from "./settings.js";
 
 const T = STR.owner;
@@ -29,6 +30,13 @@ export function liveStatus(live, her) {
   if (!live?.opened) return T.status.none;
   if (live.finished) return T.status.done(her);
   return live.n ? T.status.step(her, live.n) : T.status.opened(her);
+}
+
+/** One-tap replies on the result card, shown once she has sent (tap again to clear). */
+export function ackCard(live) {
+  if (!live?.finished) return "";
+  return html`<section class="card ackbar" data-testid="ackbar"><div class="sub">${STR.ack.title}</div>
+    <div class="grid choose">${ACK_CODES.map((c) => raw(html`<button class="btn" data-on="ack" data-arg="${c}" aria-pressed="${live.ack === c}"><span class="em">${STR.ack[c].e}</span>${STR.ack[c].t}</button>`))}</div></section>`;
 }
 
 export async function runOwner(root, store, { base = location.origin + location.pathname, mode } = {}) {
@@ -99,10 +107,11 @@ export async function runOwner(root, store, { base = location.origin + location.
         <div class="sub">${T.lastMeal}</div>
         ${last ? raw(html`<div class="big">${last.fe}</div><h2 class="title">${last.fn}</h2><div class="sub">${fmtDate(last.at)} · ${STR.modeLabel[last.m] ?? ""}</div>`) : raw(html`<p>${T.noMeals}</p>`)}
       </section>
+      ${raw(ackCard(store.doc("live", "quiz")))}
       ${raw(howCard())}
       ${store.list("history").length && backupDue(S()) ? raw(html`<button class="card btn remind" data-on="go" data-arg="settings" data-testid="backup">💾 ${STR.settings.remind}</button>`) : ""}
       <p class="sub" data-testid="live">${liveStatus(store.doc("live", "quiz"), S().her)}</p>
-      <div class="tiles">${tiles.map((k) => raw(html`<button class="btn tile${views[k] ? "" : " soon"}" data-on="go" data-arg="${k}"><span class="em">${T.tiles[k].e}</span>${T.tiles[k].t}</button>`))}</div>`, { ...common, how });
+      <div class="tiles">${tiles.map((k) => raw(html`<button class="btn tile${views[k] ? "" : " soon"}" data-on="go" data-arg="${k}"><span class="em">${T.tiles[k].e}</span>${T.tiles[k].t}</button>`))}</div>`, { ...common, how, ack: (c) => store.setAck(store.doc("live", "quiz")?.ack === c ? null : c).catch(() => {}) });
   };
 
   views.send = () => {

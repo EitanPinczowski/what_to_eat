@@ -69,6 +69,14 @@ export const STR = {
     again: "עוד סיבוב?",
     already: (me) => `כבר שלחת ל${me} 💌`,
   },
+  // Eitan's one-tap replies (codes match ACK_CODES in js/store/store.js). `line` is what she sees, as Eitan.
+  ack: {
+    title: "לעדכן אותה?",
+    seen: { e: "👀", t: "ראיתי", line: "ראיתי! 👀" },
+    ordered: { e: "🛵", t: "הזמנתי", line: "הזמנתי! 🛵" },
+    onway: { e: "🚗", t: "בדרך אלייך", line: "אני בדרך אלייך 🚗" },
+    there: { e: "🍽️", t: "מחכה לך שם", line: "מחכה לך שם 🍽️" },
+  },
   ntfy: (her) => `${her} סיימה 🎉 — פתח את האפליקציה`,
   imported: "התוצאה נקלטה 🎉",
   importedOld: "את התוצאה הזאת כבר קלטנו 👍",
