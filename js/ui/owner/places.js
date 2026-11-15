@@ -4,7 +4,7 @@ import { STR } from "../../data/strings.js";
 import { TAGS } from "../../data/tags.js";
 import { buildFoods } from "../../engine/foods.js";
 import { newId } from "../../share/codec.js";
-import { scorePlaces, weightedPick, mapsUrl, kioskUrl, recipeUrl, woltUrl, tenbisUrl } from "../../places/picker.js";
+import { scorePlaces, weightedPick, navLinks, mapsUrl, kioskUrl, recipeUrl, woltUrl, tenbisUrl } from "../../places/picker.js";
 import { render, html, raw, toast } from "../dom.js";
 
 const L = STR.places;
@@ -108,6 +108,15 @@ export function placesViews({ root, store, stack, views, back, common, ctx }) {
 
   // ---------- picker ----------
   views.picker = () => {
+    if (ctx.navTo) {
+      const n = navLinks(ctx.navTo);
+      render(root, html`<h2 class="q">${STR.picker.navTitle}</h2>
+        <section class="card chosen" data-testid="nav"><div class="big" aria-hidden="true">🎯</div><h3 class="title">${ctx.navTo.name}</h3>
+          <div class="stack"><a class="btn btn-primary" href="${n.waze}" target="_blank" rel="noopener" data-testid="nav-waze">${STR.picker.waze}</a>
+          <a class="btn" href="${n.maps}" target="_blank" rel="noopener" data-testid="nav-maps">${STR.picker.gmaps}</a>
+          <button class="btn btn-ghost" data-on="navDone">${STR.picker.navDone}</button></div></section>`, { navDone: () => ((ctx.navTo = null), done()) });
+      return;
+    }
     const entry = ctx.entryId ? store.doc("history", ctx.entryId) : null;
     const all = foods();
     const st = (ctx.pick ??= {
@@ -201,7 +210,8 @@ export function placesViews({ root, store, stack, views, back, common, ctx }) {
     if (p) store.put("places", placeId, { ...p, visits: [...(p.visits ?? []), new Date().toISOString()].slice(-30) }).catch(() => {});
     markGoing(placeId);
     toast(K.logged);
-    done();
+    if (p) ((ctx.navTo = p), views.picker());
+    else done();
   }
 
   function done() {

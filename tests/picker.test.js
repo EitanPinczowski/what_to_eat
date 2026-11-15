@@ -2,7 +2,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { FOODS } from "../js/data/foods.js";
 import { buildFoods } from "../js/engine/foods.js";
-import { scorePlaces, weightedPick, isShabbat, openStatus, mapsUrl, recipeUrl, woltUrl, tenbisUrl } from "../js/places/picker.js";
+import { scorePlaces, weightedPick, isShabbat, openStatus, navLinks, mapsUrl, recipeUrl, woltUrl, tenbisUrl } from "../js/places/picker.js";
 
 const foods = buildFoods(FOODS);
 const food = (id) => foods.find((f) => f.id === id);
@@ -112,4 +112,19 @@ test("Shabbat still applies together with hours", () => {
   const fri = new Date(2026, 10, 13, 18);
   const places = [P("k", { foods: ["pizza"], shabbat: true, hours: [H(5, "09:00", "23:00")] }), P("o", { foods: ["pizza"], hours: [H(5, "09:00", "23:00")] })];
   assert.deepEqual(scorePlaces(places, foods, { food: food("pizza"), now: fri }).map((x) => x.place.id), ["o"]);
+});
+
+test("navLinks: name + city search when no map link", () => {
+  const n = navLinks({ name: "פיצה רעננה", city: "חיפה", link: "https://pizza.example/menu" });
+  const q = encodeURIComponent("פיצה רעננה חיפה");
+  assert.equal(n.waze, `https://waze.com/ul?q=${q}&navigate=yes`);
+  assert.equal(n.maps, `https://www.google.com/maps/dir/?api=1&destination=${q}`);
+});
+
+test("navLinks: saved map links are used as is, name only when no city", () => {
+  const g = "https://maps.app.goo.gl/abc123";
+  assert.equal(navLinks({ name: "א", link: g }).maps, g);
+  assert.match(navLinks({ name: "א", link: g }).waze, /^https:\/\/waze\.com\/ul\?q=%D7%90&navigate=yes$/);
+  const w = "https://waze.com/ul?ll=1,2&navigate=yes";
+  assert.equal(navLinks({ name: "א", city: "ב", link: w }).waze, w);
 });

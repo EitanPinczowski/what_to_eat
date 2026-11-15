@@ -94,4 +94,17 @@ export const mapsUrl = (q) => `https://www.google.com/maps/search/?api=1&query=$
 export const recipeUrl = (food) => `https://www.youtube.com/results?search_query=${encodeURIComponent(`מתכון ${food}`)}`;
 export const woltUrl = (q) => `https://wolt.com/he/isr/search?q=${encodeURIComponent(q)}`;
 export const tenbisUrl = (q) => `https://www.10bis.co.il/next/search?query=${encodeURIComponent(q)}`;
+const MAP_LINK = /^https?:\/\/((www\.|maps\.)?google\.[a-z.]+\/maps|maps\.app\.goo\.gl|goo\.gl\/maps)/i;
+const WAZE_LINK = /^https?:\/\/(www\.)?(waze\.com|ul\.waze\.com)\//i;
+
+/** Navigation links for a chosen place (plain URLs, no API). A saved Google Maps / Waze link is used as is for that app; otherwise "name + city" is searched. */
+export function navLinks(place) {
+  const q = [place?.name, place?.city].filter(Boolean).join(" ").trim();
+  const link = String(place?.link ?? "").trim();
+  const enc = encodeURIComponent(q);
+  return {
+    waze: WAZE_LINK.test(link) ? link : `https://waze.com/ul?q=${enc}&navigate=yes`,
+    maps: MAP_LINK.test(link) ? link : `https://www.google.com/maps/dir/?api=1&destination=${enc}`,
+  };
+}
 export const kioskUrl = () => mapsUrl("קיוסק");
