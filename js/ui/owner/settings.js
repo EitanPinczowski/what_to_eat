@@ -6,6 +6,7 @@ import { buildJoinLink, parseHash } from "../../share/links.js";
 import { normPhone } from "../../share/whatsapp.js";
 import { ROOM_KEY, openStore } from "../../store/open.js";
 import { render, html, raw, toast, copy } from "../dom.js";
+import { addSub, removeSub, hasSub, pushSupport, subscribeThisDevice, currentSub, unsubscribeThisDevice, notifyAll } from "../../push.js";
 import { installKind, installHelp } from "../../pwa.js";
 
 const G = STR.settings;
@@ -57,6 +58,9 @@ export function settingsViews({ root, store, views, back, common, base, mode }) 
       </form>
       <section class="card stack"><b>${G.ntfy}</b><span class="sub">${G.ntfyHelp}</span>
         <code class="link" dir="ltr">https://ntfy.sh/${s.ntfy}</code></section>
+      <section class="card stack" data-testid="push"><b>${G.push.title}</b><span class="sub">${G.push.help}</span>
+        <span class="sub" data-testid="push-state" role="status"></span>
+        <div class="stack" data-testid="push-actions"></div></section>
       <section class="card stack"><b>${G.join}</b><span class="sub">${G.joinHelp}</span>
         <code class="link" dir="ltr">${join}</code><button class="btn" data-on="copyJoin">${STR.owner.copy}</button></section>
       <form class="card stack" data-submit="paste"><b>${G.paste}</b>
@@ -70,6 +74,26 @@ export function settingsViews({ root, store, views, back, common, base, mode }) 
       <button class="btn btn-ghost" data-on="rotate">${G.rotate}</button>
       <button class="btn btn-ghost" data-on="reset">${G.reset}</button>`, {
       ...common,
+      pushOn: async () => {
+        try {
+          const sub = await subscribeThisDevice();
+          await store.update((db) => (db.settings.push = addSub(db.settings.push, sub)));
+          toast(G.push.done);
+        } catch (e) {
+          toast(e?.message === "denied" ? G.push.denied : G.push.fail);
+        }
+        views.settings();
+      },
+      pushTest: async () => {
+        const res = await notifyAll({ push: [await currentSub()].filter(Boolean) }, "test");
+        toast(res.some((c) => c === 201) ? G.push.testSent : G.push.testFail);
+      },
+      pushOff: async () => {
+        const ep = await unsubscribeThisDevice();
+        if (ep) await store.update((db) => (db.settings.push = removeSub(db.settings.push, ep))).catch(() => {});
+        toast(G.push.offDone);
+        views.settings();
+      },
       install: async () => {
         const p = globalThis.__installPrompt;
         globalThis.__installPrompt = null;
@@ -139,5 +163,23 @@ export function settingsViews({ root, store, views, back, common, base, mode }) 
         location.reload();
       },
     });
+    fillPush(root, store);
   };
+}
+
+/** Fill the notifications card with this device's state (async: needs the service worker). */
+async function fillPush(root, store) {
+  const st = root.querySelector?.("[data-testid=push-state]");
+  const acts = root.querySelector?.("[data-testid=push-actions]");
+  if (!st || !acts) return;
+  const P = G.push;
+  const support = pushSupport();
+  const sub = support === "unsupported" ? null : await currentSub();
+  if (!st.isConnected) return; // the view changed while waiting
+  const on = !!sub && hasSub(store.get().settings.push, sub.endpoint);
+  const state = on ? "on" : support;
+  st.textContent = P[state];
+  acts.innerHTML = state === "on"
+    ? `<button class="btn" data-on="pushTest">${P.test}</button><button class="btn btn-ghost" data-on="pushOff">${P.disable}</button>`
+    : state === "off" ? `<button class="btn btn-primary" data-on="pushOn">${P.enable}</button>` : "";
 }

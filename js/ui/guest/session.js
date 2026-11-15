@@ -1,4 +1,5 @@
 // Guest session: live doc + resume, finish/send, ntfy ping, feedback, error log, #r= WhatsApp fallback.
+import { notifyAll } from "../../push.js";
 import { STR } from "../../data/strings.js";
 import { newId } from "../../share/codec.js";
 import { buildResultLink } from "../../share/links.js";
@@ -144,6 +145,7 @@ export async function runGuest(root, store, { base = location.origin + location.
             SEND_TIMEOUT,
           );
           ping(s.ntfy, STR.ntfy(s.her));
+          notifyAll(s, "quiz");
           sent();
         } catch {
           fallback({ t: "quiz", id, ...entry });
@@ -207,6 +209,7 @@ export async function runGuest(root, store, { base = location.origin + location.
         if (!code || !(code === VOTE_NONE || store.vote()?.ids.includes(code))) return;
         store.castVote(code).catch(() => {}); // local copy updates synchronously; the write may wait on the network
         ping(s.ntfy, STR.vote.ntfy(s.her));
+        notifyAll(s, "vote");
       });
     }
   };
