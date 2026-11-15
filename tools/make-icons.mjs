@@ -1,4 +1,4 @@
-// Draws the app icons (no deps): green tile, white plate, yellow dot. Run: node tools/make-icons.mjs
+// Draws the app icons (no deps): berry tile, white plate, soft-pink dot. Run: node tools/make-icons.mjs
 import { deflateSync } from "node:zlib";
 import { writeFileSync, mkdirSync } from "node:fs";
 
@@ -21,7 +21,7 @@ const chunk = (type, data) => {
   return Buffer.concat([len, td, c]);
 };
 
-const GREEN = [18, 133, 90], WHITE = [255, 255, 255], YELLOW = [255, 210, 63], INK = [20, 35, 27];
+const GREEN = [176, 48, 110], WHITE = [255, 255, 255], YELLOW = [243, 215, 230], INK = [58, 22, 48]; // berry #B0306E, soft pink #F3D7E6, plum ink #3A1630
 
 /** maskable: full-bleed square; otherwise rounded tile with transparent corners. */
 export function png(size, { maskable = false } = {}) {
