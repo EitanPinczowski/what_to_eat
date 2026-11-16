@@ -81,10 +81,34 @@ export function cleanResult(p, knownIds = new Set(FOODS.map((f) => f[0]))) {
 
 const clone = (x) => (x === undefined ? x : JSON.parse(JSON.stringify(x)));
 
+/** Structural equality for plain JSON values (key order does not matter). */
+export function deepEqual(a, b) {
+  if (a === b) return true;
+  if (!a || !b || typeof a !== "object" || typeof b !== "object" || Array.isArray(a) !== Array.isArray(b)) return false;
+  const ka = Object.keys(a);
+  if (ka.length !== Object.keys(b).length) return false;
+  return ka.every((k) => k in b && deepEqual(a[k], b[k]));
+}
+
+/** Top-level keys whose value differs between two room docs (added, changed or removed). */
+export function changedKeys(before, after) {
+  return [...new Set([...Object.keys(before ?? {}), ...Object.keys(after ?? {})])].filter((k) => !deepEqual(before?.[k], after?.[k]));
+}
+
+/** The stored room doc with only `keys` taken from `room` (a key missing from `room` is removed). */
+export function mergeKeys(stored, room, keys) {
+  const out = { ...stored };
+  for (const k of keys) {
+    if (k in room) out[k] = room[k];
+    else delete out[k];
+  }
+  return out;
+}
+
 /**
  * Shared logic. Subclasses implement:
  *   _open() → Promise<{room, cols}>   initial load (cols: {name: {id: doc}})
- *   _writeRoom(room) → Promise
+ *   _writeRoom(room, keys?) → Promise   (keys: the top-level keys that changed; absent = write the whole doc)
  *   _writeDoc(col, id, doc|null) → Promise   (null = delete)
  * and call this._remote(room, cols) when data changes elsewhere.
  */
@@ -94,7 +118,40 @@ export class Store {
     this.room = emptyRoom();
     this.cols = Object.fromEntries(COLLECTIONS.map((c) => [c, {}]));
     this.subs = new Set();
+    this.saveSubs = new Set();
+    this.pending = 0; // writes started and not yet acknowledged (offline: they stay pending)
     this._ready = null;
+  }
+
+  /** cb({state: "pending"|"saved"|"error", pending, col?, error?}) whenever a write starts, lands or fails. Returns unsubscribe. */
+  onSave(cb) {
+    this.saveSubs.add(cb);
+    return () => this.saveSubs.delete(cb);
+  }
+
+  _emitSave(state, extra = {}) {
+    for (const cb of this.saveSubs) {
+      try {
+        cb({ state, pending: this.pending, ...extra });
+      } catch (e) {
+        console.error(e);
+      }
+    }
+  }
+
+  /** Run a write, counting it as pending until it lands. A failure is reported to onSave and rethrown. */
+  async _track(col, write) {
+    this.pending++;
+    this._emitSave("pending", { col });
+    try {
+      await write();
+    } catch (error) {
+      this.pending--;
+      this._emitSave("error", { col, error });
+      throw error;
+    }
+    this.pending--;
+    this._emitSave(this.pending ? "pending" : "saved", { col });
   }
 
   ready() {
@@ -133,13 +190,15 @@ export class Store {
     await this._writeRoom({ v: SCHEMA, moved: true, at });
   }
 
-  /** Mutate the room doc and persist it. */
+  /** Mutate the room doc and persist it. Only the top-level keys that changed are written (item 5). */
   async update(fn) {
-    const next = clone(this.room);
+    const before = this.room;
+    const next = clone(before);
     fn(next);
     this.room = migrate(next);
     this._emit("room");
-    await this._writeRoom(clone(this.room));
+    const keys = changedKeys(before, this.room);
+    if (keys.length) await this._track("room", () => this._writeRoom(clone(this.room), keys));
   }
 
   /** Docs of a subcollection, newest first by `at` when present. */
@@ -167,7 +226,7 @@ export class Store {
     const { id: _ignored, ...data } = clone(doc);
     this.cols[col][id] = data;
     this._emit(col);
-    await this._writeDoc(col, id, data);
+    await this._track(col, () => this._writeDoc(col, id, data));
   }
 
   /** Set (or clear with null) Eitan's reply code on her finished live doc. Unknown codes are ignored. */
@@ -251,7 +310,7 @@ export class Store {
     this._check(col);
     delete this.cols[col][id];
     this._emit(col);
-    await this._writeDoc(col, id, null);
+    await this._track(col, () => this._writeDoc(col, id, null));
   }
 
   /** cb(what) on any change: 'room' or a collection name. Returns unsubscribe. */

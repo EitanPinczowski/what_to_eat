@@ -141,6 +141,8 @@ test("firebase: reads and writes through the SDK (fake)", async () => {
     onSnapshot: () => () => calls.push("unsub"),
     setDoc: async (ref, d) => (calls.push(`set ${ref.path}`), docs.set(ref.path, d)),
     deleteDoc: async (ref) => (calls.push(`del ${ref.path}`), docs.delete(ref.path)),
+    updateDoc: async (ref, d) => (calls.push(`upd ${ref.path} ${Object.keys(d).join(",")}`), docs.set(ref.path, { ...docs.get(ref.path), ...d })),
+    deleteField: () => undefined,
   };
   const s = await new FirebaseStore(ROOM, {}, { sdk }).ready();
   assert.equal(calls[0], "auth");
@@ -261,6 +263,8 @@ test("firebase fast open: ready() answers from this room's saved copy, the live 
         onSnapshot: () => () => {},
         setDoc: async (ref, d) => (calls.push(`set ${ref.path}`), docs.set(ref.path, d)),
         deleteDoc: async () => {},
+        updateDoc: async (ref, d) => (calls.push(`upd ${ref.path} ${Object.keys(d).join(",")}`), docs.set(ref.path, { ...docs.get(ref.path), ...d })),
+        deleteField: () => undefined,
       },
     };
   };
@@ -293,4 +297,108 @@ test("firebase fast open: ready() answers from this room's saved copy, the live 
   const s3 = await new FirebaseStore("other", {}, { sdk: c.sdk, fast: true, storage }).ready();
   assert.equal(s3.list("history").length, 0);
   s3.close();
+});
+
+// ---- item 5: save only what changed ----
+test("update() sends only the changed top-level keys (firebase)", async () => {
+  const docs = new Map([["rooms/" + ROOM, { v: 1, settings: { city: "חיפה" }, ratings: { pizza: { r: 4 } }, inbox: [] }]]);
+  const calls = [];
+  const snap = (path) => ({ id: path.split("/").pop(), exists: () => docs.has(path), data: () => docs.get(path), metadata: {} });
+  const sdk = {
+    initializeApp: () => ({}), initializeFirestore: () => ({}), persistentLocalCache: () => ({}), persistentMultipleTabManager: () => ({}),
+    getAuth: () => ({}), signInAnonymously: async () => {},
+    doc: (parent, ...segs) => ({ path: [parent.path, ...segs].filter(Boolean).join("/") }),
+    collection: (parent, c) => ({ path: `${parent.path}/${c}` }),
+    getDoc: async (ref) => snap(ref.path),
+    getDocs: async () => ({ forEach: () => {} }),
+    onSnapshot: () => () => {},
+    setDoc: async (ref, d, o) => (calls.push(`set ${o?.merge ? "merge " : ""}${ref.path}`), docs.set(ref.path, o?.merge ? { ...docs.get(ref.path), ...d } : d)),
+    updateDoc: async (ref, d) => (calls.push(`upd ${Object.keys(d).join(",")}`), docs.set(ref.path, { ...docs.get(ref.path), ...d })),
+    deleteField: () => undefined,
+  };
+  const s = await new FirebaseStore(ROOM, {}, { sdk }).ready();
+  await s.update((db) => (db.inbox = ["x"]));
+  await s.update((db) => (db.settings.city = "חיפה")); // same value: nothing to write
+  await s.update((db) => (db.ratings.pizza.r = 4));
+  assert.deepEqual(calls, ["upd inbox"]);
+  await s.update((db) => ((db.exp = { a: 1 }), (db.learned = { b: 2 })));
+  assert.deepEqual(calls.at(-1).split(" ")[1].split(",").sort(), ["exp", "learned"]);
+  s.close();
+  // a room doc that does not exist yet is created whole (merge)
+  const fresh = new Map();
+  calls.length = 0;
+  const sdk2 = { ...sdk, getDoc: async (ref) => ({ exists: () => fresh.has(ref.path), data: () => fresh.get(ref.path), metadata: {} }), setDoc: async (ref, d, o) => (calls.push(`set ${o?.merge ? "merge" : "full"}`), fresh.set(ref.path, d)) };
+  const s2 = await new FirebaseStore(ROOM, {}, { sdk: sdk2 }).ready();
+  await s2.update((db) => (db.inbox = ["y"]));
+  await s2.update((db) => (db.inbox = ["z"]));
+  assert.equal(calls[0], "set merge");
+  assert.ok(fresh.get("rooms/" + ROOM).settings, "the first write carries the whole valid doc");
+  s2.close();
+});
+
+test("two clients editing different keys do not overwrite each other", async () => {
+  const shared = { rooms: {} };
+  const ma = await new MemoryStore(ROOM, shared).ready();
+  const mb = await new MemoryStore(ROOM, shared).ready();
+  await ma.update((db) => (db.inbox = ["a"]));
+  mb.room = { ...mb.room, inbox: [] }; // b still holds its old copy, yet its edit of another key keeps a's
+  await mb.update((db) => (db.ratings.pizza = { r: 3 }));
+  assert.deepEqual(shared.rooms[ROOM].room.inbox, ["a"]);
+  assert.equal(shared.rooms[ROOM].room.ratings.pizza.r, 3);
+  const storage = fakeStorage();
+  const a = await new LocalStore(ROOM, { storage, win: fakeWin() }).ready();
+  const b = await new LocalStore(ROOM, { storage, win: fakeWin() }).ready();
+  await a.update((db) => (db.inbox = ["a"]));
+  await b.update((db) => (db.ratings.pizza = { r: 3 }));
+  const stored = JSON.parse(storage.getItem(a.key)).room;
+  assert.deepEqual(stored.inbox, ["a"]);
+  assert.equal(stored.ratings.pizza.r, 3);
+});
+
+test("firebase fast open: an early edit neither clobbers live fields nor flickers back", async () => {
+  const storage = fakeStorage();
+  storage.setItem(`wte.snap:${ROOM}`, JSON.stringify({ roomId: ROOM, room: { v: 1, settings: { city: "ישן" }, inbox: [] }, cols: {} }));
+  const docs = new Map([["rooms/" + ROOM, { v: 1, settings: { city: "ישן" }, inbox: ["live-only"], ratings: { pizza: { r: 2 } } }]]);
+  let release;
+  const gate = new Promise((r) => (release = r));
+  const calls = [];
+  const snap = (path) => ({ id: path, exists: () => docs.has(path), data: () => docs.get(path), metadata: {} });
+  const sdk = {
+    initializeApp: () => ({}), initializeFirestore: () => ({}), persistentLocalCache: () => ({}), persistentMultipleTabManager: () => ({}),
+    getAuth: () => ({}), signInAnonymously: () => gate,
+    doc: (parent, ...segs) => ({ path: [parent.path, ...segs].filter(Boolean).join("/") }),
+    collection: (parent, c) => ({ path: `${parent.path}/${c}` }),
+    getDoc: async (ref) => snap(ref.path), getDocs: async () => ({ forEach: () => {} }), onSnapshot: () => () => {},
+    setDoc: async () => calls.push("set"),
+    updateDoc: async (ref, d) => (calls.push(Object.keys(d).join(",")), docs.set(ref.path, { ...docs.get(ref.path), ...d })),
+    deleteField: () => undefined,
+  };
+  const s = await new FirebaseStore(ROOM, {}, { sdk, fast: true, storage }).ready();
+  const w = s.update((db) => (db.settings.city = "חדש"));
+  release();
+  await w;
+  assert.deepEqual(calls, ["settings"], "only the edited field is written");
+  assert.deepEqual(docs.get("rooms/" + ROOM).inbox, ["live-only"], "live fields survive");
+  assert.equal(s.get().settings.city, "חדש", "the edit stays on screen after the live data arrived");
+  assert.deepEqual(s.get().inbox, ["live-only"]);
+  s.close();
+});
+
+// ---- item 6: pending-write count for the save marker ----
+test("onSave: pending while a write waits, saved when it lands, error when it fails", async () => {
+  const s = await new MemoryStore(ROOM).ready();
+  const seen = [];
+  s.onSave((e) => seen.push(`${e.state}:${e.pending}`));
+  await s.update((db) => (db.inbox = ["x"]));
+  await s.put("live", "quiz", { step: 1 });
+  assert.deepEqual(seen, ["pending:1", "saved:0", "pending:1", "saved:0"]);
+  assert.equal(s.pending, 0);
+  seen.length = 0;
+  s._writeDoc = async () => {
+    throw new Error("offline");
+  };
+  await assert.rejects(s.put("live", "quiz", { step: 2 }), /offline/);
+  assert.deepEqual(seen, ["pending:1", "error:0"]);
+  await s.update(() => {}); // nothing changed: no write, no event
+  assert.equal(seen.length, 2);
 });

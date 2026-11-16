@@ -25,6 +25,8 @@ export class FirebaseStore extends Store {
     this.storage = storage;
     this.snapKey = `wte.snap:${roomId}`;
     this._live = null;
+    this._early = {}; // room keys edited while the live connection was still opening
+    this._roomExists = false;
   }
 
   /**
@@ -34,9 +36,14 @@ export class FirebaseStore extends Store {
    */
   async _open() {
     const snap = this.fast ? this._readSnap() : null;
-    if (!snap) return this._openLive();
+    if (!snap) {
+      this._early = null;
+      return this._openLive();
+    }
     this._live = this._openLive().then(({ room, cols }) => {
-      this._remote(room ?? this.room, cols);
+      // An edit made before the live data arrived stays on top of it (no flicker back to the old value).
+      this._remote(room ? { ...room, ...this._early } : this.room, cols);
+      this._early = null;
     });
     this._live.catch((e) => console.error("live connection failed", e));
     return snap;
@@ -109,12 +116,22 @@ export class FirebaseStore extends Store {
           this._remote(undefined, { [c]: docs });
         }, () => {}),
       );
+    this._roomExists = snap.exists();
     return { room: snap.exists() ? snap.data() : null, cols };
   }
 
-  async _writeRoom(room) {
+  /** keys = the changed top-level fields: sent as field updates, so a stale local copy cannot overwrite other fields. */
+  async _writeRoom(room, keys) {
+    if (keys && this._early) for (const k of keys) this._early[k] = room[k]; // runs before the first await
     await this._live;
-    await this.sdk.setDoc(this.roomRef, room);
+    if (!keys || !this._roomExists) {
+      await this.sdk.setDoc(this.roomRef, room, keys ? { merge: true } : undefined);
+      this._roomExists = true;
+      return;
+    }
+    const data = {};
+    for (const k of keys) data[k] = k in room ? room[k] : this.sdk.deleteField();
+    await this.sdk.updateDoc(this.roomRef, data);
   }
 
   async _writeDoc(col, id, doc) {

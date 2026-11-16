@@ -1,6 +1,6 @@
 // localStorage Store: the no-Firebase fallback and the e2e mode (?store=local).
 // Other tabs see changes through `storage` events.
-import { Store, COLLECTIONS } from "./store.js";
+import { Store, COLLECTIONS, mergeKeys } from "./store.js";
 import { DB_KEY } from "../data/constants.js";
 
 export class LocalStore extends Store {
@@ -27,9 +27,9 @@ export class LocalStore extends Store {
   async _open() {
     return this._read();
   }
-  async _writeRoom(room) {
+  async _writeRoom(room, keys) {
     const d = this._read();
-    d.room = room;
+    d.room = keys && d.room ? mergeKeys(d.room, room, keys) : room;
     this._write(d);
   }
   async _writeDoc(col, id, doc) {

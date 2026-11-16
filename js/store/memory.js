@@ -1,5 +1,5 @@
 // In-memory Store for unit tests. Stores sharing one `shared` object see each other's writes.
-import { Store, COLLECTIONS } from "./store.js";
+import { Store, COLLECTIONS, mergeKeys } from "./store.js";
 
 const copy = (x) => JSON.parse(JSON.stringify(x));
 
@@ -17,8 +17,9 @@ export class MemoryStore extends Store {
     const d = this._data();
     return copy({ room: d.room, cols: d.cols });
   }
-  async _writeRoom(room) {
-    this._data().room = room;
+  async _writeRoom(room, keys) {
+    const d = this._data();
+    d.room = keys && d.room ? mergeKeys(d.room, room, keys) : room;
     this._fanout(true);
   }
   async _writeDoc(col, id, doc) {
