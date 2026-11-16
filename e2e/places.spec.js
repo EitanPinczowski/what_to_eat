@@ -60,3 +60,24 @@ test("picker: maps fallback asks where we went and quick-adds the place", async 
   await page.locator('[data-on="go"][data-arg="places"]').click();
   await expect(page.locator(".place-row")).toContainText("סושי בר");
 });
+
+test("picker from home links to a fresh quiz result (item 9)", async ({ page, context }) => {
+  await page.goto("/?store=local");
+  await expect(page.locator(".tile")).toHaveCount(10);
+  const room = await page.evaluate(() => localStorage.getItem("mabalach_room"));
+  await page.evaluate((room) => {
+    const key = `mabalach_v1:${room}`;
+    const d = JSON.parse(localStorage.getItem(key));
+    d.cols.history = { fresh1: { at: new Date(Date.now() - 20 * 60e3).toISOString(), f: "sushi", fn: "סושי", fe: "🍣", m: "sit", stats: { hit: true, steps: 9, skips: [] }, trail: [] } };
+    localStorage.setItem(key, JSON.stringify(d));
+  }, room);
+  await page.reload();
+  await page.locator('[data-on="go"][data-arg="picker"]').click();
+  await expect(page.locator('select[data-input="food"]')).toHaveValue("sushi");
+  const popup = context.waitForEvent("page");
+  await page.locator(".fallbacks a").first().click();
+  await (await popup).close();
+  await page.getByTestId("quick-add").locator("input").fill("סושי בר");
+  await page.getByTestId("quick-add").locator('button[type="submit"]').click();
+  await expect.poll(async () => (await page.evaluate((r) => JSON.parse(localStorage.getItem(`mabalach_v1:${r}`)), room)).cols.history.fresh1.place).toBeTruthy();
+});

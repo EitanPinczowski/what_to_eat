@@ -1,4 +1,5 @@
 // Owner app: home + view stack (send quiz, she's-next-to-me, history). Later steps add brain, places, picker, settings.
+import { recentQuizEntry } from "./recent.js";
 import { STR } from "../../data/strings.js";
 import { newId } from "../../share/codec.js";
 import { buildQuizLink } from "../../share/links.js";
@@ -80,7 +81,7 @@ export async function runOwner(root, store, { base = location.origin + location.
   const back = html`<button class="btn back" data-on="back">${T.back}</button>`;
   const common = {
     back: () => stack.back(),
-    go: (v) => (v === "picker" && ((ctx.entryId = null), (ctx.pick = null)), views[v] ? stack.push(v) : toast(T.soon)),
+    go: (v) => (v === "picker" && ((ctx.entryId = recentQuizEntry(store.list("history"))?.id ?? null), (ctx.pick = null)), views[v] ? stack.push(v) : toast(T.soon)),
     pickFor: (id) => ((ctx.entryId = id), (ctx.pick = null), stack.push("picker")),
   };
 
