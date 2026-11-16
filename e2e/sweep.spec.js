@@ -34,5 +34,6 @@ test("sweep: owner sends, she rates (tap, skip, swipe, undo), extras reach the i
   await openMore(page, "brain");
   await expect(page.locator(".inbox")).toContainText("מרק עוף של אמא");
   await page.locator('input[type="search"]').fill(first);
-  await expect(page.locator("li.row").first().locator('[aria-pressed="true"]')).toHaveText("😍");
+  // Her food's own row (the brain screen is grouped since item 28, so the first match may be another food); her rating syncs a little after "סיימה".
+  await expect(page.locator("li.row", { hasText: first }).first().locator('[aria-pressed="true"]')).toHaveText("😍", { timeout: 15000 });
 });

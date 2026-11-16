@@ -35,7 +35,11 @@ const cacheNames = (page) => page.evaluate(async () => (await caches.keys()).fil
 const install = async (page) => {
   await page.goto(`${base}/?store=local&sw`);
   await controlled(page);
-  await page.reload();
+  // The app's own controllerchange reload can land mid-call ("frame detached"); retry until one reload completes.
+  for (let i = 0; ; i++) {
+    try { await page.reload({ waitUntil: "load" }); break; }
+    catch (e) { if (i >= 2) throw e; await page.waitForLoadState("load").catch(() => {}); }
+  }
   await controlled(page);
   await expect(page.locator("h1")).toHaveText("מה בא לך?");
 };
