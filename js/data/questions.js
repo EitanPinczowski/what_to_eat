@@ -1,6 +1,8 @@
 // Question bank v1 (docs/plan/spec-questions.md §2.4). Ids are stable.
 // start: fixed position among the opening questions · need: ask only when one of these tags is in play
 // w: weight multiplier (playful questions) · ordered: keep answer order (R10) · fx: tag → score delta
+import { STR } from "./strings.js";
+import { CUISINES } from "./cuisines.js";
 const a = (e, t, fx = {}) => ({ e, t, fx });
 
 export const QUESTIONS = [
@@ -10,13 +12,14 @@ export const QUESTIONS = [
     a("🐻", "רעבה. ארוחה.", { meal: 3, snack: -2 }),
     a("🦖", "אני אוכלת את השולחן", { meal: 3, heavy: 2.5, light: -2, snack: -3 }),
   ] },
-  { id: "vibe", start: 2, text: "איזה וייב יש לערב הזה?", answers: [
+  { id: "cuisine", start: 2, ordered: true, text: STR.cuisine.text, answers: CUISINES.map((c) => a(STR.cuisine.options[c][0], STR.cuisine.options[c][1], { [`c:${c}`]: 3 })) },
+  { id: "vibe", text: "איזה וייב יש לערב הזה?", answers: [
     a("🛋️", "ספה, שמיכה, לא זזה", { couch: 2.5, home: 1, heavy: 1 }),
     a("✨", "בא לי להתפנק", { fancy: 2.5, resto: 1.5 }),
     a("🥗", "קליל ונקי", { light: 2.5, healthy: 2.5, junk: -2 }),
     a("😈", "יום ג׳אנק, בלי שיפוטים", { junk: 3, fried: 1.5, healthy: -2 }),
   ] },
-  { id: "veto", start: 3, text: "מה הכי לא בא לך עכשיו?", answers: [
+  { id: "veto", text: "מה הכי לא בא לך עכשיו?", answers: [
     a("🍟", "שום דבר שמנוני", { fried: -3, heavy: -2, junk: -1.5 }),
     a("🍣", "שום דבר אסייתי", { asian: -3, japanese: -3, thai: -3 }),
     a("🧀", "בלי גבינות", { cheesy: -3, creamy: -1 }),

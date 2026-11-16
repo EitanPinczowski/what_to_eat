@@ -12,6 +12,7 @@ const SHELL = [
   "manifest.webmanifest",
   "img/icons/icon-192.png",
   "js/data/constants.js",
+  "js/data/cuisines.js",
   "js/data/foods.js",
   "js/data/questions.js",
   "js/data/recipes.js",

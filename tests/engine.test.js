@@ -43,16 +43,16 @@ test("prior: ratings, recent (R2), time of day and season (R12)", () => {
   assert.equal(late.bamba, 0.5);
 });
 
-test("starters come first in order: hunger, vibe, veto (R4)", () => {
+test("starters come first in order: hunger, then cuisine (item 14); the rest is by information gain", () => {
   const z = quiz();
   const ids = [];
-  for (let i = 0; i < 3; i++) {
+  for (let i = 0; i < 2; i++) {
     const s = z.next();
     assert.equal(s.type, "q");
     ids.push(s.q.id);
     z.answer(s.q, 0);
   }
-  assert.deepEqual(ids, ["hunger", "vibe", "veto"]);
+  assert.deepEqual(ids, ["hunger", "cuisine"]);
 });
 
 test("ordered questions keep their order, others shuffle (R10)", () => {
@@ -99,35 +99,28 @@ test("need: spice question is skipped when nothing spicy is in play", () => {
   assert.ok(z.value(q("temp"), top) > 0);
 });
 
-test("grid comes at step 5 and vetoes spread to similar foods", () => {
-  const z = new FoodQuiz(foods, QUESTIONS, {}, { rnd: seeded(), pickBelow: 0 }); // single guesses, not the unsure pick of 3
-  let s;
-  for (let i = 0; i < 20; i++) {
-    s = z.next();
-    if (s.type === "grid") break;
-    if (s.type === "q") z.answer(s.q, 0);
-    else if (s.type === "duel") z.duel(s.a, s.b, "a");
-    else if (s.type === "guess") z.guessResult(s.f, "no");
-  }
-  assert.equal(s.type, "grid");
-  assert.equal(z.n, 5);
-  assert.equal(s.items.length, 9);
+test("grid vetoes lower the food and spread to similar foods; the grid comes once", () => {
+  const z = new FoodQuiz(foods, QUESTIONS, {}, { rnd: seeded(), pickBelow: 0 });
+  z.answer(q("hunger"), 2);
+  const items = z.ranked().slice(0, 9).map((x) => x.f);
   const before = { ...z.s.score };
-  z.grid(s.items, ["shawarma"]);
+  z.grid(items, ["shawarma"]);
   assert.equal(z.s.score.shawarma, before.shawarma - 6 - 0);
   assert.ok(z.s.score.meorav < before.meorav);
+  assert.ok(z.s.gridDone);
   assert.notEqual(z.next().type, "grid");
 });
 
 test("duel picks the most different of the top 2–7 and scores the winner", () => {
   const z = quiz();
-  z.s.n = 3;
-  z.s.asked = ["hunger", "vibe", "veto"];
-  const s = z.next();
-  assert.equal(s.type, "duel");
-  const a = z.s.score[s.a.id];
-  z.duel(s.a, s.b, "b");
-  assert.ok(z.s.score[s.b.id] > a - 1);
+  z.answer(q("hunger"), 2);
+  const ranked = z.ranked();
+  const [a, b] = z.duelPair(ranked);
+  assert.equal(a.id, ranked[0].f.id);
+  assert.ok(ranked.slice(1, 7).some((x) => x.f.id === b.id));
+  const before = z.s.score[b.id];
+  z.duel(z.food(a.id), z.food(b.id), "b");
+  assert.ok(z.s.score[b.id] > before);
   assert.equal(z.s.duels, 1);
 });
 

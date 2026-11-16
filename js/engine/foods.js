@@ -1,7 +1,7 @@
 // buildFoods(seed, custom) → Food[] ({id, name, emoji, tags, season?, custom?}).
 export function buildFoods(seed, custom = []) {
-  const out = seed.map(([id, name, emoji, tags, season]) => {
-    const f = { id, name, emoji, tags: tags.split(" ") };
+  const out = seed.map(([id, name, emoji, tags, season, cuisine]) => {
+    const f = { id, name, emoji, tags: tags.split(" "), cuisine: cuisine ? [...cuisine] : [] };
     if (season) f.season = season;
     return f;
   });

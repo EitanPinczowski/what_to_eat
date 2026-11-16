@@ -13,13 +13,18 @@ const VERBOSE = process.argv.includes("--verbose");
 const NOISE = 0.15;
 const TARGETS = { found: 0.945, steps: 10, express: 0.25 };
 // Honest accuracy (docs/REVIEW.md): regression floors = measured value rounded down to 5 points; PRODUCT = report-only goals.
-const FLOORS = { first: 0.15, top3: 0.75 }; // at noise 0.15, tired, learned history
+const FLOORS = { first: 0.25, top3: 0.80 }; // at noise 0.15, tired, learned history
 const PRODUCT = { first: 0.45, top3: 0.85, steps: 9 };
 const LEVELS = [0, 0.15, 0.3];
 const TIRED_AFTER = 8, TIRED_ADD = 0.1; // found was 0.95; no-skip rule (1.6) costs ~1 trial in 475 — see docs/REVIEW.md
 
 const TUNE = {}; // tuning only: PICK_BELOW=0.4 PICK_DISTINCT=0 node tests/sim.js
 if (process.env.PICK_BELOW) TUNE.pickBelow = Number(process.env.PICK_BELOW);
+if (process.env.CONFP) TUNE.confP = Number(process.env.CONFP);
+if (process.env.M3) TUNE.m3 = Number(process.env.M3);
+if (process.env.MING) TUNE.minGain = Number(process.env.MING);
+if (process.env.TAU) TUNE.tau = Number(process.env.TAU);
+if (process.env.EPS) TUNE.eps = Number(process.env.EPS);
 if (process.env.PICK_DISTINCT) TUNE.pickDistinct = process.env.PICK_DISTINCT !== "0";
 const foods = buildFoods(FOODS);
 const rng = (seed) => () => ((seed = (seed * 16807) % 2147483647) / 2147483647);

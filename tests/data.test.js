@@ -1,6 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { FOODS } from "../js/data/foods.js";
+import { CUISINES } from "../js/data/cuisines.js";
 import { QUESTIONS } from "../js/data/questions.js";
 import { TAGS, KINDS, ALL_TAGS } from "../js/data/tags.js";
 import { STR } from "../js/data/strings.js";
@@ -36,28 +37,29 @@ test("foods: no two foods share the exact same tag set", () => {
   }
 });
 
-test("questions: unique ids, 2–4 answers, known tags, starters 1–3", () => {
+test("questions: unique ids, 2–4 answers, known tags, starters 1–2 (hunger, cuisine)", () => {
   const ids = new Set();
   for (const q of QUESTIONS) {
     assert.ok(!ids.has(q.id), q.id);
     ids.add(q.id);
     assert.ok(q.text.trim().endsWith("?"), `${q.id} is a question`);
-    assert.ok(q.answers.length >= 2 && q.answers.length <= 4, q.id);
+    assert.ok(q.answers.length >= 2 && q.answers.length <= (q.id === "cuisine" ? CUISINES.length : 4), q.id);
     for (const a of q.answers) {
       assert.ok(a.e && a.t, q.id);
       assert.ok(a.t.split(/\s+/).length <= 5, `${q.id}: answer too long "${a.t}"`);
-      for (const tag of Object.keys(a.fx)) assert.ok(TAGS[tag], `${q.id}: unknown tag ${tag}`);
+      for (const tag of Object.keys(a.fx)) assert.ok(TAGS[tag] || (tag.startsWith("c:") && CUISINES.includes(tag.slice(2))), `${q.id}: unknown tag ${tag}`);
     }
     for (const tag of q.need ?? []) assert.ok(TAGS[tag], q.id);
   }
   const starts = QUESTIONS.filter((q) => q.start).map((q) => q.start).sort();
-  assert.deepEqual(starts, [1, 2, 3]);
-  assert.equal(QUESTIONS.find((q) => q.start === 3).id, "veto");
+  assert.deepEqual(starts, [1, 2]);
+  assert.equal(QUESTIONS.find((q) => q.start === 1).id, "hunger");
+  assert.equal(QUESTIONS.find((q) => q.start === 2).id, "cuisine");
   assert.ok(QUESTIONS.filter((q) => q.w).length <= 3);
 });
 
 test("every answer tag matches at least one food", () => {
-  const used = new Set(FOODS.flatMap((f) => f[3].split(" ")));
+  const used = new Set(FOODS.flatMap((f) => [...f[3].split(" "), ...(f[5] ?? []).map((c) => `c:${c}`)]));
   for (const q of QUESTIONS)
     for (const a of q.answers)
       for (const [tag, v] of Object.entries(a.fx)) if (v > 0) assert.ok(used.has(tag), `${q.id}: ${tag} unused`);
@@ -110,4 +112,17 @@ test("every food is reachable at noise 0 (result or top 3 in some trial); no ide
   const NEW = ["tiramisu", "panna_cotta", "choco_mousse", "cookies", "sorbet", "cinnamon_roll", "baklava", "gnocchi", "quiche", "greek_salad", "sandwich", "tomato_soup"];
   const missed = NEW.filter((id) => !Array.from({ length: 5 }, (_, k) => k + 1).some((k) => reach(foods.find((f) => f.id === id), k * 977 + 3)));
   assert.deepEqual(missed, []);
+});
+
+test("cuisines: every food has one, ids are known, every cuisine has 2+ foods", () => {
+  const count = Object.fromEntries(CUISINES.map((c) => [c, 0]));
+  for (const f of FOODS) {
+    const cu = f[5];
+    assert.ok(Array.isArray(cu) && cu.length >= 1, `${f[0]} has no cuisine`);
+    for (const c of cu) {
+      assert.ok(CUISINES.includes(c), `${f[0]}: unknown cuisine ${c}`);
+      count[c]++;
+    }
+  }
+  for (const c of CUISINES) assert.ok(count[c] >= 2, `${c} has ${count[c]} foods`);
 });
