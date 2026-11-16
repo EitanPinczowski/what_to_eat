@@ -77,6 +77,18 @@ for (const [name, make] of [
     await assert.rejects(b.importJSON("{}"));
   });
 
+  test(`${name}: places without cuisines get them from their food list; saved cuisines win; foods are kept`, async () => {
+    const a = await make().ready();
+    await a.put("places", "old", { name: "ישן", foods: ["pizza", "sushi"] });
+    await a.put("places", "own", { name: "שלה", foods: ["pizza"], cuisines: ["cafe"] });
+    await a.put("places", "none", { name: "בלי" });
+    assert.deepEqual(a.doc("places", "old").cuisines, ["italian", "asian"]);
+    assert.deepEqual(a.doc("places", "old").foods, ["pizza", "sushi"]);
+    assert.deepEqual(a.doc("places", "own").cuisines, ["cafe"]);
+    assert.deepEqual(a.doc("places", "none").cuisines, []);
+    assert.deepEqual(a.list("places").find((x) => x.id === "old").cuisines, ["italian", "asian"]);
+  });
+
   test(`${name}: error log keeps 50`, async () => {
     const s = await make().ready();
     for (let i = 0; i < 53; i++) await s.logError({ msg: `e${i}` });

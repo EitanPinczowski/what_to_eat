@@ -12,10 +12,17 @@ test("places: add a place, then pick it for a result and log the visit", async (
   await page.locator('[data-input="foodq"]').fill("פיצ");
   await page.locator('[data-on="serve"][data-arg="pizza"]').click();
   await expect(page.locator(".served")).toContainText("פיצה");
+  // serving a dish switches its cuisines on; she can still correct them
+  await expect(page.locator('[data-on="cuisine"][data-arg="italian"]')).toHaveAttribute("aria-pressed", "true");
+  await page.locator('[data-on="cuisine"][data-arg="american"]').click();
   await page.locator('[data-on="rating"][data-arg="5"]').click();
   await page.locator('[data-input="shabbat"]').check();
   await page.locator('[data-input="shabbat"]').uncheck(); // Shabbat filtering is unit-tested; keep this day-independent
   await page.getByRole("button", { name: "שמירה" }).click();
+  await expect(page.locator(".place-row")).toContainText("פיצה של רפי");
+  await page.locator('[data-testid="cuisine-filter"] [data-arg="cafe"]').click();
+  await expect(page.locator(".place-row")).toHaveCount(0);
+  await page.locator('[data-testid="cuisine-filter"] [data-arg="italian"]').click();
   await expect(page.locator(".place-row")).toContainText("פיצה של רפי");
 
   await page.locator('[data-on="back"]').click();
@@ -35,7 +42,7 @@ test("places: add a place, then pick it for a result and log the visit", async (
   await expect.poll(async () => Object.values((await readRoom()).cols.places)[0]?.visits?.length).toBe(1);
   const d = await readRoom();
   const place = Object.values(d.cols.places)[0];
-  expect(place).toMatchObject({ name: "פיצה של רפי", city: "רעננה", modes: ["delivery"], foods: ["pizza"], rating: 5, shabbat: false });
+  expect(place).toMatchObject({ name: "פיצה של רפי", city: "רעננה", modes: ["delivery"], foods: ["pizza"], cuisines: ["italian", "american"], rating: 5, shabbat: false });
   expect(place.visits.length).toBe(1);
   expect(d.cols.history.pick1.goAt).toBeTruthy();
 });

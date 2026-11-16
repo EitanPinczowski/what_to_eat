@@ -3,8 +3,10 @@ import { FOODS } from "../../data/foods.js";
 import { STR } from "../../data/strings.js";
 import { TAGS } from "../../data/tags.js";
 import { buildFoods } from "../../engine/foods.js";
+import { CUISINES } from "../../data/cuisines.js";
+import { cuisinesOfFoods } from "../../places/cuisine.js";
 import { newId } from "../../share/codec.js";
-import { scorePlaces, weightedPick, navLinks, mapsUrl, kioskUrl, woltUrl, tenbisUrl } from "../../places/picker.js";
+import { pickPlaces, weightedPick, navLinks, mapsUrl, kioskUrl, woltUrl, tenbisUrl } from "../../places/picker.js";
 import { parsePlaceLink } from "../../places/links.js";
 import { recipesFor } from "../../data/recipes.js";
 import { recipeBlock } from "./shopping.js";
@@ -14,11 +16,13 @@ import { render, html, raw, toast } from "../dom.js";
 const L = STR.places;
 const K = STR.picker;
 const PLACE_MODES = ["sit", "take", "delivery"];
+const cuisineLabel = (c) => STR.cuisine.options[c].join(" ");
 const norm = (s) => String(s ?? "").replace(/[\s״׳"'\-]/g, "").toLowerCase();
 
 export function reasonText(r, food) {
   if (r.reason === "new") return K.isNew;
   if (r.reason === "serves") return K.serves(food?.name ?? "");
+  if (r.reason.startsWith("cuisine:")) return K.cuisine(r.reason.slice(8).split(",").map((c) => STR.cuisine.options[c][1]).join(", "));
   if (r.reason.startsWith("style:")) return K.style(r.reason.slice(6).split(",").map((t) => TAGS[t]).join(", "));
   return "";
 }
@@ -31,18 +35,21 @@ export function placesViews({ root, store, stack, views, back, common, ctx }) {
 
   // ---------- places ----------
   views.places = () => {
-    const list = store.list("places");
+    const fc = (ctx.placeCuisine ??= null);
+    const list = store.list("places").filter((p) => !fc || (p.cuisines ?? []).includes(fc));
     const byCity = {};
     for (const p of list) (byCity[p.city || "—"] ??= []).push(p);
     render(root, html`${raw(back)}
       <h2 class="q">${L.title}</h2>
       <button class="btn" data-on="add">${L.add}</button>
       <button class="btn" data-on="tryAdd" data-testid="try-add">${L.tryAdd}</button>
+      <div class="chips" data-testid="cuisine-filter">${raw(html`<button class="chip" data-on="cfilter" data-arg="" aria-pressed="${!fc}">${L.filterAll}</button>`)}${CUISINES.map((c) => raw(html`<button class="chip" data-on="cfilter" data-arg="${c}" aria-pressed="${fc === c}">${cuisineLabel(c)}</button>`))}</div>
       ${list.length ? "" : raw(html`<p class="sub">${L.empty}</p>`)}
       ${Object.entries(byCity).map(([city, ps]) => raw(html`<section><h3 class="sub">${city}</h3>
         ${ps.map((p) => raw(html`<button class="btn place-row" data-on="edit" data-arg="${p.id}"><b>${p.name}</b>${p.wantTry && !(p.visits ?? []).length ? raw(html`<span class="sub">${L.tryBadge}</span>`) : ""}<span class="sub">${"₪".repeat(p.price || 0)} ${"❤️".repeat(Math.round(p.rating || 0))}</span></button>`))}</section>`))}`, {
       ...common,
-      add: () => ((ctx.place = { name: "", city: store.get().settings.city, modes: [], foods: [], price: 2, rating: 3, link: "", note: "", shabbat: false, hours: [], visits: [] }), stack.push("placeForm")),
+      add: () => ((ctx.place = { name: "", city: store.get().settings.city, modes: [], foods: [], cuisines: [], price: 2, rating: 3, link: "", note: "", shabbat: false, hours: [], visits: [] }), stack.push("placeForm")),
+      cfilter: (c) => ((ctx.placeCuisine = c || null), views.places()),
       edit: (id) => ((ctx.place = store.doc("places", id)), stack.push("placeForm")),
       tryAdd: () => ((ctx.tryDraft = { link: "", name: "" }), stack.push("tryForm")),
     });
@@ -74,7 +81,7 @@ export function placesViews({ root, store, stack, views, back, common, ctx }) {
           if (!r) return toast(L.tryBad);
           const name = d.name.trim().slice(0, 60);
           if (!name) return ((ask = true), draw(), toast(L.tryAsk));
-          store.put("places", newId(12), { name, city: store.get().settings.city ?? "", modes: ["sit", "take"], foods: [], price: 2, rating: 3, link: r.url, note: "", shabbat: false, hours: [], visits: [], wantTry: true }).catch(() => {});
+          store.put("places", newId(12), { name, city: store.get().settings.city ?? "", modes: ["sit", "take"], foods: [], cuisines: [], price: 2, rating: 3, link: r.url, note: "", shabbat: false, hours: [], visits: [], wantTry: true }).catch(() => {});
           toast(STR.owner.saved);
           stack.back();
         },
@@ -84,6 +91,7 @@ export function placesViews({ root, store, stack, views, back, common, ctx }) {
 
   views.placeForm = () => {
     const p = ctx.place;
+    p.cuisines ??= [];
     let q = "";
     const all = foods();
     const matches = () => (q ? all.filter((f) => norm(f.name).includes(norm(q)) && !p.foods.includes(f.id)).slice(0, 8) : []);
@@ -99,6 +107,7 @@ export function placesViews({ root, store, stack, views, back, common, ctx }) {
         <label class="field">${L.name}<input data-input="name" value="${p.name}" maxlength="60" autofocus></label>
         <label class="field">${L.city}<input data-input="city" value="${p.city}" maxlength="40" list="cities"><datalist id="cities">${cities().map((c) => raw(html`<option value="${c}">`))}</datalist></label>
         <div class="field">${L.modes}<div class="chips">${PLACE_MODES.map((m) => chip("mode", m, STR.modeLabel[m], p.modes.includes(m)))}</div></div>
+        <div class="field">${L.cuisines}<div class="chips" data-testid="cuisine-chips">${CUISINES.map((c) => chip("cuisine", c, cuisineLabel(c), p.cuisines.includes(c)))}</div></div>
         <div class="field">${L.foods}<div class="chips served">${servedHtml()}</div>
           <input type="search" data-input="foodq" placeholder="${L.foodSearch}" aria-label="${L.foodSearch}"><div class="chips matches"></div></div>
         <div class="field">${L.price}<div class="chips">${[1, 2, 3].map((n) => chip("price", n, "₪".repeat(n), p.price === n))}</div></div>
@@ -120,7 +129,15 @@ export function placesViews({ root, store, stack, views, back, common, ctx }) {
         link: (v) => (p.link = v.trim()),
         note: (v) => (p.note = v),
         foodq: (v) => ((q = v), refresh()),
-        serve: (id) => (p.foods.push(id), refresh()),
+        serve: (id) => {
+          p.foods.push(id);
+          // serving a dish adds its category; the chips stay hers to correct
+          for (const c of cuisinesOfFoods([id], all)) if (!p.cuisines.includes(c)) p.cuisines.push(c);
+          p.cuisines = CUISINES.filter((c) => p.cuisines.includes(c));
+          root.querySelectorAll('[data-on="cuisine"]').forEach((b) => b.setAttribute("aria-pressed", String(p.cuisines.includes(b.dataset.arg))));
+          refresh();
+        },
+        cuisine: (c, _e, el) => ((p.cuisines = p.cuisines.includes(c) ? p.cuisines.filter((x) => x !== c) : CUISINES.filter((x) => x === c || p.cuisines.includes(x))), el.setAttribute("aria-pressed", String(p.cuisines.includes(c)))),
         unserve: (id) => ((p.foods = p.foods.filter((x) => x !== id)), refresh()),
         mode: (m, _e, el) => ((p.modes = p.modes.includes(m) ? p.modes.filter((x) => x !== m) : [...p.modes, m]), el.setAttribute("aria-pressed", String(p.modes.includes(m)))),
         price: (n) => ((p.price = Number(n)), draw()),
@@ -138,7 +155,7 @@ export function placesViews({ root, store, stack, views, back, common, ctx }) {
           const { id = newId(12), ...data } = p;
           // Keep only complete ranges; none left = no hours = always eligible.
           const hours = (data.hours ?? []).filter((h) => h.o && h.c).sort((a, b) => a.d - b.d);
-          store.put("places", id, { ...data, hours, name: data.name.trim().slice(0, 60), link: /^https?:\/\//.test(data.link) ? data.link : "" }).catch(() => {});
+          store.put("places", id, { ...data, cuisines: CUISINES.filter((c) => (data.cuisines ?? []).includes(c)), hours, name: data.name.trim().slice(0, 60), link: /^https?:\/\//.test(data.link) ? data.link : "" }).catch(() => {});
           toast(STR.owner.saved);
           stack.back();
         },
@@ -194,7 +211,7 @@ export function placesViews({ root, store, stack, views, back, common, ctx }) {
     });
     const food = all.find((f) => f.id === st.food) ?? null;
     const label = food?.name ?? st.free;
-    const scored = scorePlaces(store.list("places"), all, { food, mode: st.mode, city: st.city, budget: st.budget, novel: !!st.novel });
+    const { list: scored, noneOfKind } = pickPlaces(store.list("places"), all, { food, mode: st.mode, city: st.city, budget: st.budget, novel: !!st.novel });
     const chip = (on, arg, text, pressed) => raw(html`<button class="chip" data-on="${on}" data-arg="${arg}" aria-pressed="${pressed}">${text}</button>`);
     const q = [label, st.city].filter(Boolean).join(" ");
     render(root, html`${raw(back)}
@@ -206,6 +223,7 @@ export function placesViews({ root, store, stack, views, back, common, ctx }) {
       ${raw(voteCard(st))}
       ${st.chosen ? raw(html`<section class="card chosen" data-testid="chosen"><div class="big" aria-hidden="true">🎯</div><h3 class="title">${st.chosen}</h3>
           <button class="btn btn-primary" data-on="go" data-arg="${st.chosenId ?? ""}">${K.go}</button></section>`) : ""}
+      ${scored.length && noneOfKind && st.mode !== "home" ? raw(html`<p class="sub" data-testid="none-of-kind">${K.noneOfKind((food?.cuisine ?? []).map((c) => STR.cuisine.options[c][1]).join(", "))}</p>`) : ""}
       ${scored.length && st.mode !== "home" ? raw(html`<button class="btn btn-primary" data-on="roll">${K.roll}</button>
         <ul class="foods">${scored.map((r) => raw(html`<li class="food-row"><button class="linkish" data-on="choose" data-arg="${r.place.id}"><b>${r.place.name}</b> <span class="sub">${reasonText(r, food)}</span> ${r.closesIn ? raw(html`<span class="sub" data-testid="closes-soon">⏰ ${closesText(r)}</span>`) : ""}</button><button class="chip" data-on="voteToggle" data-arg="${r.place.id}" aria-pressed="${(st.sel ?? []).includes(r.place.id)}">${(st.sel ?? []).includes(r.place.id) ? K.voteIn : K.voteAdd}</button><span class="sub">${r.score}</span></li>`))}</ul>`) : raw(html`<p class="sub">${st.mode === "home" ? "" : K.none}</p>`)}
       <div class="stack fallbacks">
@@ -253,7 +271,7 @@ export function placesViews({ root, store, stack, views, back, common, ctx }) {
         if (!name) return;
         const id = newId(12);
         const mode = st.mode && st.mode !== "home" ? [st.mode] : [];
-        store.put("places", id, { name, city: st.city ?? "", modes: mode, foods: st.food ? [st.food] : [], price: st.budget ?? 2, rating: 3, link: "", note: "", shabbat: false, visits: [new Date().toISOString()] }).catch(() => {});
+        store.put("places", id, { name, city: st.city ?? "", modes: mode, foods: st.food ? [st.food] : [], cuisines: food?.cuisine ?? [], price: st.budget ?? 2, rating: 3, link: "", note: "", shabbat: false, visits: [new Date().toISOString()] }).catch(() => {});
         markGoing(id);
         ctx.quickAdd = false;
         toast(K.logged);

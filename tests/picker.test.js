@@ -2,7 +2,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { FOODS } from "../js/data/foods.js";
 import { buildFoods } from "../js/engine/foods.js";
-import { scorePlaces, weightedPick, isShabbat, openStatus, navLinks, mapsUrl, recipeUrl, woltUrl, tenbisUrl } from "../js/places/picker.js";
+import { pickPlaces, scorePlaces, weightedPick, isShabbat, openStatus, navLinks, mapsUrl, recipeUrl, woltUrl, tenbisUrl } from "../js/places/picker.js";
 
 const foods = buildFoods(FOODS);
 const food = (id) => foods.find((f) => f.id === id);
@@ -127,4 +127,24 @@ test("navLinks: saved map links are used as is, name only when no city", () => {
   assert.match(navLinks({ name: "א", link: g }).waze, /^https:\/\/waze\.com\/ul\?q=%D7%90&navigate=yes$/);
   const w = "https://waze.com/ul?ll=1,2&navigate=yes";
   assert.equal(navLinks({ name: "א", city: "ב", link: w }).waze, w);
+});
+
+test("F3: the picker offers only places of the result's cuisine; unmigrated places are derived from their foods", () => {
+  const places = [P("pizzeria", { foods: ["pizza"] }), P("cafe", { cuisines: ["cafe"], rating: 5 }), P("sushi_bar", { cuisines: ["asian"] }), P("trattoria", { cuisines: ["italian"] })];
+  const pf = food("pizza");
+  assert.ok(pf.cuisine.length);
+  const { list, noneOfKind } = pickPlaces(places, foods, { food: pf, now });
+  assert.equal(noneOfKind, false);
+  assert.deepEqual(list.map((x) => x.place.id).sort(), ["pizzeria", "trattoria"]);
+  assert.equal(list[0].place.id, "pizzeria");
+  assert.equal(list[0].reason, "serves");
+  assert.match(list[1].reason, /^cuisine:italian/);
+});
+
+test("F3: no place of the cuisine falls back to the old matching and says so", () => {
+  const places = [P("pasta_place", { foods: ["pasta_cream"], cuisines: ["cafe"] }), P("sushi_bar", { cuisines: ["asian"] })];
+  const r = pickPlaces(places, foods, { food: food("pizza"), now });
+  assert.equal(r.noneOfKind, true);
+  assert.deepEqual(r.list.map((x) => x.place.id), ["pasta_place"]);
+  assert.equal(pickPlaces(places, foods, { food: null, now }).noneOfKind, false);
 });

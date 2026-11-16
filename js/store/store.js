@@ -3,6 +3,8 @@
 // Subcollections: history, places, live, feedback, errors, shopping.
 import { FOODS } from "../data/foods.js";
 import { MODES } from "../data/constants.js";
+import { buildFoods } from "../engine/foods.js";
+import { cuisinesOfFoods } from "../places/cuisine.js";
 export const SCHEMA = 1;
 export const COLLECTIONS = ["history", "places", "live", "feedback", "errors", "shopping"];
 /** Eitan's one-tap replies to her sent result. Stored as a short code in live/quiz.ack (no rules change needed). */
@@ -144,14 +146,20 @@ export class Store {
   list(col) {
     this._check(col);
     return Object.entries(this.cols[col])
-      .map(([id, d]) => ({ ...clone(d), id }))
+      .map(([id, d]) => this._view(col, { ...clone(d), id }))
       .sort((a, b) => String(b.at ?? "").localeCompare(String(a.at ?? "")));
   }
 
   doc(col, id) {
     this._check(col);
     const d = this.cols[col][id];
-    return d ? { ...clone(d), id } : null;
+    return d ? this._view(col, { ...clone(d), id }) : null;
+  }
+
+  /** Read-path migration: a place without cuisines gets them from its (kept) food list. */
+  _view(col, d) {
+    if (col === "places" && !Array.isArray(d.cuisines)) d.cuisines = cuisinesOfFoods(d.foods, buildFoods(FOODS, this.room?.custom ?? []));
+    return d;
   }
 
   async put(col, id, doc) {

@@ -30,6 +30,7 @@ const SHELL = [
   "js/main.js",
   "js/places/links.js",
   "js/places/picker.js",
+  "js/places/cuisine.js",
   "js/push.js",
   "js/pwa.js",
   "js/router.js",

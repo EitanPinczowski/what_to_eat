@@ -2,6 +2,7 @@
 // score = 10 if it serves the food | 2 × shared cuisine tags · + 0.8 × rating · −3 if visited this week
 //         · −2 per price step above her budget. Closed-on-Shabbat places hide Fri evening → Sat evening. Places closed right now (opening hours) are hidden.
 import { CUISINE } from "../data/constants.js";
+import { placeCuisines } from "./cuisine.js";
 
 const WEEK = 7 * 864e5;
 export const CLOSING_SOON_MIN = 45;
@@ -49,10 +50,11 @@ export function isShabbat(now = new Date()) {
  * @param {{food?: object, mode?: string, city?: string, now?: Date, budget?: number|null, novel?: boolean}} q
  * @returns {{place, score, reason, closesIn?}[]} best first; closed places are dropped, closesIn is set when closing within 45 min
  */
-export function scorePlaces(places, foods, { food = null, mode = null, city = null, now = new Date(), budget = null, novel = false } = {}) {
+export function scorePlaces(places, foods, { food = null, mode = null, city = null, now = new Date(), budget = null, novel = false, byCuisine = false } = {}) {
   const byId = foods instanceof Map ? foods : new Map(foods.map((f) => [f.id, f]));
   const want = new Set((food?.tags ?? []).filter((t) => CUISINE.includes(t)));
   const shabbat = isShabbat(now);
+  const wantC = byCuisine ? (food?.cuisine ?? []) : [];
   const out = [];
   for (const p of places) {
     if (mode && mode !== "any" && mode !== "home" && !(p.modes ?? []).includes(mode)) continue;
@@ -63,11 +65,16 @@ export function scorePlaces(places, foods, { food = null, mode = null, city = nu
     let score = 0;
     let reason = "";
     const isNew = novel && !(p.visits ?? []).length;
+    const sharedC = wantC.length ? placeCuisines(p, byId).filter((c) => wantC.includes(c)) : null;
+    if (sharedC && !sharedC.length && !(isNew && !(p.foods ?? []).length)) continue; // category filter: only places of the result's cuisine
     if (food && isNew && !(p.foods ?? []).length) {
       reason = "new"; // a "want to try" place with no foods yet stays eligible
     } else if (food && (p.foods ?? []).includes(food.id)) {
       score = 10;
       reason = "serves";
+    } else if (sharedC) {
+      score = 2 * sharedC.length;
+      reason = `cuisine:${sharedC.join(",")}`;
     } else if (food) {
       const theirs = new Set((p.foods ?? []).flatMap((id) => byId.get(id)?.tags ?? []).filter((t) => CUISINE.includes(t)));
       const shared = [...want].filter((t) => theirs.has(t));
@@ -84,6 +91,18 @@ export function scorePlaces(places, foods, { food = null, mode = null, city = nu
     out.push({ place: p, score: Math.round(score * 10) / 10, reason, ...(hrs.closesIn !== null && hrs.closesIn <= CLOSING_SOON_MIN ? { closesIn: hrs.closesIn } : {}) });
   }
   return out.sort((a, b) => b.score - a.score);
+}
+
+/**
+ * The picker's list (F3): places of the result's cuisine category, ranked as scorePlaces does.
+ * When none fits, falls back to the old food/tag matching and says so (noneOfKind).
+ * @returns {{list: object[], noneOfKind: boolean}}
+ */
+export function pickPlaces(places, foods, q = {}) {
+  const hasCuisine = (q.food?.cuisine ?? []).length > 0;
+  const list = scorePlaces(places, foods, { ...q, byCuisine: true });
+  if (list.length || !hasCuisine) return { list, noneOfKind: false };
+  return { list: scorePlaces(places, foods, q), noneOfKind: true };
 }
 
 /** Weighted random pick (weights = score, floored at 0.1). */
