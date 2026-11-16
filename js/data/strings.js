@@ -12,8 +12,10 @@ export const STR = {
     go: "יאללה, תנחש",
   },
   weatherTease: { rain: "גשם בחוץ… מרק?", cold: "קר בחוץ… משהו חם?", hot: "חם בחוץ… משהו קר?" },
-  meter: "כמה אני בטוח",
-  qn: (n) => `שאלה ${n}`,
+  left: (n) => (n <= 1 ? "עוד שאלה אחת" : n >= 4 ? "עוד כמה שאלות" : `עוד ${n} שאלות`),
+  almost: "כמעט שם",
+  cravingTitle: "מה שבא לך עד עכשיו",
+  cravingEmpty: "ספרי לי עוד…",
   craving: {
     line: (list) => `בא לך משהו ${list} —`,
     tag: { hot: "חם", cold: "קר", comfort: "מנחם", salty: "מלוח", sweet: "מתוק", sour: "חמצמץ", spicy: "חריף", crunchy: "קראנצ׳י", creamy: "קרמי", saucy: "עם רוטב", cheesy: "גבינתי", fried: "מטוגן", light: "קליל", healthy: "בריא", heavy: "כבד", junk: "ג׳אנק", fancy: "מפנק", home: "ביתי", quick: "מהיר" },

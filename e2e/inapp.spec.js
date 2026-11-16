@@ -38,7 +38,7 @@ for (const [name, userAgent] of Object.entries(UAS)) {
       await expect(page.locator("html")).toHaveAttribute("dir", "rtl");
       await expect(page.locator("#app h2")).toContainText("היי");
       await page.getByRole("button", { name: "יאללה, תנחש" }).click();
-      await expect(page.getByRole("meter")).toBeVisible();
+      await expect(page.getByTestId("qn")).toBeVisible();
       await playToResult(page);
       await expect(page.locator(".mood")).toBeVisible();
       await expect(page.locator(".title")).not.toBeEmpty();

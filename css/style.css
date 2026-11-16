@@ -34,11 +34,16 @@ p.cat{text-align:center;margin:-4px 0 8px;display:block}
 code.link{display:block;padding:8px;font-size:var(--t2);word-break:break-all;color:var(--muted)}
 .card{background:var(--card);border:var(--border);border-radius:var(--radius);padding:24px 16px;box-shadow:var(--shadow)}
 
-.meter{height:8px;border-radius:99px;background:var(--card);overflow:hidden;border:1px solid var(--muted)}
-.meter > i{display:block;height:100%;background:var(--accent);border-radius:inherit;transition:width .4s var(--ease)}
-.meter-wrap{display:flex;flex-direction:column;gap:4px;text-align:start}
-.meter-wrap .sub{text-align:start;font-size:var(--t2)}
-.meter-wrap .line{justify-content:space-between}
+.craving-card{display:flex;flex-direction:column;gap:6px;text-align:start;background:var(--card);border:1px solid var(--muted);border-radius:14px;padding:8px 12px}
+.craving-card .sub{text-align:start;font-size:var(--t2)}
+.craving-card .line{justify-content:space-between}
+.chips{display:flex;flex-wrap:wrap;gap:6px;min-height:28px}
+.chip{padding:3px 10px;border-radius:99px;background:var(--accent);color:#fff;font-size:var(--t2);animation:chipin .3s var(--ease)}
+.chip.soft{opacity:.55}
+.chip.empty{background:none;color:inherit;opacity:.6;padding-inline:0}
+.craving-line{margin:0 0 4px}
+@keyframes chipin{from{transform:scale(.7);opacity:0}}
+@media (prefers-reduced-motion:reduce){.chip{animation:none}}
 
 .grid{display:grid;grid-template-columns:repeat(3, 1fr);gap:8px}
 .grid .btn{flex-direction:column;justify-content:center;padding:10px 4px;font-size:var(--t2)}

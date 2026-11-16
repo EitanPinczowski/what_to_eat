@@ -225,11 +225,12 @@ test("at most 7 questions, whatever she answers and rejects; the screens may be 
   }
 });
 
-test("each stage gets at most 2 questions (a skipped stage may come back once it is worth asking)", () => {
+test("each stage gets at most 2 questions and the stages only move forward", () => {
   for (let seed = 1; seed <= 20; seed++) {
     const z = play(mk({ rnd: seeded(seed), salt: String(seed) }));
     const stages = z.s.asked.map((id) => q(id).stage);
     assert.equal(stages[0], 1);
+    assert.deepEqual(stages, [...stages].sort((a, b) => a - b), `seed ${seed} stages never go back`);
     for (const st of [1, 2, 3, 4]) assert.ok(stages.filter((x) => x === st).length <= 2, `seed ${seed} stage ${st}`);
   }
 });

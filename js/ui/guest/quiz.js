@@ -5,8 +5,8 @@ import { QUESTIONS, questionText } from "../../data/questions.js";
 import { STR } from "../../data/strings.js";
 import { buildFoods } from "../../engine/foods.js";
 import { priorFrom, knownFrom, novelEffects } from "../../engine/prior.js";
-import { moodFor } from "../../engine/mood.js";
-import { FoodQuiz } from "../../engine/quiz.js";
+import { moodFor, cravingSummary } from "../../engine/mood.js";
+import { FoodQuiz, questionsLeft } from "../../engine/quiz.js";
 import { learnFrom, seenFrom } from "../../engine/learn.js";
 import { pic, catLabel, foodLabel } from "../pics.js";
 import { BackLayer } from "../../router.js";
@@ -105,11 +105,16 @@ export function startGuestQuiz(root, opts) {
   if (opts.baseEntry) layer.push(onBack); // guest page (nothing below it): back on the very first screen stays instead of leaving the app
   for (let i = 0; i < actions.length; i++) layer.push(onBack); // a resumed quiz: one entry per replayed step
 
+  const cravingAnswers = () => [
+    ...Object.values(z.known).map((k) => ({ q: k.q, i: k.i, inferred: true })),
+    ...actions.filter((x) => x.k === "a" && x.i >= 0).map((x) => ({ q: x.q, i: x.i })),
+  ];
   const meter = () => {
     const p1 = z.ranked()[0]?.p ?? 0;
-    const w = Math.round(Math.max(0.1, Math.min(1, p1)) * 100);
-    return html`<div class="meter-wrap"><div class="line"><span class="sub">${STR.meter}</span><span class="sub qn" data-testid="qn">${STR.qn(actions.length + 1)}</span></div>
-      <div class="meter" role="meter" aria-label="${STR.meter}" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${w}"><i style="width:${w}%"></i></div></div>`;
+    const n = questionsLeft(z.s.asked.length, p1);
+    const { chips } = cravingSummary(cravingAnswers());
+    return html`<div class="craving-card" aria-live="polite"><div class="line"><span class="sub">${STR.cravingTitle}</span><span class="sub qn" data-testid="qn">${p1 >= 0.75 ? STR.almost : STR.left(n)}</span></div>
+      <div class="chips">${chips.length ? chips.map((c) => raw(html`<span class="chip${c.inferred ? " soft" : ""}">${c.label}</span>`)) : raw(html`<span class="chip empty">${STR.cravingEmpty}</span>`)}</div></div>`;
   };
   const footer = () => html`<div class="foot">
       ${actions.length ? raw(html`<button class="btn btn-ghost" data-on="undo">↪︎ ${STR.back}</button>`) : ""}
@@ -227,7 +232,7 @@ export function startGuestQuiz(root, opts) {
     const stats = { hit: actions.at(-1)?.k === "x", steps: z.n, guesses: actions.filter((a) => a.k === "x").length, skips: answered.filter((a) => a.i < 0).map((a) => a.q) };
     const ans = answered.filter((a) => a.i >= 0).map((a) => [a.q, a.i]);
     const rej = rejectedIds(actions, r.f);
-    const out = { result: r, food, rej, mood: moodFor(food), trail: [...z.trail], top: z.ranked().slice(0, 5).map((x) => x.f.id), ans, stats };
+    const out = { craving: cravingSummary(cravingAnswers()).line, result: r, food, rej, mood: moodFor(food), trail: [...z.trail], top: z.ranked().slice(0, 5).map((x) => x.f.id), ans, stats };
     out.back = goBack;
     out.step = (fn) => (uiSteps.push(fn), layer.push(onBack));
     out.seal = (on = true) => (sealed = on);

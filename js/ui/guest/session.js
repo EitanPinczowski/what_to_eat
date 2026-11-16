@@ -91,7 +91,7 @@ export function finishForm(root, out, sendLabel, onSend) {
   };
   const draw = () =>
     render(root, html`${out.back ? raw(backBar()) : ""}
-      <section class="card stack result" data-testid="result"><div class="mood">${out.mood}</div>
+      <section class="card stack result" data-testid="result">${out.craving ? raw(html`<p class="sub craving-line">${out.craving}</p>`) : ""}<div class="mood">${out.mood}</div>
         <div class="big reveal" aria-hidden="true">${raw(pic(out.food))}</div>
         <h2 class="title">${out.food?.name ?? out.result.free}</h2>${out.food ? raw(html`<p class="cat">${catLabel(out.food)}</p>`) : ""}</section>
       <p class="sub">${STR.result.how}</p>

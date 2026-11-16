@@ -16,7 +16,7 @@ const RELATED = 0.15;
 const GRID_SIZE = 9;
 const PICK_SIZE = 8;
 const MAX_WRONG = 4;
-const MAX_Q = 7; // at most 7 questions; then the guess or the 3 options (those, a duel and the grid are screens, not questions)
+export const MAX_Q = 7; // at most 7 questions; then the guess or the 3 options (those, a duel and the grid are screens, not questions)
 const EXPRESS_Q = 3;
 const QUOTA = 2;
 const KNOWN_W = 0.5;
@@ -266,7 +266,8 @@ export class FoodQuiz {
       const want = asked.length === 1 ? axes.filter((a) => this.axisStage(a) === 2) : axes.filter((a) => FEEL.includes(a));
       return this.bestOf(want, ranked, -1);
     }
-    for (let st = 1; st <= 4; st++) {
+    const top = Math.max(1, ...asked.map((id) => this.qById.get(id)?.stage ?? 1)); // forward only: never back to an earlier stage
+    for (let st = top; st <= 4; st++) {
       if ([...done].filter((a) => this.axisStage(a) === st).length >= QUOTA) continue;
       const best = this.bestOf(axes.filter((a) => this.axisStage(a) === st), ranked);
       if (best) return best;
@@ -528,4 +529,11 @@ export class FoodQuiz {
     const whole = nameIn.filter((x) => x[1] === most).map((x) => x[0]);
     return (whole.length ? whole : inName).map((f) => this.food(f.id));
   }
+}
+
+/** Countdown under the question: questions probably left, at least 1 while one is on screen. Pure. */
+export function questionsLeft(asked, p1, max = MAX_Q) {
+  const room = Math.max(1, max - asked);
+  const want = p1 >= 0.6 ? 1 : p1 >= 0.4 ? 2 : p1 >= 0.25 ? 3 : room;
+  return Math.max(1, Math.min(room, want));
 }

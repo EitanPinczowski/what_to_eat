@@ -8,7 +8,7 @@ test("guest plays the quiz to a result (local store)", async ({ page }) => {
   await page.goto(`/?store=local#q=${ROOM}`);
   await expect(page.locator("#app h2")).toContainText("היי");
   await page.getByRole("button", { name: "יאללה, תנחש" }).click();
-  await expect(page.getByRole("meter")).toBeVisible();
+  await expect(page.getByTestId("qn")).toBeVisible();
   for (let i = 0; i < 40; i++) {
     if (await page.locator(".mood").count()) break;
     const yes = page.locator('[data-on="guess"][data-arg="yes"]');

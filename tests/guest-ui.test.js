@@ -1,7 +1,8 @@
-// Her quiz screens: "שאלה n" next to the meter, back arrow points right (RTL), no skip, confetti sits behind the content.
+// Her quiz screens: countdown next to the craving card, back arrow points right (RTL), no skip, confetti sits behind the content.
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
+import { questionsLeft } from "../js/engine/quiz.js";
 import { STR } from "../js/data/strings.js";
 import { startGuestQuiz, backBar } from "../js/ui/guest/quiz.js";
 import { emptyRoom } from "../js/store/store.js";
@@ -20,15 +21,22 @@ function fakeRoot() {
   };
 }
 
-test("question label: 'שאלה n' shown with the meter, counts up with each step", () => {
-  assert.equal(STR.qn(3), "שאלה 3");
+test("countdown: 'עוד n שאלות' next to the craving card, never 0, may go up or down", () => {
+  assert.equal(STR.left(1), "עוד שאלה אחת");
+  assert.equal(STR.left(2), "עוד 2 שאלות");
+  assert.equal(questionsLeft(0, 0), 7);
+  assert.equal(questionsLeft(6, 0.1), 1);
+  assert.equal(questionsLeft(7, 0.9), 1);
+  assert.equal(questionsLeft(2, 0.5), 2);
+  assert.ok(questionsLeft(3, 0.1) > questionsLeft(3, 0.7));
   const root = fakeRoot();
   const z = startGuestQuiz(root, { room: emptyRoom(), history: [], intro: false });
-  assert.match(root.innerHTML, /data-testid="qn">שאלה 1</);
+  assert.match(root.innerHTML, /data-testid="qn">עוד /);
+  assert.match(root.innerHTML, /craving-card/);
   const s = z.next();
   assert.equal(s.type, "q");
   root.click("ans", String(s.order[0]));
-  assert.match(root.innerHTML, /data-testid="qn">שאלה 2</);
+  assert.match(root.innerHTML, /data-testid="qn">(עוד|כמעט)/);
 });
 
 test("back arrow points right (→) in RTL; the undo link uses the right-pointing hook", () => {
