@@ -41,3 +41,34 @@ export function parsePlaceLink(text) {
   }
   return null;
 }
+
+// Booking links: Tabit and Ontopo have no public search or API, so a place only stores its page link.
+const hostOf = (link) => {
+  try {
+    return new URL(String(link ?? "").trim()).hostname.toLowerCase();
+  } catch {
+    return "";
+  }
+};
+const onDomain = (h, d) => h === d || h.endsWith(`.${d}`);
+
+/** @returns {"tabit"|"ontopo"|null} which booking site a place link points at */
+export function bookingOf(link) {
+  const h = hostOf(link);
+  if (onDomain(h, "tabitisrael.co.il") || onDomain(h, "tabit.cloud")) return "tabit";
+  if (onDomain(h, "ontopo.com") || onDomain(h, "ontopo.co.il")) return "ontopo";
+  return null;
+}
+
+export const TABIT_SEARCH = "https://tabitisrael.co.il/%D7%9E%D7%A1%D7%A2%D7%93%D7%95%D7%AA";
+const ONTOPO_CITY = {
+  "tel-aviv": "תל אביב|תל אביב יפו", jerusalem: "ירושלים", haifa: "חיפה", herzeliya: "הרצליה", holon: "חולון", ramatgan: "רמת גן",
+  rishon_lezion: "ראשון לציון", petah_tikva: "פתח תקווה|פתח תקוה", natanya: "נתניה", raanana: "רעננה", kfar_saba: "כפר סבא",
+  modiin: "מודיעין|מודיעין מכבים רעות", rehovot: "רחובות", ashdod: "אשדוד", ashkelon: "אשקלון", "beer-sheva": "באר שבע", eilat: "אילת",
+  hod_hasharon: "הוד השרון", ramat_hasharon: "רמת השרון", kiryat_ono: "קרית אונו|קריית אונו", ness_ziona: "נס ציונה", yehud: "יהוד|יהוד מונוסון", caesarya: "קיסריה",
+};
+const cityKey = (s) => String(s ?? "").replace(/[\s\-־"'׳״]/g, "");
+const SLUG_OF = new Map(Object.entries(ONTOPO_CITY).flatMap(([slug, names]) => names.split("|").map((n) => [cityKey(n), slug])));
+
+/** Ontopo's page for a city when we know its slug, else their Israel home page. */
+export const ontopoUrl = (city) => `https://ontopo.com/he/il${SLUG_OF.has(cityKey(city)) ? `/${SLUG_OF.get(cityKey(city))}` : ""}`;

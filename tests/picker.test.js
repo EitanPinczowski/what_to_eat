@@ -2,7 +2,8 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { FOODS } from "../js/data/foods.js";
 import { buildFoods } from "../js/engine/foods.js";
-import { pickPlaces, scorePlaces, weightedPick, isShabbat, openStatus, navLinks, mapsUrl, recipeUrl, woltUrl, tenbisUrl } from "../js/places/picker.js";
+import { pickPlaces, scorePlaces, weightedPick, isShabbat, openStatus, navLinks, mapsUrl, recipeUrl, woltUrl, tenbisUrl, cuisineSearch } from "../js/places/picker.js";
+import { bookingOf, ontopoUrl, TABIT_SEARCH } from "../js/places/links.js";
 
 const foods = buildFoods(FOODS);
 const food = (id) => foods.find((f) => f.id === id);
@@ -147,4 +148,55 @@ test("F3: no place of the cuisine falls back to the old matching and says so", (
   assert.equal(r.noneOfKind, true);
   assert.deepEqual(r.list.map((x) => x.place.id), ["pasta_place"]);
   assert.equal(pickPlaces(places, foods, { food: null, now }).noneOfKind, false);
+});
+
+test("category picker: an explicit cuisine filters with no food; null shows every place", () => {
+  const places = [P("pizzeria", { foods: ["pizza"] }), P("cafe", { cuisines: ["cafe"] }), P("trattoria", { cuisines: ["italian"] })];
+  const it = pickPlaces(places, foods, { cuisine: "italian", now });
+  assert.deepEqual(it.list.map((x) => x.place.id).sort(), ["pizzeria", "trattoria"]);
+  assert.equal(it.noneOfKind, false);
+  assert.equal(pickPlaces(places, foods, { cuisine: "sweet", now }).list.length, 0);
+  assert.equal(pickPlaces(places, foods, { cuisine: null, now }).list.length, 3);
+});
+
+test("category picker: serving the exact food still adds the +10 bonus, also under 'all'", () => {
+  const places = [P("trattoria", { cuisines: ["italian"] }), P("pizzeria", { foods: ["pizza"], cuisines: ["italian"] }), P("cafe", { cuisines: ["cafe"] })];
+  const r = pickPlaces(places, foods, { food: food("pizza"), cuisine: "italian", now }).list;
+  assert.deepEqual(r.map((x) => x.place.id), ["pizzeria", "trattoria"]);
+  assert.equal(r[0].reason, "serves");
+  const all = pickPlaces(places, foods, { food: food("pizza"), cuisine: null, now }).list;
+  assert.deepEqual(all.map((x) => x.place.id), ["pizzeria", "trattoria", "cafe"]);
+});
+
+test("search words come from the category", () => {
+  assert.equal(cuisineSearch("italian"), "מסעדה איטלקית");
+  assert.equal(cuisineSearch("sweet"), "קינוחים");
+  assert.equal(cuisineSearch("snack"), "קיוסק");
+  assert.equal(cuisineSearch("nope"), "");
+});
+
+test("bookingOf: Tabit and Ontopo links only", () => {
+  assert.equal(bookingOf("https://tabitisrael.co.il/online-reservations/create-reservation?step=search&orgId=1"), "tabit");
+  assert.equal(bookingOf("https://www.tabit.cloud/x"), "tabit");
+  assert.equal(bookingOf("https://ontopo.com/he/il/page/123"), "ontopo");
+  assert.equal(bookingOf("https://www.ontopo.co.il/x"), "ontopo");
+  assert.equal(bookingOf("https://maps.google.com/x"), null);
+  assert.equal(bookingOf("https://evilontopo.com/x"), null);
+  assert.equal(bookingOf("https://example.com/?u=ontopo.com"), null);
+  assert.equal(bookingOf(""), null);
+  assert.equal(bookingOf(undefined), null);
+});
+
+test("ontopoUrl: city slug when known, Israel home otherwise; Tabit search is fixed", () => {
+  assert.equal(ontopoUrl("תל אביב"), "https://ontopo.com/he/il/tel-aviv");
+  assert.equal(ontopoUrl("תל אביב-יפו"), "https://ontopo.com/he/il/tel-aviv");
+  assert.equal(ontopoUrl("רמת גן"), "https://ontopo.com/he/il/ramatgan");
+  assert.equal(ontopoUrl("ראשון לציון"), "https://ontopo.com/he/il/rishon_lezion");
+  assert.equal(ontopoUrl("פתח תקווה"), "https://ontopo.com/he/il/petah_tikva");
+  assert.equal(ontopoUrl("נתניה"), "https://ontopo.com/he/il/natanya");
+  assert.equal(ontopoUrl("באר שבע"), "https://ontopo.com/he/il/beer-sheva");
+  assert.equal(ontopoUrl("רעננה"), "https://ontopo.com/he/il/raanana");
+  assert.equal(ontopoUrl("כפר שמריהו"), "https://ontopo.com/he/il");
+  assert.equal(ontopoUrl(null), "https://ontopo.com/he/il");
+  assert.match(TABIT_SEARCH, /^https:\/\/tabitisrael\.co\.il\//);
 });

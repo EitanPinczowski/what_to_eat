@@ -6,8 +6,8 @@ import { buildFoods } from "../../engine/foods.js";
 import { CUISINES } from "../../data/cuisines.js";
 import { cuisinesOfFoods } from "../../places/cuisine.js";
 import { newId } from "../../share/codec.js";
-import { pickPlaces, weightedPick, navLinks, mapsUrl, kioskUrl, woltUrl, tenbisUrl } from "../../places/picker.js";
-import { parsePlaceLink } from "../../places/links.js";
+import { pickPlaces, weightedPick, navLinks, mapsUrl, kioskUrl, woltUrl, tenbisUrl, cuisineSearch } from "../../places/picker.js";
+import { parsePlaceLink, bookingOf, ontopoUrl, TABIT_SEARCH } from "../../places/links.js";
 import { recipesFor } from "../../data/recipes.js";
 import { recipeBlock } from "./shopping.js";
 import { VOTE_MAX, VOTE_MIN, VOTE_NONE } from "../../store/store.js";
@@ -209,13 +209,20 @@ export function placesViews({ root, store, stack, views, common, ctx }) {
       chosen: null,
     });
     const food = all.find((f) => f.id === st.food) ?? null;
+    // the category is the input; the result's food only ranks places that serve it
+    if (st.cuisine === undefined) st.cuisine = food?.cuisine?.[0] ?? null;
     const label = food?.name ?? st.free;
-    const { list: scored, noneOfKind } = pickPlaces(store.list("places"), all, { food, mode: st.mode, city: st.city, budget: st.budget, novel: !!st.novel });
-    const q = [label, st.city].filter(Boolean).join(" ");
+    const term = (st.cuisine && cuisineSearch(st.cuisine)) || label;
+    const { list: scored, noneOfKind } = pickPlaces(store.list("places"), all, { food, cuisine: st.cuisine, mode: st.mode, city: st.city, budget: st.budget, novel: !!st.novel });
+    const q = [term, st.city].filter(Boolean).join(" ");
+    const book = st.chosen && st.chosenId ? bookingOf(store.doc("places", st.chosenId)?.link) : null;
+    const bookLink = book ? store.doc("places", st.chosenId).link : "";
+    const searchSit = !st.mode || st.mode === "sit";
     // exactly one main button: the chosen place's "go", else the quick-add form's save, else the roll
     const prim = st.chosen ? "go" : ctx.quickAdd ? "quick" : scored.length && st.mode !== "home" ? "roll" : "";
     render(root, html`${raw(topbar(K.title))}
-      <label class="field">${K.food}<select data-input="food"><option value="">${K.anyFood}</option>${all.map((f) => raw(html`<option value="${f.id}" ${f.id === st.food ? "selected" : ""}>${f.emoji} ${f.name}</option>`))}</select></label>
+      <div class="field">${K.food}<div class="chips" data-testid="picker-cuisine">${chip("cuisine", "", L.filterAll, !st.cuisine)}${CUISINES.map((c) => chip("cuisine", c, cuisineLabel(c), st.cuisine === c))}</div>
+        ${food ? raw(html`<p class="sub" data-testid="wanted">${K.wanted(her(), `${food.emoji} ${food.name}`)}</p>`) : ""}</div>
       <div class="field">${K.mode}<div class="chips">${PLACE_MODES.map((m) => chip("mode", m, STR.modeLabel[m], st.mode === m))}${chip("mode", "home", STR.modeLabel.home, st.mode === "home")}</div></div>
       <div class="field"><div class="chips">${chip("novel", "", K.novel, !!st.novel)}</div></div>
       <div class="field">${K.city}<div class="chips">${chip("city", "", K.anyCity, !st.city)}${cities().map((c) => chip("city", c, c, st.city === c))}</div></div>
@@ -226,17 +233,20 @@ export function placesViews({ root, store, stack, views, common, ctx }) {
         <ul class="foods">${scored.map((r) => raw(html`<li class="row"><button class="linkish" data-on="choose" data-arg="${r.place.id}"><b>${r.place.name}</b> <span class="sub">${reasonText(r, food)}</span> ${r.closesIn ? raw(html`<span class="sub" data-testid="closes-soon">⏰ ${closesText(r)}</span>`) : ""}</button><button class="chip" data-on="voteToggle" data-arg="${r.place.id}" aria-pressed="${(st.sel ?? []).includes(r.place.id)}">${(st.sel ?? []).includes(r.place.id) ? K.voteIn : K.voteAdd}</button><span class="sub">${r.score}</span></li>`))}</ul>`) : raw(html`<p class="sub">${st.mode === "home" ? "" : K.none}</p>`)}
       <div class="stack fallbacks">
         ${st.mode === "home" ? raw(recipeBlock(recipesFor(food?.id, label), label || "")) : raw(html`<a class="btn" href="${mapsUrl(q || "אוכל")}" target="_blank" rel="noopener" data-on="fallback">${K.maps(q)}</a>`)}
-        ${st.mode === "delivery" && !scored.length ? raw(html`<a class="btn" href="${woltUrl(label || "אוכל")}" target="_blank" rel="noopener" data-on="fallback">${K.wolt(label || "אוכל")}</a>
-          <a class="btn" href="${tenbisUrl(label || "אוכל")}" target="_blank" rel="noopener" data-on="fallback">${K.tenbis(label || "אוכל")}</a>`) : ""}
-        ${food?.tags[0] === "snack" ? raw(html`<a class="btn" href="${kioskUrl()}" target="_blank" rel="noopener" data-on="fallback">${K.kiosk}</a>`) : ""}
+        ${st.mode === "delivery" && !scored.length ? raw(html`<a class="btn" href="${woltUrl(term || "אוכל")}" target="_blank" rel="noopener" data-on="fallback">${K.wolt(term || "אוכל")}</a>
+          <a class="btn" href="${tenbisUrl(term || "אוכל")}" target="_blank" rel="noopener" data-on="fallback">${K.tenbis(term || "אוכל")}</a>`) : ""}
+        ${searchSit ? raw(html`<a class="btn" href="${TABIT_SEARCH}" target="_blank" rel="noopener" data-testid="tabit-search">${K.tabitSearch}</a>
+          <a class="btn" href="${ontopoUrl(st.city)}" target="_blank" rel="noopener" data-testid="ontopo-search">${K.ontopoSearch}</a>`) : ""}
+        ${food?.tags[0] === "snack" || st.cuisine === "snack" ? raw(html`<a class="btn" href="${kioskUrl()}" target="_blank" rel="noopener" data-on="fallback">${K.kiosk}</a>`) : ""}
       </div>
       ${ctx.quickAdd ? raw(html`<form class="card stack" data-submit="quick" data-testid="quick-add"><b>${K.whereWent}</b>
           <input name="name" maxlength="60" placeholder="${K.whereWentPh}" autofocus>
           <button class="btn btn-primary" type="submit">${K.quickSave}</button>
           <button class="btn btn-ghost" type="button" data-on="noQuick">${K.skip}</button></form>`) : ""}
-      ${prim === "go" ? raw(html`<button class="btn btn-primary act" data-on="go" data-arg="${st.chosenId ?? ""}" data-testid="chosen-go">${K.go}</button>`) : prim === "roll" ? raw(html`<button class="btn btn-primary act" data-on="roll">${K.roll}</button>`) : ""}`, {
+      ${book ? raw(html`<a class="btn ${st.mode === "sit" ? "btn-primary act" : ""}" href="${bookLink}" target="_blank" rel="noopener" data-testid="book">${K.book[book]}</a>`) : ""}
+      ${prim === "go" ? raw(html`<button class="btn ${book && st.mode === "sit" ? "" : "btn-primary act"}" data-on="go" data-arg="${st.chosenId ?? ""}" data-testid="chosen-go">${K.go}</button>`) : prim === "roll" ? raw(html`<button class="btn btn-primary act" data-on="roll">${K.roll}</button>`) : ""}`, {
       ...common,
-      food: (v) => ((st.food = v || null), (st.free = ""), (st.chosen = null), views.picker()),
+      cuisine: (c) => ((st.cuisine = c || null), (st.chosen = null), views.picker()),
       mode: (m) => ((st.mode = st.mode === m ? null : m), (st.chosen = null), views.picker()),
       novel: () => ((st.novel = !st.novel), (st.chosen = null), views.picker()),
       city: (c) => ((st.city = c || null), (st.chosen = null), views.picker()),
@@ -270,7 +280,7 @@ export function placesViews({ root, store, stack, views, common, ctx }) {
         if (!name) return;
         const id = newId(12);
         const mode = st.mode && st.mode !== "home" ? [st.mode] : [];
-        store.put("places", id, { name, city: st.city ?? "", modes: mode, foods: st.food ? [st.food] : [], cuisines: food?.cuisine ?? [], price: st.budget ?? 2, rating: 3, link: "", note: "", shabbat: false, visits: [new Date().toISOString()] }).catch(saveFailed);
+        store.put("places", id, { name, city: st.city ?? "", modes: mode, foods: st.food ? [st.food] : [], cuisines: st.cuisine ? [st.cuisine] : food?.cuisine ?? [], price: st.budget ?? 2, rating: 3, link: "", note: "", shabbat: false, visits: [new Date().toISOString()] }).catch(saveFailed);
         markGoing(id);
         ctx.quickAdd = false;
         toast(K.logged);

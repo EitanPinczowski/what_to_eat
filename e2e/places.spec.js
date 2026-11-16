@@ -52,8 +52,8 @@ test("places: add a place, then pick it for a result and log the visit", async (
 test("picker: maps fallback asks where we went and quick-adds the place", async ({ page, context }) => {
   await page.goto("/?store=local");
   await page.locator('[data-on="go"][data-arg="picker"]').click();
-  await page.locator('select[data-input="food"]').selectOption("sushi");
-  await expect(page.locator(".fallbacks a")).toContainText("סושי");
+  await page.locator('[data-testid="picker-cuisine"] [data-arg="asian"]').click();
+  await expect(page.locator(".fallbacks a").first()).toContainText("אסייתית"); // searches by the category, not a dish
   const popup = context.waitForEvent("page");
   await page.locator(".fallbacks a").first().click();
   await (await popup).close();
@@ -75,11 +75,38 @@ test("picker from home links to a fresh quiz result (item 9)", async ({ page, co
   }, room);
   await page.reload();
   await page.locator('[data-on="go"][data-arg="picker"]').click();
-  await expect(page.locator('select[data-input="food"]')).toHaveValue("sushi");
+  await expect(page.locator('[data-testid="picker-cuisine"] [data-arg="asian"]')).toHaveAttribute("aria-pressed", "true");
   const popup = context.waitForEvent("page");
   await page.locator(".fallbacks a").first().click();
   await (await popup).close();
   await page.getByTestId("quick-add").locator("input").fill("סושי בר");
   await page.getByTestId("quick-add").locator('button[type="submit"]').click();
   await expect.poll(async () => (await page.evaluate((r) => JSON.parse(localStorage.getItem(`mabalach_v1:${r}`)), room)).cols.history.fresh1.place).toBeTruthy();
+});
+
+test("picker from a result: category preselected, only its places, booking button on the chosen place", async ({ page }) => {
+  await page.goto("/?store=local");
+  await expect(page.locator(".tile")).toHaveCount(3);
+  const room = await page.evaluate(() => localStorage.getItem("mabalach_room"));
+  await page.evaluate((room) => {
+    const key = `mabalach_v1:${room}`;
+    const d = JSON.parse(localStorage.getItem(key));
+    d.cols.history = { fresh2: { at: new Date(Date.now() - 20 * 60e3).toISOString(), f: "pizza", fn: "פיצה", fe: "🍕", m: "sit", stats: { hit: true, steps: 9, skips: [] }, trail: [] } };
+    const pl = (id, name, cuisines, link) => (d.cols.places[id] = { id, name, city: "רעננה", modes: ["sit"], foods: [], cuisines, price: 2, rating: 3, link, note: "", shabbat: false, hours: [], visits: [] });
+    pl("p1", "טרטוריה", ["italian"], "https://ontopo.com/he/il/page/42");
+    pl("p2", "סושי בר", ["asian"], "");
+    localStorage.setItem(key, JSON.stringify(d));
+  }, room);
+  await page.reload();
+  await page.locator('[data-on="go"][data-arg="picker"]').click();
+  await expect(page.locator('[data-testid="picker-cuisine"] [data-arg="italian"]')).toHaveAttribute("aria-pressed", "true");
+  await expect(page.getByTestId("wanted")).toContainText("פיצה");
+  await expect(page.locator("li.row")).toHaveCount(1);
+  await expect(page.locator("li.row")).toContainText("טרטוריה");
+  await page.locator('[data-on="city"][data-arg="רעננה"]').click();
+  await expect(page.getByTestId("ontopo-search")).toHaveAttribute("href", "https://ontopo.com/he/il/raanana");
+  await page.locator('[data-on="choose"]').click();
+  await expect(page.getByTestId("book")).toHaveAttribute("href", "https://ontopo.com/he/il/page/42");
+  await expect(page.getByTestId("book")).toContainText("אונטופו");
+  await expect(page.locator(".btn-primary")).toHaveCount(1);
 });

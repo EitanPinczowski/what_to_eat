@@ -97,7 +97,7 @@ test("place vote: owner sends 2, she picks one, owner sees it and gets navigatio
   await expect(her.getByTestId("ack")).not.toHaveText(line);
 
   await page.locator('[data-on="go"][data-arg="picker"]').click();
-  await page.locator('select[data-input="food"]').selectOption(""); // her fresh result preselects pizza (item 9); the vote lists every place
+  await page.locator('[data-testid="picker-cuisine"] [data-arg=""]').click(); // her fresh result preselects its category (item 9); "all" lists every place for the vote
   await expect(page.getByTestId("vote-send")).toHaveCount(0);
   await page.locator('[data-on="voteToggle"]').nth(0).click();
   await expect(page.getByTestId("vote-send")).toHaveCount(0); // need at least two

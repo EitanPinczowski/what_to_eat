@@ -3,6 +3,7 @@
 //         · −2 per price step above her budget. Hidden: closed-on-Shabbat (Fri evening → Sat evening) and closed right now.
 import { CUISINE } from "../data/constants.js";
 import { placeCuisines } from "./cuisine.js";
+import { STR } from "../data/strings.js";
 
 const WEEK = 7 * 864e5;
 export const CLOSING_SOON_MIN = 45;
@@ -50,11 +51,11 @@ export function isShabbat(now = new Date()) {
  * @param {{food?: object, mode?: string, city?: string, now?: Date, budget?: number|null, novel?: boolean}} q
  * @returns {{place, score, reason, closesIn?}[]} best first; closed places are dropped, closesIn is set when closing within 45 min
  */
-export function scorePlaces(places, foods, { food = null, mode = null, city = null, now = new Date(), budget = null, novel = false, byCuisine = false } = {}) {
+export function scorePlaces(places, foods, { food = null, mode = null, city = null, now = new Date(), budget = null, novel = false, byCuisine = false, cuisine = null, all = false } = {}) {
   const byId = foods instanceof Map ? foods : new Map(foods.map((f) => [f.id, f]));
   const want = new Set((food?.tags ?? []).filter((t) => CUISINE.includes(t)));
   const shabbat = isShabbat(now);
-  const wantC = byCuisine ? (food?.cuisine ?? []) : [];
+  const wantC = cuisine ? [cuisine] : byCuisine ? (food?.cuisine ?? []) : [];
   const out = [];
   for (const p of places) {
     if (mode && mode !== "any" && mode !== "home" && !(p.modes ?? []).includes(mode)) continue;
@@ -75,7 +76,7 @@ export function scorePlaces(places, foods, { food = null, mode = null, city = nu
     } else if (sharedC) {
       score = 2 * sharedC.length;
       reason = `cuisine:${sharedC.join(",")}`;
-    } else if (food) {
+    } else if (food && !all) {
       const theirs = new Set((p.foods ?? []).flatMap((id) => byId.get(id)?.tags ?? []).filter((t) => CUISINE.includes(t)));
       const shared = [...want].filter((t) => theirs.has(t));
       if (!shared.length) continue;
@@ -94,16 +95,21 @@ export function scorePlaces(places, foods, { food = null, mode = null, city = nu
 }
 
 /**
- * The picker's list (F3): places of the result's cuisine category, ranked as scorePlaces does.
- * When none fits, falls back to the old food/tag matching and says so (noneOfKind).
+ * The picker's list: places of the chosen cuisine category, ranked as scorePlaces does (+10 for the exact food, when known).
+ * q.cuisine: a CUISINES id = that category only; null = all places; undefined = the old behaviour, derived from q.food.
+ * Only the derived mode falls back to food/tag matching when nothing fits (noneOfKind).
  * @returns {{list: object[], noneOfKind: boolean}}
  */
 export function pickPlaces(places, foods, q = {}) {
+  if (q.cuisine !== undefined) return { list: scorePlaces(places, foods, q.cuisine ? q : { ...q, all: true }), noneOfKind: false };
   const hasCuisine = (q.food?.cuisine ?? []).length > 0;
   const list = scorePlaces(places, foods, { ...q, byCuisine: true });
   if (list.length || !hasCuisine) return { list, noneOfKind: false };
   return { list: scorePlaces(places, foods, q), noneOfKind: true };
 }
+
+/** What to type into Wolt / 10bis / Maps for a category (words in strings.js). */
+export const cuisineSearch = (c) => STR.picker.search[c] ?? "";
 
 /** Weighted random pick (weights = score, floored at 0.1). */
 export function weightedPick(scored, rnd = Math.random) {
