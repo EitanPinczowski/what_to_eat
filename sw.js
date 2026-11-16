@@ -47,6 +47,7 @@ const SHELL = [
   "js/ui/guest/sweep.js",
   "js/ui/guest/wrapped.js",
   "js/ui/owner/app.js",
+  "js/ui/owner/backup-due.js",
   "js/ui/owner/brain.js",
   "js/ui/owner/places.js",
   "js/ui/owner/send-sweep.js",

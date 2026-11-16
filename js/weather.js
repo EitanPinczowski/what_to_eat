@@ -52,6 +52,12 @@ export async function placeFor(city, { f = globalThis.fetch, timeout = 3000 } = 
   return DEFAULT_PLACE;
 }
 
+/** The saved reading for this city (less than an hour old), without any network wait. -> {temp, rain} or null. */
+export function cachedWeather(city, now = Date.now()) {
+  const hit = cache.get(`wte.wx.${String(city ?? "").trim().slice(0, 40)}`);
+  return hit && now - hit.at < HOUR && hit.w ? hit.w : null;
+}
+
 /** -> {temp, rain} or null. Never throws. */
 export async function fetchWeather(city, { f = globalThis.fetch, now = Date.now(), timeout = 3000 } = {}) {
   try {

@@ -14,7 +14,8 @@ export function ownerRoomId(storage = globalThis.localStorage) {
   return id;
 }
 
-export async function openStore(roomId, { mode } = {}) {
+/** fast: open from this device's saved copy of the room (owner screens only; never for her quiz, which must see live state). */
+export async function openStore(roomId, { mode, fast = false } = {}) {
   let config = null;
   if (mode !== "local") {
     try {
@@ -25,7 +26,7 @@ export async function openStore(roomId, { mode } = {}) {
   }
   if (!config) return new LocalStore(roomId).ready();
   const { FirebaseStore } = await import("./firebase.js");
-  return new FirebaseStore(roomId, config).ready();
+  return new FirebaseStore(roomId, config, { fast }).ready();
 }
 
 export const PREV_ROOM_KEY = "mabalach_prev_room";

@@ -240,3 +240,57 @@ test("the #r= fallback payload stays small", () => {
   assert.ok(link.length < 2500, `link ${link.length}`);
   assert.ok(cleanResult(fallbackPayload("id1", entry)));
 });
+
+test("firebase fast open: ready() answers from this room's saved copy, the live data follows, writes wait for it", async () => {
+  const storage = fakeStorage();
+  const mk = (docs) => {
+    const snap = (path) => ({ id: path.split("/").pop(), exists: () => docs.has(path), data: () => docs.get(path), metadata: {} });
+    let release;
+    const gate = new Promise((r) => (release = r));
+    const calls = [];
+    return {
+      release,
+      calls,
+      sdk: {
+        initializeApp: () => ({}), initializeFirestore: () => ({}), persistentLocalCache: () => ({}), persistentMultipleTabManager: () => ({}),
+        getAuth: () => ({}), signInAnonymously: () => gate,
+        doc: (parent, ...segs) => ({ path: [parent.path, ...segs].filter(Boolean).join("/") }),
+        collection: (parent, c) => ({ path: `${parent.path}/${c}` }),
+        getDoc: async (ref) => snap(ref.path),
+        getDocs: async (ref) => ({ forEach: (f) => [...docs.keys()].filter((k) => k.startsWith(ref.path + "/")).forEach((k) => f(snap(k))) }),
+        onSnapshot: () => () => {},
+        setDoc: async (ref, d) => (calls.push(`set ${ref.path}`), docs.set(ref.path, d)),
+        deleteDoc: async () => {},
+      },
+    };
+  };
+  // first run: no copy, so ready() waits for the live data (and a copy is saved)
+  const a = mk(new Map([["rooms/" + ROOM, { v: 1, settings: { city: "חיפה" } }], [`rooms/${ROOM}/history/h1`, { fn: "פיצה" }]]));
+  a.release();
+  const s1 = await new FirebaseStore(ROOM, {}, { sdk: a.sdk, fast: true, storage }).ready();
+  assert.equal(s1.doc("history", "h1").fn, "פיצה");
+  await s1.put("live", "quiz", { step: 1 });
+  await new Promise((r) => setTimeout(r, 900));
+  s1.close();
+  assert.ok(storage.getItem(`wte.snap:${ROOM}`));
+  // second run: the connection is still pending, yet ready() has the copy; live data then replaces it
+  const b = mk(new Map([["rooms/" + ROOM, { v: 1, settings: { city: "עכו" } }], [`rooms/${ROOM}/history/h1`, { fn: "סושי" }]]));
+  const s2 = await new FirebaseStore(ROOM, {}, { sdk: b.sdk, fast: true, storage }).ready();
+  assert.equal(s2.doc("history", "h1").fn, "פיצה");
+  let told = 0;
+  s2.subscribe(() => told++);
+  const w = s2.put("history", "h2", { fn: "x" });
+  assert.deepEqual(b.calls, [], "no write before the connection is up");
+  b.release();
+  await w;
+  assert.equal(s2.doc("history", "h1").fn, "סושי");
+  assert.ok(told > 0);
+  assert.ok(b.calls.some((c) => c.endsWith("history/h2")));
+  s2.close();
+  // another room never reads this copy
+  const c = mk(new Map([["rooms/other", { v: 1 }]]));
+  c.release();
+  const s3 = await new FirebaseStore("other", {}, { sdk: c.sdk, fast: true, storage }).ready();
+  assert.equal(s3.list("history").length, 0);
+  s3.close();
+});

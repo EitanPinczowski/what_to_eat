@@ -9,6 +9,7 @@ import { render, html, raw, toast, copy } from "../dom.js";
 import { addSub, removeSub, hasSub, pushSupport, subscribeThisDevice, currentSub, unsubscribeThisDevice, notifyAll } from "../../push.js";
 import { installKind, installHelp } from "../../pwa.js";
 import { withTimeout } from "../guest/session.js";
+import { BACKUP_EVERY, backupDue } from "./backup-due.js";
 
 const G = STR.settings;
 /**
@@ -30,9 +31,7 @@ export function normBase(raw) {
   return u.origin + path;
 }
 
-export const BACKUP_EVERY = 30 * 864e5;
-
-export const backupDue = (settings, now = Date.now()) => !settings.lastBackup || now - new Date(settings.lastBackup) >= BACKUP_EVERY;
+export { BACKUP_EVERY, backupDue };
 
 /** A write that never gets its server ack (offline) must not leave the screen hanging: reject with Error("timeout"). */
 export const WRITE_TIMEOUT = 10000;

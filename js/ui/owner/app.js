@@ -5,17 +5,11 @@ import { buildQuizLink } from "../../share/links.js";
 import { waUrl } from "../../share/whatsapp.js";
 import { ViewStack } from "../../router.js";
 import { render, html, raw, toast, copy, confetti } from "../dom.js";
-import { startGuestQuiz } from "../guest/quiz.js";
-import { finishForm, resultEntry } from "../guest/session.js";
-import { brainViews } from "./brain.js";
 import { statsFrom, nudgeExp } from "../../engine/learn.js";
 import { QUESTIONS } from "../../data/questions.js";
-import { sweepViews } from "./send-sweep.js";
-import { wrappedViews, isFirstOfMonth } from "./send-wrapped.js";
-import { placesViews } from "./places.js";
-import { shoppingViews } from "./shopping.js";
+import { isFirstOfMonth } from "../../engine/wrapped.js";
 import { ACK_CODES } from "../../store/store.js";
-import { settingsViews, backupDue } from "./settings.js";
+import { backupDue } from "./backup-due.js";
 
 const T = STR.owner;
 const HOW_AFTER = 2 * 3600e3;
@@ -156,7 +150,8 @@ export async function runOwner(root, store, { base = location.origin + location.
   };
 
   // "She's next to me": the same quiz on this phone, saved straight to history.
-  views.local = () => {
+  views.local = async () => {
+    const [{ startGuestQuiz }, { finishForm, resultEntry }] = await Promise.all([import("../guest/quiz.js"), import("../guest/session.js")]);
     render(root, html`<div class="sub-root stack"></div>`, common);
     const inner = root.querySelector(".sub-root");
     startGuestQuiz(inner, {
@@ -175,12 +170,31 @@ export async function runOwner(root, store, { base = location.origin + location.
     });
   };
 
-  brainViews({ root, store, stack, views, back, common });
-  sweepViews({ root, store, views, back, common, base });
-  wrappedViews({ root, store, views, back, common, base });
-  placesViews({ root, store, stack, views, back, common, ctx });
-  shoppingViews({ root, store, stack, views, back, common, ctx });
-  settingsViews({ root, store, views, back, common, base, mode });
+  // Screens load on first use (sw.js still precaches every file, so they work offline). A stub stands in for each
+  // view a module defines; the real module overwrites all of them, then the tapped one runs.
+  const lazy = (keys, load, make) => {
+    let loading = null;
+    const stubs = {};
+    for (const k of keys)
+      stubs[k] = async () => {
+        try {
+          loading ??= load().then((m) => make(m));
+          await loading;
+        } catch (e) {
+          loading = null;
+          console.error(e);
+          return toast(T.soon);
+        }
+        if (views[k] !== stubs[k]) return views[k]();
+      };
+    Object.assign(views, stubs);
+  };
+  lazy(["brain", "food", "foodForm"], () => import("./brain.js"), (m) => m.brainViews({ root, store, stack, views, back, common }));
+  lazy(["sweep"], () => import("./send-sweep.js"), (m) => m.sweepViews({ root, store, views, back, common, base }));
+  lazy(["wrapped"], () => import("./send-wrapped.js"), (m) => m.wrappedViews({ root, store, views, back, common, base }));
+  lazy(["places", "tryForm", "placeForm", "picker"], () => import("./places.js"), (m) => m.placesViews({ root, store, stack, views, back, common, ctx }));
+  lazy(["recipe", "shopping"], () => import("./shopping.js"), (m) => m.shoppingViews({ root, store, stack, views, back, common, ctx }));
+  lazy(["settings"], () => import("./settings.js"), (m) => m.settingsViews({ root, store, views, back, common, base, mode }));
   stack.reset("home");
   return { stack, views };
 }
