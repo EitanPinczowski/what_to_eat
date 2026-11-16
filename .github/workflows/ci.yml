@@ -55,7 +55,7 @@ jobs:
       - name: Collect site files
         run: |
           mkdir _site
-          for f in index.html css js img design manifest.webmanifest sw.js; do
+          for f in index.html credits.html photos.html css js img design manifest.webmanifest sw.js; do
             if [ -e "$f" ]; then cp -r "$f" _site/; fi
           done
       - name: Stamp the service worker version

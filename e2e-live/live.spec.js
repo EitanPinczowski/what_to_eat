@@ -34,3 +34,7 @@ test("a guest link renders the first Hebrew screen (not answered)", async ({ pag
   await expect(body).toContainText(/[֐-׿]/, { timeout: 20000 });
   expect(await body.innerText()).toMatch(/[֐-׿]{2,}/);
 });
+
+test("the credits page linked from Settings is published", async ({ request }) => {
+  expect((await request.get("./credits.html")).status()).toBe(200);
+});
