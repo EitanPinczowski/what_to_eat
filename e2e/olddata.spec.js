@@ -24,15 +24,13 @@ test("owner app on an old full record: every screen draws, no errors", async ({ 
   page.on("pageerror", (e) => errors.push(e.message));
   await open(page, oldLocalRecord());
   for (const key of ["history", "places", "brain", "picker", "shopping", "insights", "settings"]) {
-    const direct = page.locator(`[data-on="go"][data-arg="${key}"]`);
+    await page.goto("/?store=local"); // a known starting point (the old record was seeded once and stays)
+    await page.locator(".tile").first().waitFor();
+    const direct = page.locator('.tile[data-on="go"][data-arg="' + key + '"]');
     if (await direct.count()) await direct.first().click();
     else await openMore(page, key);
-    await expect(page.locator("#app")).toContainText(/\S/);
     await expect(page.locator('[data-on="back"]').first()).toBeVisible();
-    await page.locator('[data-on="back"]').first().click();
-    await page.locator(".tile").first().waitFor();
-    // from a "more" list, back lands on that list: go home if the home tiles are not there
-    if (!(await page.locator('[data-on="go"][data-arg="more"]').count())) await page.locator('[data-on="back"]').first().click();
+    await expect(page.locator("#app")).toContainText(/\S/);
   }
   expect(errors).toEqual([]);
 });
