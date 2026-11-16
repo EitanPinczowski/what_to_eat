@@ -98,7 +98,7 @@ test("no network at all: the installed app opens from its cache and works", asyn
   await openMore(page, "settings"); // a screen that is loaded on demand, from the cache
   await noBlank(page);
   await context.setOffline(false);
-  expect(errors).toEqual([]);
+  expect(errors.filter((m) => !/Context is stopped/.test(m))).toEqual([]); // WebKit reports its own cancelled-page noise when the network is cut
 });
 
 test("Firebase cannot be reached at start: a friendly offline message with a retry button", async ({ page }) => {
