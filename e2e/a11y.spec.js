@@ -9,6 +9,8 @@ const GUEST = "e2eguest0000000000000000";
 
 async function scan(page, name) {
   await page.waitForTimeout(250); // let a screen change settle (focus move, redraw)
+  // a screen fading in has half-blended colors; wait until no animation or transition is running (WebKit flaked on this)
+  await page.waitForFunction(() => document.getAnimations().every((a) => a.playState !== "running"), null, { timeout: 5000 }).catch(() => {});
   // Contrast is measured against what is behind the text: wait until every photo has loaded (or failed to) so the result does not depend on timing.
   await page.waitForFunction(() => [...document.images].every((i) => i.complete), null, { timeout: 15000 }).catch(() => {});
   const r = await new AxeBuilder({ page }).withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"]).analyze();
