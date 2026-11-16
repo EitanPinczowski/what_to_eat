@@ -3,32 +3,91 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Food photos</title>
+  <title>Photo picker</title>
+  <link rel="stylesheet" href="css/tokens.css">
   <link rel="stylesheet" href="css/style.css">
   <style>
-    .sheet { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px; max-width: 1100px; margin: 0 auto; }
-    .sheet figure { margin: 0; padding: 8px; text-align: center; }
-    .sheet img, .sheet .em { width: 120px; height: 120px; object-fit: cover; border-radius: 12px; display: block; margin: 0 auto; font-size: 4rem; line-height: 120px; }
-    .sheet figcaption { font-size: .8rem; color: var(--muted); word-break: break-word; }
-    .sheet code { display: block; direction: ltr; font-size: .7rem; margin-top: 4px; user-select: all; }
+    .pk { max-width: 1000px; margin: 0 auto; padding: 12px; }
+    .pk .how { direction: ltr; text-align: left; font-size: .9rem; }
+    .pk .how code { user-select: all; }
+    .bar { position: sticky; top: 0; z-index: 2; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; padding: 8px; background: var(--bg, #fff); border-bottom: 2px solid currentColor; }
+    .food { padding: 8px 0; border-bottom: 1px solid #8884; }
+    .food h3 { margin: 4px 0; font-size: 1rem; }
+    .opts { display: flex; gap: 8px; flex-wrap: wrap; }
+    .opt { padding: 0; border: 3px solid transparent; border-radius: 12px; background: none; cursor: pointer; width: 112px; height: 112px; overflow: hidden; font: inherit; }
+    .opt img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .opt.on { border-color: #B0306E; box-shadow: 0 0 0 2px #B0306E; }
+    .opt.em { font-size: 3rem; display: grid; place-items: center; background: #8882; }
+    .opt small { font-size: .7rem; }
+    .none { font-size: .8rem; opacity: .7; align-self: center; }
+    .food a.src { font-size: .65rem; direction: ltr; }
   </style>
 </head>
 <body>
-  <h1>תמונות וקרדיטים</h1>
-  <p class="sub">תמונה לא מתאימה? מריצים את הפקודה שמתחת לה (‎--pick 2 = התוצאה הבאה). בלי תמונה — מוצג האימוג׳י.</p>
-  <main class="sheet" id="sheet"></main>
+  <div class="pk">
+    <h1>בחירת תמונות לאוכל</h1>
+    <div class="how" dir="ltr">
+      <b>How to:</b> 1) <code>npm run serve</code> and open <code>http://localhost:8000/photos.html</code>.
+      2) For each food tap the photo you like, or the emoji to keep the emoji (nothing tapped = emoji).
+      3) Tap "Download picks.json" (or "Copy"). 4) Run <code>node tools/apply-picks.mjs picks.json</code>, then commit img/foods/*.webp, js/data/photos.js, js/data/photo-credits.js.
+      Picks are saved in this browser as you go.
+    </div>
+    <div class="bar">
+      <b id="count"></b>
+      <button class="btn" id="dl" type="button">Download picks.json</button>
+      <button class="btn" id="cp" type="button">Copy</button>
+      <button class="btn" id="clr" type="button">Clear all</button>
+      <span id="msg"></span>
+    </div>
+    <main id="sheet"></main>
+  </div>
   <script type="module">
     import { FOODS } from "./js/data/foods.js";
-    import { html, raw } from "./js/ui/dom.js";
-    let credits = {};
-    try { const r = await fetch("img/foods/credits.json", { cache: "no-cache" }); if (r.ok) credits = await r.json(); } catch {}
-    document.getElementById("sheet").innerHTML = FOODS.map(([id, name, emoji]) => {
-      const c = credits[id];
-      return html`<figure class="card">
-        ${c ? raw(html`<img src="img/foods/${id}.jpg" alt="${name}" loading="lazy">`) : raw(html`<span class="em">${emoji}</span>`)}
-        <figcaption><b>${name}</b><br>${c ? raw(html`<a href="${c.page}" target="_blank" rel="noopener">${c.author}</a> · ${c.license}`) : "—"}
-        <code>node tools/fetch-photos.mjs --only ${id} --pick 2</code></figcaption></figure>`;
-    }).join("");
+    import { loadPicks, savePicks, setPick, exportPicks } from "./tools/picks-lib.mjs";
+
+    const KEY = "wte-photo-picks";
+    const store = (() => { try { return localStorage; } catch { return null; } })();
+    let cands = {};
+    try { cands = await (await fetch("tools/candidates.json", { cache: "no-cache" })).json(); } catch {}
+    let picks = loadPicks(store, KEY);
+    const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
+    const sheet = document.getElementById("sheet");
+    const msg = document.getElementById("msg");
+
+    function draw() {
+      sheet.innerHTML = FOODS.map(([id, name, emoji]) => {
+        const list = cands[id] ?? [];
+        const opts = list.map((c) => `<button type="button" class="opt${picks[id] === c.title ? " on" : ""}" data-id="${id}" data-v="${esc(c.title)}" title="${esc(c.author + " · " + c.license)}"><img src="${esc(c.thumbUrl)}" alt="" loading="lazy" referrerpolicy="no-referrer"></button>`).join("");
+        const em = `<button type="button" class="opt em${picks[id] === "emoji" ? " on" : ""}" data-id="${id}" data-v="emoji" title="emoji">${emoji}</button>`;
+        return `<section class="food"><h3>${esc(name)} <small dir="ltr">${id}</small></h3><div class="opts">${opts}${em}${list.length ? "" : '<span class="none">no candidates</span>'}</div></section>`;
+      }).join("");
+      document.getElementById("count").textContent = `${Object.values(picks).filter((v) => v !== "emoji").length} photos · ${Object.values(picks).filter((v) => v === "emoji").length} emoji · ${FOODS.length - Object.keys(picks).length} untouched`;
+    }
+    sheet.addEventListener("click", (e) => {
+      const b = e.target.closest(".opt");
+      if (!b) return;
+      picks = setPick(picks, b.dataset.id, b.dataset.v);
+      savePicks(store, KEY, picks);
+      draw();
+    });
+    const json = () => exportPicks(picks, cands);
+    document.getElementById("dl").onclick = () => {
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(new Blob([json()], { type: "application/json" }));
+      a.download = "picks.json";
+      a.click();
+      msg.textContent = "saved";
+    };
+    document.getElementById("cp").onclick = async () => {
+      try { await navigator.clipboard.writeText(json()); msg.textContent = "copied"; } catch { msg.textContent = "copy failed, use Download"; }
+    };
+    document.getElementById("clr").onclick = () => {
+      if (!confirm("Clear all picks?")) return;
+      picks = {};
+      savePicks(store, KEY, picks);
+      draw();
+    };
+    draw();
   </script>
 </body>
 </html>
