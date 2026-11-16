@@ -38,3 +38,22 @@ test("rules: history rejections are a bounded list and the inbox mark is a numbe
 test("rules: live status sentAt, dead list and push receipt are typed (items 7–8)", () => {
   assert.match(rules, /function liveOk\(docId\)[\s\S]*?str\('sentAt', 40\) && lst\('dead', 8\) && obj\('push'\)/);
 });
+
+test("rules: events are create-only, with fixed keys, typed and bounded (item 29)", () => {
+  const ev = rules.slice(rules.indexOf("function eventOk()"), rules.indexOf("match /events/"));
+  assert.match(ev, /difference\(\['k', 'at'[^\]]*\]\.toSet\(\)\)\.size\(\) == 0/);
+  assert.match(ev, /d\.k in \['sent', 'opened', 'step', 'guess', 'finish', 'vote', 'going', 'howItWas', 'push'\]/);
+  assert.match(ev, /d\.at is string && d\.at\.size\(\) <= 40/);
+  assert.match(ev, /d\.h >= 0 && d\.h <= 23/);
+  assert.match(ev, /d\.d >= 0 && d\.d <= 6/);
+  const m = rules.match(/match \/events\/\{eventId\} \{([\s\S]*?)\n      \}/)[1];
+  assert.match(m, /allow create: if signedIn\(\) && idOk\(\) && eventId\.size\(\) <= 64 && roomLive\(\) && eventOk\(\)/);
+  assert.match(m, /allow update: if false/);
+  assert.match(m, /allow delete: if signedIn\(\)/);
+  assert.doesNotMatch(m, /allow (create, )?update: if signedIn/);
+});
+
+test("rules: every event kind the app writes is allowed by the rule", async () => {
+  const { EVENT_KINDS } = await import("../js/store/events.js");
+  for (const k of EVENT_KINDS) assert.ok(rules.includes(`'${k}'`), k);
+});

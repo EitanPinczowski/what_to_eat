@@ -24,8 +24,8 @@ export class MemoryStore extends Store {
   }
   async _writeDoc(col, id, doc) {
     const d = this._data();
-    if (doc) d.cols[col][id] = doc;
-    else delete d.cols[col][id];
+    if (doc) (d.cols[col] ??= {})[id] = doc;
+    else delete d.cols[col]?.[id];
     this._fanout(false, col);
   }
   _fanout(room, col) {
