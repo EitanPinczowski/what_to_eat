@@ -31,11 +31,18 @@ test.beforeEach(() => (version = "e2e-one"));
 
 const controlled = (page) => page.waitForFunction(() => navigator.serviceWorker.controller, null, { timeout: 15000 });
 const cacheNames = (page) => page.evaluate(async () => (await caches.keys()).filter((k) => k.startsWith("wte-")).sort());
+// The worker claiming the page the first time fires controllerchange, which reloads it once (js/pwa.js); reload on purpose so the page is steady.
+const install = async (page) => {
+  await page.goto(`${base}/?store=local&sw`);
+  await controlled(page);
+  await page.reload();
+  await controlled(page);
+  await expect(page.locator("h1")).toHaveText("מה בא לך?");
+};
 const checkUpdate = (page) => page.evaluate(async () => (await navigator.serviceWorker.getRegistration()).update());
 
 test("a new sw.js version shows the update bar; refresh reloads onto the new version", async ({ page }) => {
-  await page.goto(`${base}/?store=local&sw`);
-  await controlled(page);
+  await install(page);
   await expect(page.locator(".update-bar")).toHaveCount(0);
   await expect.poll(() => cacheNames(page)).toEqual(["wte-e2e-one"]);
   await page.evaluate(() => (window.__marker = "before"));
@@ -56,8 +63,7 @@ test("a new sw.js version shows the update bar; refresh reloads onto the new ver
 });
 
 test("\"later\" keeps the page as it is", async ({ page }) => {
-  await page.goto(`${base}/?store=local&sw`);
-  await controlled(page);
+  await install(page);
   await page.evaluate(() => (window.__marker = "kept"));
   version = "e2e-three";
   await checkUpdate(page);
