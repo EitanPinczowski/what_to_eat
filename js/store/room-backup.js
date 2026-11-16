@@ -2,10 +2,6 @@
 import { ROOM_KEY, adoptRoom } from "./open.js";
 import { parseHash } from "../share/links.js";
 
-/**
- * The room id inside any app link that carries one: #q= (quiz), #s= (sweep), #join= (device link).
- * Accepts the whole link, only its #… part, or surrounding text. Returns null when there is none (#r= / #w= carry no room).
- */
 export function roomFromLink(text) {
   const t = String(text ?? "").replace(/[‎‏‪-‮⁦-⁩﻿\s]/g, "");
   const i = t.indexOf("#");
@@ -44,10 +40,6 @@ export function idbBackup(idb = globalThis.indexedDB) {
 const within = (p, ms) => Promise.race([p, new Promise((_, rej) => setTimeout(rej, ms, new Error("timeout")))]);
 const ROOM_OK = /^[a-z0-9]{6,40}$/;
 
-/**
- * Before anything reads or creates the room id: if this device lost it (localStorage empty) but the backup has it, put it back.
- * Returns "kept" (already there) | "restored" | "none" (nothing anywhere: a new room may be created).
- */
 export async function restoreRoom({ storage = globalThis.localStorage, backup = idbBackup(), timeout = 1500 } = {}) {
   if (storage?.getItem(ROOM_KEY)) return "kept";
   try {
@@ -72,10 +64,6 @@ export async function backupRoom({ storage = globalThis.localStorage, backup = i
   }
 }
 
-/**
- * Settings: a pasted app link (#q= / #s= / #join=) rejoins that room. Same confirm / keep-old-id rules as adoptRoom.
- * Returns "bad" | "same" | "declined" | "new" | "adopted".
- */
 export async function rejoinFromLink(text, { storage = globalThis.localStorage, ask = () => true, backup = idbBackup() } = {}) {
   const room = roomFromLink(text);
   if (!room) return "bad";

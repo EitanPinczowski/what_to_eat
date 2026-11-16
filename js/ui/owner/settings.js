@@ -14,10 +14,6 @@ import { BACKUP_EVERY, backupDue } from "./backup-due.js";
 import { relTime } from "./live-status.js";
 
 const G = STR.settings;
-/**
- * Site address as typed on a phone: Android keyboards capitalise ("Https://"), add spaces or invisible
- * RTL marks, and people leave out the scheme. Returns "" for empty input, null when it is not an address.
- */
 export function normBase(raw) {
   let t = String(raw ?? "").replace(/[‎‏‪-‮⁦-⁩﻿\s]/g, "");
   if (!t) return "";
@@ -38,11 +34,6 @@ export { BACKUP_EVERY, backupDue };
 /** A write that never gets its server ack (offline) must not leave the screen hanging: reject with Error("timeout"). */
 export const WRITE_TIMEOUT = 10000;
 
-/**
- * Copy everything to a fresh room id and switch to it (old links stop working). With keepData the old room is
- * then blanked and marked moved, so an old link shows "this link was replaced" instead of stale data.
- * Throws Error("timeout") when the copy gets no server ack in time (nothing is switched then).
- */
 export async function moveToNewRoom(store, { keepData = true, storage = localStorage, mode, open = openStore, timeout = WRITE_TIMEOUT } = {}) {
   const id = newId(24, () => crypto.getRandomValues(new Uint32Array(1))[0] / 2 ** 32);
   const next = await withTimeout(open(id, { mode }), timeout);

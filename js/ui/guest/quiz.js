@@ -8,12 +8,33 @@ import { priorFrom, knownFrom, novelEffects } from "../../engine/prior.js";
 import { moodFor, cravingSummary } from "../../engine/mood.js";
 import { FoodQuiz, questionsLeft } from "../../engine/quiz.js";
 import { learnFrom, seenFrom } from "../../engine/learn.js";
-import { pic, catLabel, foodLabel } from "../pics.js";
+import { pic, qPic, catLabel, foodLabel } from "../pics.js";
 import { BackLayer } from "../../router.js";
 import { weatherKind } from "../../engine/weather.js";
 import { render, html, raw } from "../dom.js";
 
 const DAY = 864e5;
+
+/** Which part of the week this is: shabbat (Fri 17:00-Sat 19:00), friNoon (Fri 10-17), late (22-05), morning (05-11), noon (11-17), evening (17-22). */
+export function momentOf(now = new Date()) {
+  const d = now.getDay(), h = now.getHours();
+  if ((d === 5 && h >= 17) || (d === 6 && h < 19)) return "shabbat";
+  if (d === 5 && h >= 10) return "friNoon";
+  return h >= 22 || h < 5 ? "late" : h < 11 ? "morning" : h < 17 ? "noon" : "evening";
+}
+
+/** A warm one-liner for about 1 answer in 3, never one she already got this quiz. null = stay quiet. */
+export function pickReaction(used, rnd = Math.random) {
+  if (rnd() >= 1 / 3) return null;
+  const left = STR.react.filter((x) => !used.has(x));
+  if (!left.length) return null;
+  const s = left[Math.min(left.length - 1, Math.floor(rnd() * left.length))];
+  used.add(s);
+  return s;
+}
+
+/** No motion: unit tests (no document), Playwright (webdriver), globalThis.WTE_NO_MOTION, or prefers-reduced-motion. */
+const still = () => !globalThis.document || !!globalThis.WTE_NO_MOTION || !!globalThis.navigator?.webdriver || !!globalThis.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
 
 /** Foods, prior and engine for a room. */
 export function makeQuiz(room, historyList, { now = new Date(), rnd, weather = null } = {}) {
@@ -74,6 +95,18 @@ export function startGuestQuiz(root, opts) {
   const introShown = intro && !actions.length;
   let onIntro = introShown;
   let overlay = false;
+  let pending = false; // an answer is lighting up for ~150 ms; taps and back wait
+  const usedReactions = new Set();
+  const react = () => {
+    const t = still() ? null : pickReaction(usedReactions, opts.reactRnd);
+    if (!t) return;
+    const d = document.createElement("div");
+    d.className = "react";
+    d.setAttribute("aria-hidden", "true");
+    d.textContent = t;
+    document.body.append(d);
+    setTimeout(() => d.remove(), 900);
+  };
   let sealed = false; // after the result was sent: back never undoes it (and never resends)
   const uiSteps = []; // screens the caller shows after the quiz ends (e.g. a failed send); each closer restores the one before
   const closeOverlay = () => (overlay = false);
@@ -132,9 +165,18 @@ export function startGuestQuiz(root, opts) {
 
   const handlers = {
     go: () => ((onIntro = false), layer.push(onBack), show()),
-    qback: () => goBack(),
-    ans: (i) => act({ k: "a", q: step.q.id, i: Number(i) }),
-    undo: () => goBack(),
+    qback: () => pending || goBack(),
+    ans: (i, _e, el) => {
+      if (pending) return;
+      const a = { k: "a", q: step.q.id, i: Number(i) };
+      if (still()) return act(a);
+      pending = true;
+      el?.classList?.add("picked");
+      globalThis.navigator?.vibrate?.(10);
+      react();
+      setTimeout(() => ((pending = false), act(a)), 150);
+    },
+    undo: () => pending || goBack(),
     duel: (c) => act({ k: "d", a: step.a.id, b: step.b.id, c }),
     veto: (id, _e, el) => {
       gridVeto.has(id) ? gridVeto.delete(id) : gridVeto.add(id);
@@ -185,8 +227,9 @@ export function startGuestQuiz(root, opts) {
     let body = "";
     if (step.type === "q") {
       const { q, order } = step;
-      body = html`<h2 class="q">${questionText(q, opts.now ?? new Date())}</h2>
-        ${order.map((i) => raw(html`<button class="btn" data-on="ans" data-arg="${i}"><span class="em">${q.answers[i].e}</span>${q.answers[i].t}</button>`))}
+      const lead = actions.length ? "" : STR.moment[momentOf(opts.now ?? new Date())]?.lead;
+      body = html`${lead ? raw(html`<p class="sub lead">${lead}</p>`) : ""}<h2 class="q">${questionText(q, opts.now ?? new Date())}</h2>
+        ${order.map((i) => raw(html`<button class="btn" data-on="ans" data-arg="${i}"><span class="em">${raw(qPic(q.answers[i].e))}</span>${q.answers[i].t}</button>`))}
         ${raw(footer())}`;
     } else if (step.type === "grid") {
       body = html`<h2 class="q">${STR.grid.text}</h2>
@@ -223,6 +266,7 @@ export function startGuestQuiz(root, opts) {
         <button class="btn btn-ghost" data-on="escape">${STR.pick.free}</button>`;
     }
     render(root, backBar(canBack() || !!opts.onExit) + meter() + body, handlers);
+    if (actions.length && step.type === "q") root.classList?.remove("slide"), void root.offsetWidth, root.classList?.add("slide");
   }
 
   function finish() {
@@ -246,6 +290,7 @@ export function startGuestQuiz(root, opts) {
     onIntro = true;
     render(root, html`<h2 class="title">${STR.intro.hi(her)}</h2>
       <p class="sub">${STR.intro.text(me)}</p>
+      <p class="sub">${STR.moment[momentOf(opts.now ?? new Date())]?.intro ?? ""}</p>
       ${tease ? raw(html`<p class="sub">${tease}</p>`) : ""}
       <button class="btn btn-primary" data-on="go" autofocus>${STR.intro.go}</button>`, handlers);
   }

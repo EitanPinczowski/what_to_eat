@@ -224,3 +224,10 @@ Known gaps: sim average steps 11.8 (target 10, reported only); sim "found" gate 
 - **Not wired.** `cravingSummary` exists and is tested but the result screen does not show it yet (no UI change in this step).
 
 - **W2a craving card and countdown.** The % meter became a chip card (`cravingSummary`, inferred chips lighter); the result opens with its line. "שאלה n" became "עוד שאלה אחת / עוד n שאלות / כמעט שם" from `questionsLeft(asked, p1)` (p1 >= .6 -> 1, >= .4 -> 2, >= .25 -> 3, else the cap; p1 >= .75 shows "כמעט שם"). tests/guest-ui.test.js kept its purpose (label counts the way forward, never 0) with new wording; e2e locators moved from role meter to testid qn. Change: thresholds in `questionsLeft`.
+
+## W2b (micro-reactions, answer art, smooth feel, moment openings)
+- Reactions: pool `STR.react`, ~1 answer in 3, never repeats within a quiz, floating chip under 1 s, never blocks. Change odds in `pickReaction` (js/ui/guest/quiz.js).
+- Answer art: `tools/fetch-fluent.mjs` also writes `img/emoji/q-<codepoints>.webp` + `js/data/emoji-q.json`; lazy, native emoji fallback, runtime emoji cache only (not in SHELL). Retired-question emojis not fetched.
+- Smooth feel: tapped answer lights up ~150 ms, then slide-in; vibrate(10). Motion is off (no delay, no reactions, no vibrate) under prefers-reduced-motion, `navigator.webdriver` (Playwright), no `document` (unit tests) or `globalThis.WTE_NO_MOTION = true`.
+- Moments (`momentOf`): shabbat Fri 17:00-Sat 19:00, friNoon Fri 10-17, late 22-05, morning 05-11, noon 11-17, evening 17-22. Intro line + a lead line above her first question, from `STR.moment`.
+- `cravingEmpty` is now "נגלה ביחד…". Shell budget kept at 320 KB by stripping JSDoc blocks in a few shell files.

@@ -38,3 +38,10 @@ export function foodLabel(food, size = "sm") {
 
 /** True when an illustration is listed for this food id. */
 export const hasPic = (id) => have.has(id);
+
+// Answer art (quiz answer emojis): img/emoji/q-<codepoints>.webp, listed in js/data/emoji-q.json. Not in the shell; the runtime emoji cache keeps them. Missing or failing: the native emoji.
+let qHave = new Set();
+export const loadQPics = (f = globalThis.fetch) => f("js/data/emoji-q.json").then((r) => r.json()).then((l) => setQPics(l), () => setQPics([]));
+export const setQPics = (keys) => (qHave = new Set(keys));
+export const cpKey = (e) => [...e.replace(/️/g, "")].map((c) => c.codePointAt(0).toString(16)).join("-");
+export const qPic = (e) => (qHave.has(cpKey(e)) ? html`<img class="qpic" src="img/emoji/q-${cpKey(e)}.webp" alt="" data-emoji="${e}" draggable="false" width="40" height="40" loading="lazy" decoding="async" onerror="this.outerHTML=this.dataset.emoji">` : html`${e}`);

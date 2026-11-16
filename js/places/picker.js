@@ -14,12 +14,6 @@ const toMin = (t) => {
   return m ? Number(m[1]) * 60 + Number(m[2]) : null;
 };
 
-/**
- * Opening hours (spec §2.7): place.hours = [{d: 0-6 (Sunday=0), o: "HH:MM", c: "HH:MM"}, ...].
- * No hours (missing/empty/no valid range) = always eligible. With hours, a day without a range is closed.
- * c <= o means it closes after midnight (spills into the next day). "00:00" as c = midnight.
- * @returns {{open: boolean, closesIn: number|null}} closesIn = minutes until closing while open
- */
 export function openStatus(place, now = new Date()) {
   const ranges = (place?.hours ?? []).map((r) => ({ d: Number(r?.d), o: toMin(r?.o), c: toMin(r?.c) })).filter((r) => r.d >= 0 && r.d <= 6 && r.o !== null && r.c !== null);
   if (!ranges.length) return { open: true, closesIn: null };
@@ -43,12 +37,6 @@ export function isShabbat(now = new Date()) {
   return (d === 5 && h >= 16) || (d === 6 && h < 19);
 }
 
-/**
- * @param {object[]} places  Place[] ({id, name, city, modes, foods, price, rating, visits, shabbat})
- * @param {Map<string,object>|object[]} foods  all foods (to read cuisine tags of what a place serves)
- * @param {{food?: object, mode?: string, city?: string, now?: Date, budget?: number|null, novel?: boolean}} q
- * @returns {{place, score, reason, closesIn?}[]} best first; closed places are dropped, closesIn is set when closing within 45 min
- */
 export function scorePlaces(places, foods, { food = null, mode = null, city = null, now = new Date(), budget = null, novel = false, byCuisine = false, cuisine = null, all = false } = {}) {
   const byId = foods instanceof Map ? foods : new Map(foods.map((f) => [f.id, f]));
   const want = new Set((food?.tags ?? []).filter((t) => CUISINE.includes(t)));
@@ -92,12 +80,6 @@ export function scorePlaces(places, foods, { food = null, mode = null, city = nu
   return out.sort((a, b) => b.score - a.score);
 }
 
-/**
- * The picker's list: places of the chosen cuisine category, ranked as scorePlaces does (+10 for the exact food, when known).
- * q.cuisine: a CUISINES id = that category only; null = all places; undefined = the old behaviour, derived from q.food.
- * Only the derived mode falls back to food/tag matching when nothing fits (noneOfKind).
- * @returns {{list: object[], noneOfKind: boolean}}
- */
 export function pickPlaces(places, foods, q = {}) {
   if (q.cuisine !== undefined) return { list: scorePlaces(places, foods, q.cuisine ? q : { ...q, all: true }), noneOfKind: false };
   const hasCuisine = (q.food?.cuisine ?? []).length > 0;

@@ -3,11 +3,11 @@ import { currentRoute, clearHash } from "./router.js";
 import { openStore, ownerRoomId, adoptRoom, ROOM_KEY } from "./store/open.js";
 import { render, html, raw, toast } from "./ui/dom.js";
 import { STR } from "./data/strings.js";
-import { loadPics } from "./ui/pics.js";
+import { loadPics, loadQPics } from "./ui/pics.js";
 import { registerSW } from "./pwa.js";
 
 const root = document.getElementById("app");
-const pics = loadPics();
+const pics = Promise.all([loadPics(), loadQPics()]);
 
 function fail(msg, retry = false) {
   render(root, html`<div class="big" aria-hidden="true">🍽️</div><p class="sub" role="alert">${msg}</p>

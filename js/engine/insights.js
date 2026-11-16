@@ -42,11 +42,6 @@ export function guessViewBy(events, field) {
   }).sort((a, b) => b.n - a.n || (a.key < b.key ? -1 : 1));
 }
 
-/**
- * Questions whose answers rarely changed the top guess. Each history entry's answers (`ans`: "q:i" in order) are
- * replayed on a fresh quiz (no learned history, so it is an approximation of what she saw); a question "changed it"
- * when the best food after the answer differs from before. Least-changing first, only those asked at least MIN_ASKED times.
- */
 export function uselessQuestions(history, foods, questions) {
   const byId = new Map(questions.map((q) => [q.id, q]));
   const asked = {}, changed = {};

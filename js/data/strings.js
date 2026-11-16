@@ -15,10 +15,20 @@ export const STR = {
   left: (n) => (n <= 1 ? "עוד שאלה אחת" : n >= 4 ? "עוד כמה שאלות" : `עוד ${n} שאלות`),
   almost: "כמעט שם",
   cravingTitle: "מה שבא לך עד עכשיו",
-  cravingEmpty: "ספרי לי עוד…",
+  cravingEmpty: "נגלה ביחד…",
   craving: {
     line: (list) => `בא לך משהו ${list} —`,
     tag: { hot: "חם", cold: "קר", comfort: "מנחם", salty: "מלוח", sweet: "מתוק", sour: "חמצמץ", spicy: "חריף", crunchy: "קראנצ׳י", creamy: "קרמי", saucy: "עם רוטב", cheesy: "גבינתי", fried: "מטוגן", light: "קליל", healthy: "בריא", heavy: "כבד", junk: "ג׳אנק", fancy: "מפנק", home: "ביתי", quick: "מהיר" },
+  },
+  react: ["מבין אותך 🫂", "אני איתך 🙌", "וואו, מעניין 👀", "אהבתי 😄", "ככה גם אני 😋", "שמעתי, שמעתי 👂", "יופי, מתקרבים 🔍", "מרגיש לי שנתקרב 🎯", "כן, כן, ברור 😌"],
+  // Moment-aware opening (guest/quiz.js momentOf): intro = under the greeting, lead = above the first question.
+  moment: {
+    morning: { intro: "בוקר טוב, כבר אכלת משהו?", lead: "בוקר, מה הבטן אומרת?" },
+    noon: { intro: "שעת צהריים, הבטן כבר מתעוררת?", lead: "הצהריים הגיעו…" },
+    evening: { intro: "ערב, אפשר כבר לפנק קצת?", lead: "ערב טוב, מה הבטן מבקשת?" },
+    late: { intro: "ממש מאוחר… נחשוף מה בא לך?", lead: "הלילה צעיר, ובטן ערה?" },
+    friNoon: { intro: "יום שישי, צהריים: ריח של שבת באוויר?", lead: "שישי בצהריים, מה בא?" },
+    shabbat: { intro: "שבת שלום! מה בא לך בשבת?", lead: "שבת היום, בלי למהר…" },
   },
   loading: "רגע…",
   escapeScreen: {

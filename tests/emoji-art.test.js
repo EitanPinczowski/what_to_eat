@@ -19,7 +19,7 @@ test("every food has img/emoji/<id>.webp (a real webp, small) or is in the nativ
   }
   const ids = new Set(FOODS.map((f) => f[0]));
   for (const id of Object.keys(ART)) assert.ok(ids.has(id) && existsSync(`img/emoji/${id}.webp`), `stray manifest entry ${id}`);
-  for (const f of readdirSync("img/emoji")) assert.ok(ART[f.replace(".webp", "")], `unlisted file ${f}`);
+  for (const f of readdirSync("img/emoji").filter((n) => !n.startsWith("q-"))) assert.ok(ART[f.replace(".webp", "")], `unlisted file ${f}`);
 });
 
 test("loadPics reads the manifest; a failed load means emoji", async () => {

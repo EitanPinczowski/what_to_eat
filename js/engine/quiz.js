@@ -16,7 +16,7 @@ const RELATED = 0.15;
 const GRID_SIZE = 9;
 const PICK_SIZE = 8;
 const MAX_WRONG = 4;
-export const MAX_Q = 7; // at most 7 questions; then the guess or the 3 options (those, a duel and the grid are screens, not questions)
+export const MAX_Q = 7;
 const EXPRESS_Q = 3;
 const QUOTA = 2;
 const KNOWN_W = 0.5;
@@ -54,12 +54,6 @@ function shuffle(arr, rnd) {
 }
 
 export class FoodQuiz {
-  /**
-   * @param {object[]} foods  Food[] from buildFoods
-   * @param {object[]} questions  QUESTIONS
-   * @param {Object<string,number>} prior  id → starting score
-   * @param {{rnd?: () => number, shuffle?: boolean}} opts
-   */
   constructor(foods, questions, prior = {}, opts = {}) {
     this.foods = foods.map((f) => ({ ...f, set: new Set([...f.tags, ...(f.cuisine ?? []).map((c) => `c:${c}`)]) }));
     this.byId = new Map(this.foods.map((f) => [f.id, f]));
@@ -266,7 +260,7 @@ export class FoodQuiz {
       const want = asked.length === 1 ? axes.filter((a) => this.axisStage(a) === 2) : axes.filter((a) => FEEL.includes(a));
       return this.bestOf(want, ranked, -1);
     }
-    const top = Math.max(1, ...asked.map((id) => this.qById.get(id)?.stage ?? 1)); // forward only: never back to an earlier stage
+    const top = Math.max(1, ...asked.map((id) => this.qById.get(id)?.stage ?? 1));
     for (let st = top; st <= 4; st++) {
       if ([...done].filter((a) => this.axisStage(a) === st).length >= QUOTA) continue;
       const best = this.bestOf(axes.filter((a) => this.axisStage(a) === st), ranked);
@@ -503,11 +497,6 @@ export class FoodQuiz {
     return fits.length === 1 ? fits[0] : null;
   }
 
-  /**
-   * Every food her typed text fits, by whole words (not fragments): a typed word equals a word of the name, with one
-   * leading prefix letter (ה ו ב ל כ מ ש) allowed on words of 4+ letters. An exact name wins alone. Either all typed words
-   * are words of the name ("פסטה" fits "פסטה ברוזה"), or the whole name is in what she typed ("בא לי פיצה" fits "פיצה").
-   */
   matchAll(text) {
     const norm = (s) => s.replace(/[\s״׳"'\-]/g, "").toLowerCase();
     const t = norm(text ?? "");

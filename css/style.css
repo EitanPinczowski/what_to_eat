@@ -147,3 +147,11 @@ summary{min-height:var(--tap);display:flex;align-items:center;font-weight:700;cu
 #app:has(.act){padding-bottom:calc(var(--tap) + 40px + env(safe-area-inset-bottom))}
 #app:has(.act)::after{content:"";position:fixed;inset-inline:0;bottom:0;height:calc(var(--tap) + 24px + env(safe-area-inset-bottom));background:var(--bg);border-top:1px solid var(--muted);z-index:7}
 .btn.act{position:fixed;inset-inline:16px;bottom:calc(12px + env(safe-area-inset-bottom));width:auto;max-width:448px;margin:0 auto;z-index:8}
+.btn.picked{background:var(--accent2);color:var(--on-accent2);transform:translate(2px,3px);box-shadow:var(--shadow-press)}
+.btn .qpic{width:40px;height:40px;display:block}
+.slide{animation:slidein .18s ease-out}
+@keyframes slidein{from{opacity:.4;transform:translateX(-18px)}to{opacity:1;transform:none}}
+.lead{margin:0}
+.react{position:fixed;inset-inline:0;bottom:84px;margin:auto;width:max-content;max-width:90vw;padding:8px 16px;border:var(--border);border-radius:var(--radius);background:var(--card);color:var(--fg);box-shadow:var(--shadow);font-size:var(--t3);pointer-events:none;z-index:50;animation:reactin .9s ease-out forwards}
+@keyframes reactin{0%{opacity:0;transform:translateY(10px)}15%,75%{opacity:1;transform:none}100%{opacity:0}}
+@media (prefers-reduced-motion:reduce){.react{animation:none}.slide{animation:none}}

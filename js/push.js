@@ -165,11 +165,6 @@ export const rememberEndpoint = (ep, st = globalThis.localStorage) => {
   }
 };
 
-/**
- * Owner app start: (1) drop subscriptions that her sends found dead (live/quiz.dead), (2) if notifications are on for this
- * phone, make sure its current subscription is the one stored. `env` is injectable for tests.
- * Returns {pruned, replaced} (what changed).
- */
 export async function repairOnStart(store, env = {}) {
   const { win = globalThis.window, nav = globalThis.navigator, st = globalThis.localStorage } = env;
   const out = { pruned: 0, replaced: false };

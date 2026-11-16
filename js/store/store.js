@@ -48,11 +48,6 @@ export const LOG_KEEP = 200;
 const isStr = (x, n) => typeof x === "string" && x.length <= n;
 const MAX_RATES = 400;
 
-/**
- * Strict check of a #r= payload (it comes from a link anyone can craft). Returns a cleaned copy holding only
- * the fields the importer uses, or null when anything is off: unknown food ids, ratings outside 1-4,
- * wrong types, too many or too long entries. knownIds = seed food ids + this room's custom food ids.
- */
 export function cleanResult(p, knownIds = new Set(FOODS.map((f) => f[0]))) {
   if (!p || typeof p !== "object" || !isStr(p.id, 40) || !/^[A-Za-z0-9_-]+$/.test(p.id)) return null;
   if (p.t === "rate") {
@@ -109,13 +104,6 @@ export function mergeKeys(stored, room, keys) {
   return out;
 }
 
-/**
- * Shared logic. Subclasses implement:
- *   _open() → Promise<{room, cols}>   initial load (cols: {name: {id: doc}})
- *   _writeRoom(room, keys?) → Promise   (keys: the top-level keys that changed; absent = write the whole doc)
- *   _writeDoc(col, id, doc|null) → Promise   (null = delete)
- * and call this._remote(room, cols) when data changes elsewhere.
- */
 export class Store {
   constructor(roomId) {
     this.roomId = roomId;
@@ -177,11 +165,6 @@ export class Store {
     return !!this.room.moved;
   }
 
-  /**
-   * Retire this room after its data was copied elsewhere: blank every doc (delete where the rules allow it,
-   * else overwrite with {moved:true, at}), then replace the room doc with a tombstone so clients that still
-   * open the old link learn it moved. Best effort per doc; the room tombstone goes last (it also stops writes).
-   */
   async retire(at = new Date().toISOString()) {
     const ops = [];
     for (const c of COLLECTIONS)
