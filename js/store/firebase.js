@@ -84,35 +84,23 @@ export class FirebaseStore extends Store {
     this.db = db;
     this.roomRef = s.doc(db, "rooms", this.roomId);
 
-    const [snap, ...got] = await Promise.all([
-      s.getDoc(this.roomRef),
-      ...COLLECTIONS.map((c) =>
-        s.getDocs(s.collection(this.roomRef, c)).catch((e) => {
-          if (c !== "shopping") throw e;
-          return null;
-        }),
-      ),
-    ]);
-    const cols = {};
-    COLLECTIONS.forEach((c, i) => {
-      cols[c] = {};
-      got[i]?.forEach((d) => (cols[c][d.id] = d.data()));
-    });
-
+    // No getDocs: each listener's first snapshot carries the data.
+    const first = COLLECTIONS.map((c) => new Promise((ok, no) => {
+      let done = false;
+      this.unsubs.push(s.onSnapshot(s.collection(this.roomRef, c), (qs) => {
+        const docs = {};
+        qs.forEach((d) => (docs[d.id] = d.data()));
+        if (!done) return (done = true), ok(docs);
+        if (!qs.metadata?.hasPendingWrites) this._remote(undefined, { [c]: docs });
+      }, (e) => (c === "shopping" ? ok({}) : no(e))));
+    }));
+    const [snap, ...got] = await Promise.all([s.getDoc(this.roomRef), ...first]);
+    const cols = Object.fromEntries(COLLECTIONS.map((c, i) => [c, got[i]]));
     this.unsubs.push(
       s.onSnapshot(this.roomRef, (d) => {
         if (!d.metadata?.hasPendingWrites && d.exists()) this._remote(d.data());
       }),
     );
-    for (const c of COLLECTIONS)
-      this.unsubs.push(
-        s.onSnapshot(s.collection(this.roomRef, c), (qs) => {
-          if (qs.metadata?.hasPendingWrites) return;
-          const docs = {};
-          qs.forEach((d) => (docs[d.id] = d.data()));
-          this._remote(undefined, { [c]: docs });
-        }, () => {}),
-      );
     this._roomExists = snap.exists();
     return { room: snap.exists() ? snap.data() : null, cols };
   }

@@ -137,8 +137,7 @@ test("firebase: reads and writes through the SDK (fake)", async () => {
     doc: (parent, ...segs) => ({ path: [parent.path, ...segs].filter(Boolean).join("/") }),
     collection: (parent, c) => ({ path: `${parent.path}/${c}` }),
     getDoc: async (ref) => snap(ref.path),
-    getDocs: async (ref) => ({ forEach: (f) => [...docs.keys()].filter((k) => k.startsWith(ref.path + "/")).forEach((k) => f(snap(k))) }),
-    onSnapshot: () => () => calls.push("unsub"),
+    onSnapshot: (ref, cb) => { if (ref.path.split("/").length > 2) Promise.resolve().then(() => cb({ metadata: {}, forEach: (f) => [...docs.keys()].filter((k) => k.startsWith(ref.path + "/")).forEach((k) => f(snap(k))) })); return () => calls.push("unsub"); },
     setDoc: async (ref, d) => (calls.push(`set ${ref.path}`), docs.set(ref.path, d)),
     deleteDoc: async (ref) => (calls.push(`del ${ref.path}`), docs.delete(ref.path)),
     updateDoc: async (ref, d) => (calls.push(`upd ${ref.path} ${Object.keys(d).join(",")}`), docs.set(ref.path, { ...docs.get(ref.path), ...d })),
@@ -259,8 +258,7 @@ test("firebase fast open: ready() answers from this room's saved copy, the live 
         doc: (parent, ...segs) => ({ path: [parent.path, ...segs].filter(Boolean).join("/") }),
         collection: (parent, c) => ({ path: `${parent.path}/${c}` }),
         getDoc: async (ref) => snap(ref.path),
-        getDocs: async (ref) => ({ forEach: (f) => [...docs.keys()].filter((k) => k.startsWith(ref.path + "/")).forEach((k) => f(snap(k))) }),
-        onSnapshot: () => () => {},
+        onSnapshot: (ref, cb) => { if (ref.path.split("/").length > 2) Promise.resolve().then(() => cb({ metadata: {}, forEach: (f) => [...docs.keys()].filter((k) => k.startsWith(ref.path + "/")).forEach((k) => f(snap(k))) })); return () => {}; },
         setDoc: async (ref, d) => (calls.push(`set ${ref.path}`), docs.set(ref.path, d)),
         deleteDoc: async () => {},
         updateDoc: async (ref, d) => (calls.push(`upd ${ref.path} ${Object.keys(d).join(",")}`), docs.set(ref.path, { ...docs.get(ref.path), ...d })),
@@ -310,8 +308,7 @@ test("update() sends only the changed top-level keys (firebase)", async () => {
     doc: (parent, ...segs) => ({ path: [parent.path, ...segs].filter(Boolean).join("/") }),
     collection: (parent, c) => ({ path: `${parent.path}/${c}` }),
     getDoc: async (ref) => snap(ref.path),
-    getDocs: async () => ({ forEach: () => {} }),
-    onSnapshot: () => () => {},
+    onSnapshot: (ref, cb) => { if (ref.path.split("/").length > 2) Promise.resolve().then(() => cb({ metadata: {}, forEach: (f) => [...docs.keys()].filter((k) => k.startsWith(ref.path + "/")).forEach((k) => f(snap(k))) })); return () => {}; },
     setDoc: async (ref, d, o) => (calls.push(`set ${o?.merge ? "merge " : ""}${ref.path}`), docs.set(ref.path, o?.merge ? { ...docs.get(ref.path), ...d } : d)),
     updateDoc: async (ref, d) => (calls.push(`upd ${Object.keys(d).join(",")}`), docs.set(ref.path, { ...docs.get(ref.path), ...d })),
     deleteField: () => undefined,
@@ -368,7 +365,7 @@ test("firebase fast open: an early edit neither clobbers live fields nor flicker
     getAuth: () => ({}), signInAnonymously: () => gate,
     doc: (parent, ...segs) => ({ path: [parent.path, ...segs].filter(Boolean).join("/") }),
     collection: (parent, c) => ({ path: `${parent.path}/${c}` }),
-    getDoc: async (ref) => snap(ref.path), getDocs: async () => ({ forEach: () => {} }), onSnapshot: () => () => {},
+    getDoc: async (ref) => snap(ref.path), onSnapshot: (ref, cb) => { if (ref.path.split("/").length > 2) Promise.resolve().then(() => cb({ metadata: {}, forEach: () => {} })); return () => {}; },
     setDoc: async () => calls.push("set"),
     updateDoc: async (ref, d) => (calls.push(Object.keys(d).join(",")), docs.set(ref.path, { ...docs.get(ref.path), ...d })),
     deleteField: () => undefined,
@@ -401,4 +398,20 @@ test("onSave: pending while a write waits, saved when it lands, error when it fa
   assert.deepEqual(seen, ["pending:1", "error:0"]);
   await s.update(() => {}); // nothing changed: no write, no event
   assert.equal(seen.length, 2);
+});
+
+test("firebase: start-up issues no getDocs; the first snapshot of each listener carries the data", async () => {
+  const docs = new Map([["rooms/" + ROOM, { v: 1 }], [`rooms/${ROOM}/history/h1`, { fn: "פיצה" }]]);
+  const snap = (path) => ({ id: path.split("/").pop(), exists: () => docs.has(path), data: () => docs.get(path), metadata: {} });
+  const sdk = {
+    initializeApp: () => ({}), initializeFirestore: () => ({}), persistentLocalCache: () => ({}), persistentMultipleTabManager: () => ({}),
+    getAuth: () => ({}), signInAnonymously: async () => {},
+    doc: (parent, ...segs) => ({ path: [parent.path, ...segs].filter(Boolean).join("/") }),
+    collection: (parent, c) => ({ path: `${parent.path}/${c}` }),
+    getDoc: async (ref) => snap(ref.path),
+    getDocs: async () => { throw new Error("getDocs must not be called"); },
+    onSnapshot: (ref, cb) => { if (ref.path.split("/").length > 2) Promise.resolve().then(() => cb({ metadata: {}, forEach: (f) => [...docs.keys()].filter((k) => k.startsWith(ref.path + "/")).forEach((k) => f(snap(k))) })); return () => {}; },
+  };
+  const s = await new FirebaseStore(ROOM, {}, { sdk }).ready();
+  assert.equal(s.list("history").length, 1);
 });
