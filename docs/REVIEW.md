@@ -289,3 +289,4 @@ Known gaps: sim average steps 11.8 (target 10, reported only); sim "found" gate 
 - Log deletes: rules now need `idOk() && roomLive()`; firestore.rules CHANGED, needs `firebase deploy --only firestore:rules` + `node tools/check-firebase.mjs`.
 - NOT done: collection-doc flicker before the first snapshot (start-up budget has 1 byte of headroom; needs room to merge optimistic edits by updatedAt). To change: raise the 190 KB start-up budget on purpose, or move store code lazy.
 - Start-up: trimmed trailing comments in start-up files to fit; the "harmless" tags are shortened to "harmless: skip".
+- **Flicker fix (boss, owner said "do it"): start-up budget 190 → 192 KB.** Room for merging early local edits with the first snapshot by `updatedAt`. Cost: about 10 ms more on a cold open; warm opens unchanged.
