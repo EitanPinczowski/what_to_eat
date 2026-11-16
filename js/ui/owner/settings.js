@@ -97,6 +97,7 @@ export function settingsViews({ root, store, views, back, common, base, mode }) 
       <section class="card stack"><b>${G.backup}</b>
         <button class="btn" data-on="export">${G.export}</button>
         <label class="btn">${G.restore}<input type="file" accept="application/json,.json" data-input="restore" hidden></label></section>
+      <a class="btn btn-ghost" href="credits.html" data-testid="credits-link">${G.credits.link}</a>
       <section class="card stack install"><b>${STR.install.title}</b><span class="sub">${installHelp(installKind())}</span>
         ${globalThis.__installPrompt ? raw(html`<button class="btn" data-on="install">${STR.install.button}</button>`) : ""}
         ${installKind() !== "ios" ? raw(html`<span class="sub">${STR.install.ios}</span>`) : ""}</section>

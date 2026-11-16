@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>קרדיטים לתמונות</title>
+  <link rel="stylesheet" href="css/tokens.css">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <main class="stack" style="max-width: 640px; margin: 0 auto; padding: 16px">
+    <a class="btn btn-ghost" href="./">→</a>
+    <h2 class="q" id="t"></h2>
+    <p class="sub" id="intro"></p>
+    <ul class="foods" id="list" data-testid="credits"></ul>
+  </main>
+  <script type="module">
+    import { STR } from "./js/data/strings.js";
+    import { FOODS } from "./js/data/foods.js";
+    import { html, raw } from "./js/ui/dom.js";
+    const C = STR.settings.credits;
+    let credits = {};
+    try { credits = await (await fetch("js/data/photo-credits.json")).json(); } catch {}
+    document.getElementById("t").textContent = C.title;
+    document.getElementById("intro").textContent = C.intro;
+    const rows = FOODS.filter(([id]) => credits[id]);
+    document.getElementById("list").innerHTML = rows.length
+      ? rows.map(([id, name]) => html`<li class="sub"><b>${name}</b> · ${C.by}: ${credits[id].author} · ${credits[id].license} · <a href="${credits[id].page}" target="_blank" rel="noopener" dir="ltr">Commons</a></li>`).join("")
+      : `<li class="sub">${C.none}</li>`;
+  </script>
+</body>
+</html>

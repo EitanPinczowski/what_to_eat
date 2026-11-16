@@ -47,7 +47,7 @@ test("convert: two square WebP sizes, large one within budget", async () => {
 
 test("applyPicks with a mocked fetch: files, manifest, credits; emoji pick removes", async () => {
   const dir = await mkdtemp(join(tmpdir(), "wte-picks-"));
-  const manifestFile = join(dir, "photos.js"), creditsFile = join(dir, "photo-credits.mjs"), imgDir = join(dir, "foods");
+  const manifestFile = join(dir, "photos.json"), creditsFile = join(dir, "photo-credits.json"), imgDir = join(dir, "foods");
   const asked = [];
   const img = await fixture();
   const get = async (url, asBuffer) => { asked.push(url); assert.equal(asBuffer, true); return img; };
@@ -57,9 +57,8 @@ test("applyPicks with a mocked fetch: files, manifest, credits; emoji pick remov
   assert.equal(asked.length, 2, "downloads only the picked files");
   assert.ok(asked[0].includes("P2") && asked[0].includes("960px"));
   assert.deepEqual((await readdir(imgDir)).sort(), ["bamba-160.webp", "bamba-400.webp", "pizza-160.webp", "pizza-400.webp"]);
-  const man = await readFile(manifestFile, "utf8");
-  assert.match(man, /export const PHOTOS = \{"bamba":true,"pizza":true\};/);
-  const { PHOTO_CREDITS } = await import(`file:///${creditsFile.replace(/\\/g, "/")}`);
+  assert.deepEqual(JSON.parse(await readFile(manifestFile, "utf8")), { bamba: true, pizza: true });
+  const PHOTO_CREDITS = JSON.parse(await readFile(creditsFile, "utf8"));
   assert.deepEqual(PHOTO_CREDITS.pizza, { title: "File:P2.jpg", author: "Ann", license: "CC BY 4.0", page: "https://commons.wikimedia.org/wiki/File:P2.jpg" });
 
   // a later run: bamba back to emoji, an unknown pick ignored, a failing download reported and not listed
@@ -67,5 +66,5 @@ test("applyPicks with a mocked fetch: files, manifest, credits; emoji pick remov
   const r2 = await applyPicks({ picks: { bamba: "emoji", ghost: "File:Z.jpg", pizza: "File:P1.jpg" }, cands, get: get2, sharp, imgDir, manifestFile, creditsFile, log });
   assert.deepEqual([r2.applied, r2.emoji, r2.bad, r2.failed], [0, 1, ["ghost"], ["pizza"]]);
   assert.deepEqual((await readdir(imgDir)).sort(), ["pizza-160.webp", "pizza-400.webp"]);
-  assert.match(await readFile(manifestFile, "utf8"), /\{"pizza":true\}/);
+  assert.deepEqual(JSON.parse(await readFile(manifestFile, "utf8")), { pizza: true });
 });

@@ -84,12 +84,30 @@ self.addEventListener("message", (e) => {
   if (e.data === "skipWaiting") self.skipWaiting();
 });
 
+const PHOTO_CACHE = "photos-v1";
+const PHOTO_MAX = 200;
+async function photo(req) {
+  const cache = await caches.open(PHOTO_CACHE);
+  const hit = await cache.match(req);
+  if (hit) return hit;
+  const res = await fetch(req).catch(() => null);
+  if (!res) return Response.error();
+  if (res.ok) {
+    await cache.put(req, res.clone());
+    const keys = await cache.keys();
+    for (const k of keys.slice(0, Math.max(0, keys.length - PHOTO_MAX))) await cache.delete(k); // oldest first
+  }
+  return res;
+}
+
 self.addEventListener("fetch", (e) => {
   const req = e.request;
   if (req.method !== "GET") return;
   const url = new URL(req.url);
   if (url.origin !== self.location.origin) return;
   // Only the app root / index.html is the app shell (hash and ?store= routes all load it); photos.html etc. are their own pages.
+  // Food photos: their own bounded cache-first cache (not in the shell precache; "photos-" is never swept by the "wte-" cleanup).
+  if (/\/img\/foods\/[\w-]+\.webp$/.test(url.pathname)) return e.respondWith(photo(req));
   const appPage = req.mode === "navigate" && /(^|\/)(index\.html)?$/.test(url.pathname);
   const key = appPage ? "index.html" : req;
   e.respondWith(

@@ -1,26 +1,20 @@
-// Food photos (img/foods/{id}.jpg + credits.json from tools/fetch-photos.mjs). Emoji is the fallback.
+// Food photos: img/foods/<id>-160|400.webp listed in js/data/photos.js (tools/apply-picks.mjs). Unlisted or failing: emoji (onerror).
 import { html, raw } from "./dom.js";
 import { STR } from "../data/strings.js";
 
 let have = new Set();
 
-export async function loadPics(f = globalThis.fetch) {
-  try {
-    const r = await f("img/foods/credits.json", { cache: "no-cache" });
-    have = new Set(r.ok ? Object.keys(await r.json()) : []);
-  } catch {
-    have = new Set();
-  }
-  return have;
-}
-
+/** js/data/photos.json (id -> true) is fetched, not imported, so it stays out of the start-up graph and the shell. Failure: emoji everywhere. */
+export const loadPics = (f = globalThis.fetch) => f("js/data/photos.json").then((r) => r.json()).then((m) => setPics(Object.keys(m)), () => setPics([]));
 export const setPics = (ids) => (have = new Set(ids));
 
-/** Photo when we have one, emoji otherwise. size: "big" (160) or "sm" (thumb). */
+export const photoSrc = (id, px = 400) => `img/foods/${id}-${px}.webp`;
+
 export function pic(food, size = "big") {
-  const px = size === "sm" ? 64 : 160;
-  if (food && have.has(food.id)) return html`<img class="pic" src="img/foods/${food.id}.jpg" alt="" draggable="false" width="${px}" height="${px}" loading="lazy" data-size="${size}">`;
-  return html`${food?.emoji ?? "🍽️"}`;
+  const px = size === "sm" ? 64 : 160, e = food?.emoji ?? "🍽️";
+  if (!food || !have.has(food.id)) return html`${e}`;
+  const [a, b] = [160, 400].map((n) => photoSrc(food.id, n));
+  return html`<img class="pic" src="${a}" srcset="${a} 160w, ${b} 400w" sizes="${px}px" alt="${food.name ?? ""}" data-emoji="${e}" draggable="false" width="${px}" height="${px}" loading="lazy" decoding="async" data-size="${size}" onerror="this.outerHTML=this.dataset.emoji">`;
 }
 
 /** Category key for the small label under a food (design revision 1.6). Order matters. */
@@ -43,5 +37,5 @@ export function foodLabel(food, size = "sm") {
   return html`${raw(p)}<span class="fname">${food.name}</span><small class="cat">${catLabel(food)}</small>`;
 }
 
-/** True when a photo file exists for this food id. */
+/** True when a photo is listed for this food id. */
 export const hasPic = (id) => have.has(id);

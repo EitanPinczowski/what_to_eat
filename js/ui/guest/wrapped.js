@@ -2,7 +2,7 @@
 // drawn on a canvas (navigator.share with the file, download as fallback). No store, no network except the photos.
 import { STR } from "../../data/strings.js";
 import { QUESTIONS } from "../../data/questions.js";
-import { pic, hasPic } from "../pics.js";
+import { pic, hasPic, photoSrc } from "../pics.js";
 import { render, html, raw, confetti } from "../dom.js";
 
 const W = STR.wrapped;
@@ -76,7 +76,7 @@ export async function drawShareImage(canvas, s, her = "") {
     g.roundRect(80, y - 80, w - 160, 170, 40);
     g.fill();
     g.stroke();
-    const im = hasPic(t[0]) ? await loadImg(`img/foods/${t[0]}.jpg`) : null;
+    const im = hasPic(t[0]) ? await loadImg(photoSrc(t[0], 400)) : null;
     if (im) {
       g.save();
       g.beginPath();

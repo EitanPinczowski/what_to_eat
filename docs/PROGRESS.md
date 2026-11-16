@@ -25,6 +25,12 @@
 - [x] 5.3 polish, accessibility review, Hebrew copy pass (45)
 - [x] 5.4 code review, docs, final REVIEW.md, tag phase-5, notify done, disable the nightly task (25)
 
+## Owner how-to: food photos (items 21–23)
+1. `npm run serve`, open http://localhost:8000/photos.html. Tap the photo you like for each food, or the emoji to keep the emoji. Picks are saved in the browser as you go.
+2. "Download picks.json" (or "Copy" and save it as picks.json).
+3. `node tools/apply-picks.mjs picks.json` (downloads only the picked files, makes img/foods/<id>-160.webp and -400.webp, updates js/data/photos.json and photo-credits.json).
+4. Commit the new webp files and the two json files. Candidates can be refreshed with `node tools/candidates.mjs --force`.
+
 ## Run log (date · steps done · minutes · 5h% start→end · weekly% start→end · notes)
 - 2026-11-14 · S0 · interactive session · scaffolding. Firebase project ready: config in js/firebase-config.js, rules published and verified with tools/check-firebase.mjs (7/7 pass)
 - 2026-11-14 · dry run · model: claude-opus-5-5 · cwd at start: C:\Users\eitan\OneDrive\Desktop\what_to_eat · 5h 82% · weekly 42% · unit tests pass · usage tool worked
