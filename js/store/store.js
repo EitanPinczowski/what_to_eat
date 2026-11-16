@@ -213,6 +213,9 @@ export class Store {
   async put(col, id, doc) {
     this._check(col);
     const { id: _ignored, ...data } = clone(doc);
+    // A top-level null means "no value": leave the key out. setDoc replaces the doc, so the effect is the same, and the
+    // deployed rules refused a present null (her result with no budget, price: null, was denied; R0, 2026-11-17).
+    for (const k of Object.keys(data)) if (data[k] === null) delete data[k];
     const prev = this.cols[col][id];
     this.cols[col][id] = data;
     this._emit(col);

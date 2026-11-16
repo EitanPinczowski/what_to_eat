@@ -22,33 +22,33 @@ service cloud.firestore {
     // ---- typed field checks on the incoming doc: absent is fine, present must have the type and size ----
     function str(f, n) {
       let d = request.resource.data;
-      return !(f in d) || (d[f] is string && d[f].size() <= n);
+      return !(f in d) || d[f] == null || (d[f] is string && d[f].size() <= n);
     }
 
     function lst(f, n) {
       let d = request.resource.data;
-      return !(f in d) || (d[f] is list && d[f].size() <= n);
+      return !(f in d) || d[f] == null || (d[f] is list && d[f].size() <= n);
     }
 
     // A list of at most n short strings (each at most 40 chars: the joined text is capped at n * 40 plus the commas).
     function strList(f, n) {
       let d = request.resource.data;
-      return !(f in d) || (d[f] is list && d[f].size() <= n && d[f].join(',').size() <= n * 41);
+      return !(f in d) || d[f] == null || (d[f] is list && d[f].size() <= n && d[f].join(',').size() <= n * 41);
     }
 
     function num(f) {
       let d = request.resource.data;
-      return !(f in d) || d[f] is number;
+      return !(f in d) || d[f] == null || d[f] is number;
     }
 
     function flag(f) {
       let d = request.resource.data;
-      return !(f in d) || d[f] is bool;
+      return !(f in d) || d[f] == null || d[f] is bool;
     }
 
     function obj(f) {
       let d = request.resource.data;
-      return !(f in d) || d[f] is map;
+      return !(f in d) || d[f] == null || d[f] is map;
     }
 
     // String-length caps for guest-written fields (spec §2.2). Matches the cuts in js/ui/guest/session.js.

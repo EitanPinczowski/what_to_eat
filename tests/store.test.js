@@ -415,3 +415,17 @@ test("firebase: start-up issues no getDocs; the first snapshot of each listener 
   const s = await new FirebaseStore(ROOM, {}, { sdk }).ready();
   assert.equal(s.list("history").length, 1);
 });
+
+// R0 (2026-11-17): her result without a budget had price: null, and the deployed rules refused a present null.
+test("put: top-level nulls are left out of the written doc (her result with no budget saves)", async () => {
+  const shared = { rooms: {} };
+  const s = await new MemoryStore(ROOM, shared).ready();
+  await s.put("history", "h1", { at: "2026-11-17", f: null, fn: "פיצה", price: null, m: "any", stats: { hit: true, x: null } });
+  const d = s.doc("history", "h1");
+  assert.equal("price" in d, false);
+  assert.equal("f" in d, false);
+  assert.equal(d.fn, "פיצה");
+  assert.deepEqual(d.stats, { hit: true, x: null }); // nested values are kept as they are
+  const other = await new MemoryStore(ROOM, shared).ready();
+  assert.equal("price" in other.doc("history", "h1"), false); // what reached the shared backend has no null either
+});

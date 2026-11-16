@@ -77,3 +77,11 @@ test("rules: deletes need the same room check as writes (bounded id, live room),
   assert.match(rules, /allow delete: if signedIn\(\)\s*&& col in \[[^\]]*\]\s*&& idOk\(\) && roomLive\(\);/);
   assert.match(rules, /match \/events\/\{eventId\} \{[\s\S]*?allow delete: if signedIn\(\) && idOk\(\) && roomLive\(\);/);
 });
+
+// R0 (2026-11-17): `null is number` is false in rules, so a present null (price: null when she skips the budget) was denied.
+test("rules: every typed-field helper accepts a null value", () => {
+  for (const fn of ["str", "lst", "strList", "num", "flag", "obj"]) {
+    const body = rules.match(new RegExp(String.raw`function ${fn}\([^)]*\) \{[\s\S]*?return ([^;]*);`))[1];
+    assert.match(body, /^!\(f in d\) \|\| d\[f\] == null \|\| /, fn);
+  }
+});
