@@ -4,13 +4,13 @@ import { test, expect } from "@playwright/test";
 const START = { name: "יאללה, תנחש" };
 // Same path on every machine: fixed timezone and clock (the prior leans on the hour) plus a seeded Math.random below.
 test.use({ timezoneId: "Asia/Jerusalem" });
-const NEXT = '[data-on="ans"], [data-on="gridDone"], [data-on="duel"][data-arg="a"], [data-on="guess"][data-arg="no"], [data-on="pick"]';
+const NEXT = '[data-on="ans"], [data-on="gridDone"], [data-on="duel"][data-arg="a"], [data-on="gut"][data-arg="a"], [data-on="guess"][data-arg="no"], [data-on="pick"]';
 
 const room = (page, id) => page.evaluate((r) => JSON.parse(localStorage.getItem(`mabalach_v1:${r}`)), id);
 const liveN = async (page, id) => ((await room(page, id))?.cols?.live?.quiz?.actions ?? []).length;
 const screen = async (page) => (await page.locator("#app").innerText()).replace(/\s+/g, " ");
 const kind = async (page) => {
-  for (const k of ["guess", "gridDone", "duel", "pick", "ans"]) if (await page.locator(`[data-on="${k}"]`).count()) return k;
+  for (const k of ["guess", "gridDone", "duel", "gut", "pick", "ans"]) if (await page.locator(`[data-on="${k}"]`).count()) return k;
   return (await page.locator(".mood").count()) ? "finish" : "other";
 };
 

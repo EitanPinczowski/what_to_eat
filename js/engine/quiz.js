@@ -74,6 +74,9 @@ export class FoodQuiz {
       asked: [],
       n: 0,
       duels: 0,
+      gut: false,
+      excl: [],
+      refineAt: -1,
       gridDone: false,
       wrong: 0,
       lastGuessAt: -99,
@@ -330,11 +333,21 @@ export class FoodQuiz {
   }
 
   /** Time to guess: one food when sure, else 3 options she picks from (or none of them, and the quiz goes on). */
-  guessStep(ranked) {
+  guessStep(all) {
+    const fresh = all.filter((x) => !this.s.excl.includes(x.f.id)); // "Close, but…" never offers the foods she was already shown
+    const ranked = fresh.length >= SHORTLIST_SIZE ? fresh : all;
     if (ranked[0].p >= this.pickBelow || ranked.length < SHORTLIST_SIZE)
       return { type: "guess", f: ranked[0].f, p: ranked[0].p };
+    const gut = this.gutPair(ranked);
+    if (gut) return { type: "gut", a: this.food(gut[0].id), b: this.food(gut[1].id) };
     const items = this.pickDistinct ? this.shortlist(ranked) : ranked.slice(0, SHORTLIST_SIZE).map((x) => x.f);
     return { type: "pick", unsure: true, items };
+  }
+
+  /** The gut-check pair: once per quiz, when the top 2 are near-twins (the same TWIN rule as confident()), before the options. null otherwise. */
+  gutPair(ranked) {
+    const [a, b] = ranked.map((x) => this.byId.get(x.f.id));
+    return !this.s.gut && !this.s.excl.length && b && jaccard(a.set, b.set) >= TWIN ? [a, b] : null;
   }
 
   qStep(q) {
@@ -357,6 +370,7 @@ export class FoodQuiz {
 
     const n = this.s.n;
     const nq = this.s.asked.length;
+    if (this.s.refineAt === n) return this.guessStep(ranked); // right after "Close, but…": 3 new options now
     if (this.s.big && nq >= EXPRESS_Q)
       return { type: "pick", express: true, items: ranked.slice(0, SHORTLIST_SIZE).map((x) => x.f) };
     if (nq >= MAX_Q) return this.guessStep(ranked);
@@ -435,6 +449,27 @@ export class FoodQuiz {
       this.spread(b, -1);
       this.trail.push(`${a.name} מול ${b.name} → אף אחד`);
     }
+  }
+
+  /** Gut-check: her tap on the picture she craves more is a strong answer (not a question: MAX_Q does not count it). */
+  gut(a, b, choice) {
+    this.snap();
+    this.s.n++;
+    this.s.gut = true;
+    const [w, l] = choice === "a" ? [a, b] : [b, a];
+    this.s.score[w.id] += 2;
+    this.s.score[l.id] -= 1;
+    this.trail.push(`${a.name} או ${b.name} → ${w.name}`);
+  }
+
+  /** "Close, but…": fx (tag → weight) nudges every food that has the tag; `shown` (the options she just saw) are never offered again. */
+  refine(fx, shown, label = "") {
+    this.snap();
+    this.s.n++;
+    this.s.refineAt = this.s.n;
+    this.s.excl.push(...shown.filter((id) => !this.s.excl.includes(id)));
+    for (const f of this.foods) for (const [tag, v] of Object.entries(fx)) if (f.set.has(tag)) this.s.score[f.id] += v;
+    this.trail.push(`קרוב, אבל ${label}`);
   }
 
   grid(items, vetoIds = []) {

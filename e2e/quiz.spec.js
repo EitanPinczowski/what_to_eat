@@ -16,7 +16,7 @@ test("guest plays the quiz to a result (local store)", async ({ page }) => {
       await yes.click();
       continue;
     }
-    const next = page.locator('[data-on="ans"], [data-on="gridDone"], [data-on="duel"][data-arg="a"], [data-on="pick"]').first();
+    const next = page.locator('[data-on="ans"], [data-on="gridDone"], [data-on="duel"][data-arg="a"], [data-on="gut"][data-arg="a"], [data-on="pick"]').first();
     await next.click();
   }
   await expect(page.locator(".mood")).toBeVisible();

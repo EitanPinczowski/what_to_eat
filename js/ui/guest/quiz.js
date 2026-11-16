@@ -51,6 +51,8 @@ export function applyAction(z, a) {
     if (q) z.answer(q, a.i); // a v1 question id from a quiz she started before the update: dropped
   }
   else if (a.k === "d") z.duel(z.food(a.a), z.food(a.b), a.c);
+  else if (a.k === "t") z.gut(z.food(a.a), z.food(a.b), a.c);
+  else if (a.k === "r") z.refine(a.x ?? {}, a.f ?? [], a.l);
   else if (a.k === "g") z.grid([], a.v ?? []);
   else if (a.k === "x") z.guessResult(z.food(a.f), a.r);
   else if (a.k === "n") z.rejectPick((a.f ?? []).map((id) => z.food(id)).filter(Boolean));
@@ -107,6 +109,7 @@ export function startGuestQuiz(root, opts) {
     document.body.append(d);
     setTimeout(() => d.remove(), 900);
   };
+  const refineMod = import("../../engine/refine.js"); // "why this?" lines and "Close, but…" nudges: loaded with her first pick, not at start-up
   let sealed = false; // after the result was sent: back never undoes it (and never resends)
   const uiSteps = []; // screens the caller shows after the quiz ends (e.g. a failed send); each closer restores the one before
   const closeOverlay = () => (overlay = false);
@@ -187,6 +190,8 @@ export function startGuestQuiz(root, opts) {
       gridVeto = new Set();
       act({ k: "g", v });
     },
+    gut: (c) => act({ k: "t", a: step.a.id, b: step.b.id, c }),
+    refine: (key) => refineMod.then((m) => act(m.refineAction(key, step.items.map((f) => f.id)))),
     guess: (r) => act({ k: "x", f: step.f.id, r }),
     pick: (id) => act({ k: "c", f: id }),
     pickNone: () => act({ k: "n", f: step.items.map((f) => f.id) }),
@@ -248,6 +253,14 @@ export function startGuestQuiz(root, opts) {
           <button class="btn" data-on="duel" data-arg="none">${STR.duel.neither}</button>
         </div>
         ${raw(footer())}`;
+    } else if (step.type === "gut") {
+      const { a, b } = step;
+      body = html`<h2 class="q">${STR.gut.text}</h2>
+        <div class="duel">
+          <button class="btn food" data-on="gut" data-arg="a">${raw(foodLabel(a, "big"))}</button>
+          <button class="btn food" data-on="gut" data-arg="b">${raw(foodLabel(b, "big"))}</button>
+        </div>
+        ${raw(footer())}`;
     } else if (step.type === "guess") {
       const f = step.f;
       body = html`<div class="sub">${STR.guess.text}</div>
@@ -261,12 +274,28 @@ export function startGuestQuiz(root, opts) {
         ${raw(footer())}`;
     } else if (step.type === "pick") {
       body = html`<h2 class="q">${step.express ? STR.pick.express : step.unsure ? STR.pick.unsure : STR.pick.text}</h2>
-        <div class="grid">${step.items.map((f) => raw(html`<button class="btn food" data-on="pick" data-arg="${f.id}">${raw(foodLabel(f))}</button>`))}</div>
+        <div class="grid">${step.items.map((f) => raw(html`<button class="btn food" data-on="pick" data-arg="${f.id}">${raw(foodLabel(f))}${step.unsure ? raw(html`<small class="why" data-why="${f.id}"></small>`) : ""}</button>`))}</div>
+        ${step.unsure ? raw(html`<div class="nudges" data-testid="nudges"></div>`) : ""}
         ${step.unsure ? raw(html`<button class="btn" data-on="pickNone">${STR.pick.none}</button>`) : ""}
         <button class="btn btn-ghost" data-on="escape">${STR.pick.free}</button>`;
     }
     render(root, backBar(canBack() || !!opts.onExit) + meter() + body, handlers);
+    if (step.type === "pick" && step.unsure) fillPick(step);
     if (actions.length && step.type === "q") root.classList?.remove("slide"), void root.offsetWidth, root.classList?.add("slide");
+  }
+
+  /** The 3 options get a "why" line each and the "Close, but…" nudges, once the lazy module is in (the screen works without them). */
+  function fillPick(on) {
+    refineMod.then((m) => {
+      if (step !== on) return;
+      const ans = cravingAnswers();
+      for (const f of on.items) {
+        const el = root.querySelector(`[data-why="${f.id}"]`);
+        if (el) el.textContent = m.whyLine(f, ans);
+      }
+      const host = root.querySelector("[data-testid=nudges]");
+      if (host) host.innerHTML = html`<p class="sub">${STR.refine.title}</p><div class="chips">${m.nudgesFor(ans).map((k) => raw(html`<button class="btn" data-on="refine" data-arg="${k}">${STR.refine.nudge[k]}</button>`))}</div>`;
+    }, () => {}); // harmless: the options work without the extras
   }
 
   function finish() {

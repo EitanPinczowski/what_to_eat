@@ -121,6 +121,7 @@ test("every food is reachable at noise 0 (result or top 3 in some trial); no ide
         z.answer(s.q, ds.indexOf(max));
       } else if (s.type === "grid") z.grid(s.items, s.items.filter((f) => f.id !== t.id && sim(f) < 0.15).map((f) => f.id));
       else if (s.type === "duel") z.duel(s.a, s.b, Math.max(sim(s.a), sim(s.b)) < 0.15 ? "none" : sim(s.a) >= sim(s.b) ? "a" : "b");
+      else if (s.type === "gut") z.gut(s.a, s.b, "a");
       else if (s.type === "guess") {
         offered.push(s.f.id);
         z.guessResult(s.f, s.f.id === t.id ? "yes" : sim(s.f) >= 0.5 ? "close" : "no");

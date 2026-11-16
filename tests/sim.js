@@ -76,6 +76,8 @@ function play(target, rnd, learned = {}, noiseAt = () => NOISE) {
       }
     } else if (s.type === "grid") {
       z.grid(s.items, s.items.filter((f) => f.id !== target.id && sim(f) < 0.15).map((f) => f.id));
+    } else if (s.type === "gut") {
+      z.gut(s.a, s.b, sim(s.a) >= sim(s.b) ? "a" : "b");
     } else if (s.type === "duel") {
       const sa = sim(s.a);
       const sb = sim(s.b);

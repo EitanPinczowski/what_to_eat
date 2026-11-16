@@ -37,6 +37,9 @@ function randomMove(z, r, style) {
       z.grid(s.items, veto);
       return true;
     }
+    case "gut":
+      z.gut(s.a, s.b, pickOf(r, ["a", "b"]));
+      return true;
     case "duel":
       z.duel(s.a, s.b, pickOf(r, ["a", "b"]));
       return true;

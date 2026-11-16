@@ -14,7 +14,7 @@ const MIN_SCORE = 1.5;
  * answers: [{q: id, i: index | [i, j], inferred?: bool}] or [id, i] pairs, in the order asked. Pure.
  * → {chips: [{tag, label, inferred}], line}: the 2-3 strongest tags (a pair counts 0.6 each, an inferred answer half), line "בא לך משהו חם, מנחם ומלוח —" or "".
  */
-export function cravingSummary(answers, questions = QUESTIONS) {
+export function cravingSummary(answers, questions = QUESTIONS, max = MAX_CHIPS) {
   const score = {}, order = [];
   for (const a of answers ?? []) {
     const [id, i, inferred] = Array.isArray(a) ? a : [a?.q, a?.i, a?.inferred];
@@ -33,7 +33,7 @@ export function cravingSummary(answers, questions = QUESTIONS) {
       }
     }
   }
-  const top = order.filter((t) => score[t].v >= MIN_SCORE).sort((a, b) => score[b].v - score[a].v).slice(0, MAX_CHIPS);
+  const top = order.filter((t) => score[t].v >= MIN_SCORE).sort((a, b) => score[b].v - score[a].v).slice(0, max);
   const chips = top.map((tag) => ({ tag, label: STR.craving.tag[tag], inferred: score[tag].own === 0 }));
   const names = chips.map((c) => c.label);
   const list = names.length > 1 ? `${names.slice(0, -1).join(", ")} ו${names.at(-1)}` : names[0];

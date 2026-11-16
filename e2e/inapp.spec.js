@@ -19,7 +19,7 @@ async function playToResult(page) {
       await yes.click();
       continue;
     }
-    await page.locator('[data-on="ans"], [data-on="gridDone"], [data-on="duel"][data-arg="a"], [data-on="pick"]').first().click();
+    await page.locator('[data-on="ans"], [data-on="gridDone"], [data-on="duel"][data-arg="a"], [data-on="gut"][data-arg="a"], [data-on="pick"]').first().click();
   }
 }
 

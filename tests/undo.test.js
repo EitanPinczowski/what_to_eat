@@ -39,6 +39,7 @@ function walk(z, visit, max = 30) {
     if (s.type === "q") z.answer(s.q, s.order[0]);
     else if (s.type === "grid") z.grid(s.items, [s.items[0].id]);
     else if (s.type === "duel") z.duel(s.a, s.b, "a");
+    else if (s.type === "gut") z.gut(s.a, s.b, "a");
     else if (s.type === "guess") z.guessResult(s.f, "no");
     else if (s.type === "pick") z.choose(s.items[0]);
   }
@@ -82,6 +83,7 @@ test("the hungry express shortlist: pick one of 3 and undo returns to the same 3
     if (s.type === "q") z.answer(s.q, s.order[0]);
     else if (s.type === "grid") z.grid(s.items, []);
     else if (s.type === "duel") z.duel(s.a, s.b, "a");
+    else if (s.type === "gut") z.gut(s.a, s.b, "a");
     else z.guessResult(s.f, "no");
   }
   assert.equal(s.type, "pick");
@@ -102,6 +104,7 @@ test("a long walk undone all the way back to the start", () => {
     if (s.type === "q") z.answer(s.q, s.order[0]);
     else if (s.type === "grid") z.grid(s.items, [s.items[0].id]);
     else if (s.type === "duel") z.duel(s.a, s.b, "b");
+    else if (s.type === "gut") z.gut(s.a, s.b, "a");
     else if (s.type === "guess") z.guessResult(s.f, "close");
     else z.choose(s.items[0]);
   }
@@ -140,6 +143,7 @@ test("back from the result screen un-chooses it and the live progress shrinks; s
     else if (h.includes('data-on="ans"')) root.click("ans", String(z.next().order[0]));
     else if (h.includes('data-on="gridDone"')) root.click("gridDone");
     else if (h.includes('data-on="duel"')) root.click("duel", "a");
+    else if (h.includes('data-on="gut"')) root.click("gut", "a");
     else root.click("pick", z.next().items[0].id);
   }
   assert.ok(out, "reached the result");
@@ -179,6 +183,7 @@ test("item 13: the unsure pick of 3: one tap and 'none of these' both undo to th
     if (s.type === "q") z.answer(s.q, s.order[0]);
     else if (s.type === "grid") z.grid(s.items, []);
     else if (s.type === "duel") z.duel(s.a, s.b, "a");
+    else if (s.type === "gut") z.gut(s.a, s.b, "a");
   }
   assert.equal(s.type, "pick");
   assert.equal(s.unsure, true);

@@ -25,6 +25,7 @@ const SHELL = [
   "js/engine/mood.js",
   "js/engine/prior.js",
   "js/engine/quiz.js",
+  "js/engine/refine.js",
   "js/engine/similarity.js",
   "js/engine/weather.js",
   "js/engine/wrapped.js",

@@ -196,6 +196,7 @@ test("a full run ends within 20 steps", () => {
     if (s.type === "q") z.answer(s.q, s.order[0]);
     else if (s.type === "grid") z.grid(s.items, []);
     else if (s.type === "duel") z.duel(s.a, s.b, "a");
+    else if (s.type === "gut") z.gut(s.a, s.b, "a");
     else if (s.type === "guess") z.guessResult(s.f, i > 8 ? "yes" : "no");
     else if (s.type === "pick") z.choose(s.items[0]);
   }
@@ -217,6 +218,7 @@ test("🦖 express quiz: hunger, one mood question, one sensation question, then
     if (s.type === "q") z.answer(s.q, 0);
     else if (s.type === "guess") z.guessResult(s.f, "no");
     else if (s.type === "duel") z.duel(s.a, s.b, "none");
+    else if (s.type === "gut") z.gut(s.a, s.b, "a");
     else if (s.type === "grid") z.grid(s.items, []);
     else break;
   }

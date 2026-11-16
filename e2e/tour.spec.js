@@ -189,7 +189,7 @@ for (const scheme of ["light", "dark"]) {
         const kind = (await her.locator('[data-on="guess"]').count()) ? "guess" : (await her.locator('[data-on="gridDone"]').count()) ? "grid" : (await her.locator('[data-on="duel"]').count()) ? "duel" : (await her.locator('[data-on="pick"]').count()) ? "pick" : "ans";
         if (!seen.has(kind)) { seen.add(kind); await shot(her, `her-q-${kind}`); }
         if (kind === "guess") { await her.locator('[data-on="guess"][data-arg="yes"]').click(); continue; }
-        await her.locator('[data-on="ans"], [data-on="gridDone"], [data-on="duel"][data-arg="a"], [data-on="pick"]').first().click();
+        await her.locator('[data-on="ans"], [data-on="gridDone"], [data-on="duel"][data-arg="a"], [data-on="gut"][data-arg="a"], [data-on="pick"]').first().click();
       }
       await shot(her, "her-finish");
       await her.locator('[data-on="mode"]').first().click();

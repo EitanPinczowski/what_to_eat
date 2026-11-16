@@ -24,6 +24,7 @@ function play(z, pick = (s) => s.order[0]) {
     if (s.type === "q") z.answer(s.q, pick(s));
     else if (s.type === "grid") z.grid(s.items, []);
     else if (s.type === "duel") z.duel(s.a, s.b, "a");
+    else if (s.type === "gut") z.gut(s.a, s.b, "a");
     else if (s.type === "guess") z.guessResult(s.f, "no");
     else if (s.type === "pick") (s.unsure ? z.rejectPick(s.items) : z.choose(s.items[0]));
   }

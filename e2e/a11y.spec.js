@@ -73,7 +73,7 @@ test("her quiz result screen", async ({ page }) => {
   for (let i = 0; i < 40 && !(await page.locator(".mood").count()); i++) {
     const yes = page.locator('[data-on="guess"][data-arg="yes"]');
     if (await yes.count()) await yes.click();
-    else await page.locator('[data-on="ans"], [data-on="gridDone"], [data-on="duel"][data-arg="a"], [data-on="pick"]').first().click();
+    else await page.locator('[data-on="ans"], [data-on="gridDone"], [data-on="duel"][data-arg="a"], [data-on="gut"][data-arg="a"], [data-on="pick"]').first().click();
   }
   await expect(page.locator(".mood")).toBeVisible();
   await scan(page, "guest result");

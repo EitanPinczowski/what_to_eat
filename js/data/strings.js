@@ -37,6 +37,11 @@ export const STR = {
     send: "זה!",
     back: "בעצם, תמשיך לנחש",
   },
+  gut: { text: "מה מעלה לך ריר יותר?" },
+  refine: {
+    title: "קרוב, אבל…",
+    nudge: { light: "יותר קליל?", comfort: "יותר מנחם?", sweet: "יותר מתוק?", salty: "יותר מלוח?", spicy: "יותר חריף?", fancy: "יותר מפנק?", quick: "יותר מהיר?", cold: "יותר קר?" },
+  },
   duel: { text: "אם חייבים לבחור עכשיו:", both: "שניהם 😍", neither: "אף אחד 🙅‍♀️" },
   cuisine: {
     text: "איזה סוג אוכל בא לך?",
