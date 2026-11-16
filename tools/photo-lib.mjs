@@ -31,7 +31,7 @@ export const QUERY = {
 
 export const queryFor = (id) => QUERY[id] ?? id.replace(/_/g, " ");
 
-const OK_LICENSE = /^(cc0|cc[- ]by(-sa)?( \d(\.\d)?)?|public domain|pd)/i;
+export const OK_LICENSE = /^(cc0|cc[- ]by(-sa)?( \d(\.\d)?)?|public domain|pd)/i;
 
 /** Commons search API URL (files namespace, 320px thumbs, license metadata). */
 export function searchUrl(query, limit = 8) {
@@ -43,7 +43,7 @@ export function searchUrl(query, limit = 8) {
   return `https://commons.wikimedia.org/w/api.php?${p}`;
 }
 
-const strip = (s) => String(s ?? "").replace(/<[^>]*>/g, "").replace(/\s+/g, " ").trim();
+export const strip = (s) => String(s ?? "").replace(/<[^>]*>/g, "").replace(/\s+/g, " ").trim();
 
 /** Usable candidates (jpeg/png, free license, has a thumb), in search order. */
 export function candidates(json) {
@@ -63,4 +63,90 @@ export function candidates(json) {
     });
   }
   return out;
+}
+
+// ---- Item 21: candidates by identity (Wikidata item -> P18 + Commons category) ----
+
+export const UA = "what_to_eat-photo-tool/1.0 (personal project)";
+export const isOkLicense = (s) => OK_LICENSE.test(String(s ?? ""));
+
+/** Search terms for Wikidata where the plain English term finds the wrong item (mostly Israeli products and dishes). */
+export const WIKIDATA = {
+  bamba: "Bamba", bissli: "Bissli", krembo: "Krembo", kif_kef: "Kif-Kef", pesek_zman: "Pesek Zman", apropo: "Apropo",
+  tapuchips: "Tapuchips", klik: "Klik chocolate", milky: "Milky dessert", jachnun: "jachnun", malawach: "malawach",
+  sabich: "sabich", meorav: "Meorav Yerushalmi", arayes: "arayes", choco_bar: "Shokolad Para", shoko_bag: "chocolate milk",
+  artik: "ice pop", seeds: "sunflower seed", wafers: "wafer", pretzels: "pretzel",
+  hamin: "cholent", majadra: "mujaddara", ptitim: "Israeli couscous", il_breakfast: "Israeli breakfast", il_salad: "Israeli salad",
+  schnitzel_baguette: "schnitzel", sufganiya: "sufganiyah", kubbeh: "kubbeh", labneh: "labneh", malabi: "malabi", knafeh: "kanafeh",
+};
+export const wikidataTerm = (id) => WIKIDATA[id] ?? queryFor(id);
+
+export const BAD_TITLE = /logo|packag|wrapper|painting|drawing|svg|icon|label/i;
+
+const API = { wd: "https://www.wikidata.org/w/api.php", commons: "https://commons.wikimedia.org/w/api.php" };
+const qs = (o) => new URLSearchParams({ format: "json", ...o }).toString();
+export const wdSearchUrl = (term) => `${API.wd}?${qs({ action: "wbsearchentities", search: term, language: "en", limit: "3" })}`;
+export const wdEntitiesUrl = (ids) => `${API.wd}?${qs({ action: "wbgetentities", ids: ids.join("|"), props: "claims" })}`;
+const INFO = { prop: "imageinfo", iiprop: "url|size|mime|extmetadata", iiurlwidth: "330" };
+export const categoryUrl = (cat) => `${API.commons}?${qs({ action: "query", generator: "categorymembers", gcmtitle: `Category:${cat.replace(/^Category:/, "")}`, gcmtype: "file", gcmlimit: "30", ...INFO })}`;
+export const titlesUrl = (titles) => `${API.commons}?${qs({ action: "query", titles: titles.join("|"), ...INFO })}`;
+export const searchInfoUrl = (term) => `${API.commons}?${qs({ action: "query", generator: "search", gsrnamespace: "6", gsrsearch: `${term} filetype:bitmap`, gsrlimit: "20", ...INFO })}`;
+
+/** P18 file names and P373 category from a wbgetentities response; first entity that has either wins. */
+export function entityMedia(json) {
+  for (const e of Object.values(json?.entities ?? {})) {
+    const files = (e.claims?.P18 ?? []).map((c) => c.mainsnak?.datavalue?.value).filter(Boolean).map((f) => `File:${f}`);
+    const cat = e.claims?.P373?.[0]?.mainsnak?.datavalue?.value ?? null;
+    if (files.length || cat) return { qid: e.id, files, cat };
+  }
+  return { qid: null, files: [], cat: null };
+}
+
+/** Commons imageinfo response -> filtered candidates (jpg, >=600px short side, aspect 0.75-1.33, free licence, clean title). */
+export function filterInfo(json, source = "search") {
+  const pages = Object.values(json?.query?.pages ?? {}).sort((a, b) => (a.index ?? 0) - (b.index ?? 0));
+  const out = [];
+  for (const p of pages) {
+    const ii = p.imageinfo?.[0];
+    if (!ii || !p.title || BAD_TITLE.test(p.title)) continue;
+    if (ii.mime !== "image/jpeg" || !ii.thumburl) continue;
+    if (Math.min(ii.width, ii.height) < 600) continue;
+    const ar = ii.width / ii.height;
+    if (ar < 0.75 || ar > 1.33) continue;
+    const meta = ii.extmetadata ?? {};
+    const license = strip(meta.LicenseShortName?.value);
+    if (!isOkLicense(license)) continue;
+    out.push({ thumbUrl: ii.thumburl, fileUrl: ii.url, title: p.title, author: strip(meta.Artist?.value).slice(0, 120) || "unknown", license, page: ii.descriptionurl, source });
+  }
+  return out;
+}
+
+/** Merge lists in priority order, dedupe by title, cap. */
+export function rank(lists, max = 6) {
+  const seen = new Set(), out = [];
+  for (const l of lists) for (const c of l) if (!seen.has(c.title)) { seen.add(c.title); out.push(c); }
+  return out.slice(0, max);
+}
+
+/** Polite client: one request at a time, fixed UA, honours 429/503 Retry-After with backoff. asBuffer -> Buffer, else JSON. */
+export function politeClient({ fetchFn = globalThis.fetch, sleep = (ms) => new Promise((r) => setTimeout(r, ms)), gapMs = 400, retries = 5 } = {}) {
+  let last = 0;
+  let chain = Promise.resolve();
+  const one = async (url, asBuffer) => {
+    for (let attempt = 0; ; attempt++) {
+      const wait = last + gapMs - Date.now();
+      if (wait > 0) await sleep(wait);
+      last = Date.now();
+      const res = await fetchFn(url, { headers: { "User-Agent": UA, "Api-User-Agent": UA }, signal: AbortSignal.timeout(30000) });
+      if (res.status === 429 || res.status === 503) {
+        if (attempt >= retries) throw new Error(`HTTP ${res.status} after ${retries} retries: ${url}`);
+        const ra = Number(res.headers?.get?.("retry-after"));
+        await sleep((Number.isFinite(ra) && ra > 0 ? ra : 2 ** attempt * 2) * 1000);
+        continue;
+      }
+      if (!res.ok) throw new Error(`HTTP ${res.status}: ${url}`);
+      return asBuffer ? Buffer.from(await res.arrayBuffer()) : res.json();
+    }
+  };
+  return (url, asBuffer) => (chain = chain.then(() => one(url, asBuffer), () => one(url, asBuffer)));
 }
