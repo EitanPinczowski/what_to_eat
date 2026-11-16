@@ -49,7 +49,7 @@ code.link { display: block; padding: 8px; font-size: var(--t2); word-break: brea
 
 .toast { position: fixed; inset-inline: 16px; bottom: 24px; max-width: 448px; margin: 0 auto; padding: 12px 16px; background: var(--fg); color: var(--bg); border-radius: var(--radius-sm); text-align: center; z-index: 10; }
 .savemark { position: fixed; top: 6px; inset-inline-start: 8px; padding: 2px 8px; font-size: var(--t1); opacity: 0.8; pointer-events: none; background: var(--bg); color: var(--fg); border-radius: var(--radius-sm); z-index: 9; }
-@media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; }; }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
 
 input, textarea, select { width: 100%; min-height: var(--tap); padding: 12px 14px; font: inherit; font-size: var(--t3); color: var(--fg); background: var(--card); border: var(--border); border-radius: var(--radius-sm); accent-color: var(--accent); }
 input:focus-visible, textarea:focus-visible, select:focus-visible { border-color: var(--accent); }
@@ -59,10 +59,10 @@ input[type="checkbox"], input[type="radio"] { width: 24px; height: 24px; min-hei
 
 .reveal, .ack-in { animation: pop .5s var(--ease) both; }
 .ack-in { font-size: var(--t4); font-weight: 700; color: var(--fg); }
-@keyframes pop { from { transform: scale(.3) rotate(-12deg); opacity: 0; } to { transform: none; opacity: 1; }; }
+@keyframes pop { from { transform: scale(.3) rotate(-12deg); opacity: 0; } to { transform: none; opacity: 1; } }
 .confetti { position: fixed; inset: 0; pointer-events: none; overflow: hidden; z-index: 20; }
 .confetti span { position: absolute; top: -2rem; font-size: var(--t5); animation: fall 2.2s ease-in forwards; }
-@keyframes fall { to { transform: translateY(110vh) rotate(540deg); }; }
+@keyframes fall { to { transform: translateY(110vh) rotate(540deg); } }
 
 .tiles { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 .tile { flex-direction: column; justify-content: center; text-align: center; min-height: 92px; }
@@ -112,7 +112,7 @@ input[type="checkbox"], input[type="radio"] { width: 24px; height: 24px; min-hei
 .update-bar span { flex: 1 1 100%; font-weight: var(--heavy); }
 .update-bar .btn { flex: 1; }
 .screen-in { animation: screen-in .22s ease-out both; }
-@keyframes screen-in { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; }; }
+@keyframes screen-in { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
 .hours-row { display: flex; gap: 8px; align-items: center; }
 .hours-row b { min-width: 2ch; }
 

@@ -46,3 +46,7 @@ test("themed controls and no outline box on headings", () => {
   assert.match(style, /accent-color: var\(--accent\)/);
   assert.match(style, /h2:focus[^{]*\{ outline: none/);
 });
+
+test("css: no stray ';' after a closing brace (it broke the screen-in fade and left screens invisible)", () => {
+  for (const f of ["css/style.css", "css/tokens.css"]) assert.doesNotMatch(readFileSync(f, "utf8"), /\}\s*;/, f);
+});
