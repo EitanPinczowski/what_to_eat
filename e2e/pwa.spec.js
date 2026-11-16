@@ -31,18 +31,16 @@ test.beforeEach(() => (version = "e2e-one"));
 
 const controlled = (page) => page.waitForFunction(() => navigator.serviceWorker.controller, null, { timeout: 15000 });
 const cacheNames = (page) => page.evaluate(async () => (await caches.keys()).filter((k) => k.startsWith("wte-")).sort());
-// The worker claiming the page the first time fires controllerchange, which reloads it once (js/pwa.js); reload on purpose so the page is steady.
+// Without care the worker claiming the page fires controllerchange, which reloads it once (js/pwa.js); install() avoids that.
 const install = async (page) => {
-  // The app's own controllerchange reload can land mid-call ("frame detached"): load until a controlled page stays put.
-  for (let i = 0; ; i++) {
-    try {
-      await page.goto(`${base}/?store=local&sw`);
-      await controlled(page);
-      await page.evaluate(() => (window.__steady = 1));
-      await page.waitForTimeout(700);
-      if (await page.evaluate(() => window.__steady === 1)) break;
-    } catch (e) { if (i >= 4) throw e; }
-  }
+  // Install the worker from a plain page of the same origin first, so the app opens already controlled and its
+  // one-time controllerchange reload never races the test ("navigation interrupted" on CI).
+  await page.goto(`${base}/__blank`);
+  await page.evaluate(async () => {
+    await navigator.serviceWorker.register("/sw.js");
+    await navigator.serviceWorker.ready;
+  });
+  await page.goto(`${base}/?store=local&sw`);
   await controlled(page);
   await expect(page.locator("h1")).toHaveText("מה בא לך?");
 };
