@@ -114,6 +114,7 @@ export const STR = {
       places: { e: "📍", t: "מקומות" },
       sweep: { e: "🃏", t: "היכרות" },
       wrapped: { e: "🎁", t: "סיכום חודשי" },
+      insights: { e: "📊", t: "מה למדנו" },
       shopping: { e: "🛒", t: "רשימת קניות" },
       settings: { e: "⚙️", t: "הגדרות" },
     },
