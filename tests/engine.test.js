@@ -241,3 +241,27 @@ test("item 13: unsure at guess time → 3 distinct options; sure → one guess; 
   z.choose(low.items[1]); // tapping one option = the result
   assert.equal(z.result.f, low.items[1].id);
 });
+
+test("item 19: free text matches whole words and lists every food that fits", () => {
+  const z = quiz();
+  const names = (t) => z.matchAll(t).map((f) => f.name);
+  assert.ok(names("פסטה").length >= 2 && names("פסטה").every((n) => n.includes("פסטה")));
+  assert.deepEqual(names("בפסטה"), names("פסטה")); // prefix letter ב
+  assert.equal(z.match("פסטה"), null); // several fit: no silent pick
+  assert.deepEqual(names("פיצה"), ["פיצה"]); // exact name wins alone
+  assert.deepEqual(names("בא לי פיצה"), ["פיצה"]); // the whole name is among her words
+  assert.deepEqual(names("פס"), []); // a fragment is not a word
+  assert.deepEqual(names("מרק תירס של סבתא"), []);
+  z.choose("פס");
+  assert.deepEqual(z.result, { free: "פס" });
+});
+
+test("item 19: 'לערב הזה' only in the evening (17:00-04:00)", async () => {
+  const { questionText, isEvening } = await import("../js/data/questions.js");
+  const vibe = QUESTIONS.find((x) => x.id === "vibe");
+  const at = (h) => new Date(2026, 0, 1, h, 0);
+  for (const h of [17, 21, 23, 0, 3]) (assert.ok(isEvening(at(h))), assert.match(questionText(vibe, at(h)), /לערב הזה/));
+  for (const h of [4, 8, 12, 16]) (assert.ok(!isEvening(at(h))), assert.doesNotMatch(questionText(vibe, at(h)), /לערב/));
+  const hunger = QUESTIONS.find((x) => x.id === "hunger");
+  assert.equal(questionText(hunger, at(10)), hunger.text); // other questions never change
+});

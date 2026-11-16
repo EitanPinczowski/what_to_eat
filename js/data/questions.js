@@ -5,6 +5,11 @@ import { STR } from "./strings.js";
 import { CUISINES } from "./cuisines.js";
 const a = (e, t, fx = {}) => ({ e, t, fx });
 
+/** Evening = 17:00-04:00 local (REVIEW item 19). */
+export const isEvening = (now = new Date()) => now.getHours() >= 17 || now.getHours() < 4;
+/** The question's wording for this hour: a question may carry a daytime variant (textDay). */
+export const questionText = (q, now = new Date()) => (q.textDay && !isEvening(now) ? q.textDay : q.text);
+
 export const QUESTIONS = [
   { id: "hunger", start: 1, ordered: true, text: "כמה את רעבה עכשיו, בכנות?", answers: [
     a("🐭", "סתם בא לנשנש", { snack: 3, dessert: 1, meal: -2 }),
@@ -13,7 +18,7 @@ export const QUESTIONS = [
     a("🦖", "אני אוכלת את השולחן", { meal: 3, heavy: 2.5, light: -2, snack: -3 }),
   ] },
   { id: "cuisine", start: 2, ordered: true, text: STR.cuisine.text, answers: CUISINES.map((c) => a(STR.cuisine.options[c][0], STR.cuisine.options[c][1], { [`c:${c}`]: 3 })) },
-  { id: "vibe", text: "איזה וייב יש לערב הזה?", answers: [
+  { id: "vibe", text: STR.vibe.evening, textDay: STR.vibe.day, answers: [
     a("🛋️", "ספה, שמיכה, לא זזה", { couch: 2.5, home: 1, heavy: 1 }),
     a("✨", "בא לי להתפנק", { fancy: 2.5, resto: 1.5 }),
     a("🥗", "קליל ונקי", { light: 2.5, healthy: 2.5, junk: -2 }),

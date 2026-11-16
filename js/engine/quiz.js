@@ -421,12 +421,36 @@ export class FoodQuiz {
     this.trail.push(`בחרה: ${r.f ? this.byId.get(r.f).name : r.free}`);
   }
 
+  /** The one food her typed text means, or null (none fit, or several do: see matchAll). */
   match(text) {
+    const fits = this.matchAll(text);
+    return fits.length === 1 ? fits[0] : null;
+  }
+
+  /**
+   * Every food her typed text fits, by whole words (not fragments): a typed word equals a word of the name, with one
+   * leading prefix letter (ה ו ב ל כ מ ש) allowed on words of 4+ letters. An exact name wins alone. Either all typed words
+   * are words of the name ("פסטה" fits "פסטה ברוזה"), or the whole name is in what she typed ("בא לי פיצה" fits "פיצה").
+   */
+  matchAll(text) {
     const norm = (s) => s.replace(/[\s״׳"'\-]/g, "").toLowerCase();
     const t = norm(text ?? "");
-    if (!t) return null;
+    if (!t) return [];
     const exact = this.foods.find((f) => norm(f.name) === t || f.id === t);
-    const f = exact ?? this.foods.find((f) => norm(f.name).includes(t) || (t.length >= 3 && t.includes(norm(f.name))));
-    return f ? this.food(f.id) : null;
+    if (exact) return [this.food(exact.id)];
+    const words = (s) => s.toLowerCase().split(/[\s\-־.,;:!?"'״׳()]+/).filter(Boolean);
+    const bare = (w) => (w.length >= 4 && "הובלכמש".includes(w[0]) ? w.slice(1) : w);
+    const same = (a, b) => a === b || bare(a) === b || a === bare(b);
+    const qw = words(text);
+    const inName = [], nameIn = [];
+    for (const f of this.foods) {
+      const nw = words(f.name);
+      if (!nw.length) continue;
+      if (qw.every((q) => nw.some((n) => same(q, n)))) inName.push(f);
+      else if (norm(f.name).length >= 3 && nw.every((n) => qw.some((q) => same(q, n)))) nameIn.push([f, nw.length]);
+    }
+    const most = Math.max(0, ...nameIn.map((x) => x[1]));
+    const whole = nameIn.filter((x) => x[1] === most).map((x) => x[0]);
+    return (whole.length ? whole : inName).map((f) => this.food(f.id));
   }
 }

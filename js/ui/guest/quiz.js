@@ -2,7 +2,7 @@
 // One question per screen, tap = answer. Escapes: 🤫 type it · ↩︎ undo. No skip on her screens (R5).
 // Every step is kept as a small action so the quiz can resume on another browser (live doc).
 import { FOODS } from "../../data/foods.js";
-import { QUESTIONS } from "../../data/questions.js";
+import { QUESTIONS, questionText } from "../../data/questions.js";
 import { STR } from "../../data/strings.js";
 import { buildFoods } from "../../engine/foods.js";
 import { priorFrom } from "../../engine/prior.js";
@@ -138,12 +138,20 @@ export function startGuestQuiz(root, opts) {
     free: (fd) => {
       const t = String(fd.get("food") ?? "").trim().slice(0, 80);
       if (!t) return;
-      const f = z.match(t);
-      act(f ? { k: "c", f: f.id } : { k: "c", t });
+      const fits = z.matchAll(t);
+      if (fits.length > 1) return showSeveral(fits);
+      act(fits.length ? { k: "c", f: fits[0].id } : { k: "c", t });
     },
     back: () => goBack(),
     feedback: () => (openOverlay(), onFeedback?.(() => goBack())),
   };
+
+  /** Several foods fit her typed words: she picks one (nothing is recorded until she does). */
+  function showSeveral(fits) {
+    render(root, html`${raw(backBar())}
+      <h2 class="q">${STR.pick.several}</h2>
+      <div class="grid">${fits.map((f) => raw(html`<button class="btn food" data-on="pick" data-arg="${f.id}">${raw(foodLabel(f))}</button>`))}</div>`, handlers);
+  }
 
   function showEscape() {
     const list = z.foods.map((f) => raw(html`<option value="${f.name}"></option>`));
@@ -163,7 +171,7 @@ export function startGuestQuiz(root, opts) {
     let body = "";
     if (step.type === "q") {
       const { q, order } = step;
-      body = html`<h2 class="q">${q.text}</h2>
+      body = html`<h2 class="q">${questionText(q, opts.now ?? new Date())}</h2>
         ${order.map((i) => raw(html`<button class="btn" data-on="ans" data-arg="${i}"><span class="em">${q.answers[i].e}</span>${q.answers[i].t}</button>`))}
         ${raw(footer())}`;
     } else if (step.type === "grid") {
