@@ -33,5 +33,5 @@ test("sweep: owner sends, she rates (tap, skip, swipe, undo), extras reach the i
   await page.locator('[data-on="go"][data-arg="brain"]').click();
   await expect(page.locator(".inbox")).toContainText("מרק עוף של אמא");
   await page.locator('input[type="search"]').fill(first);
-  await expect(page.locator(".food-row").first().locator('[aria-pressed="true"]')).toHaveText("😍");
+  await expect(page.locator("li.row").first().locator('[aria-pressed="true"]')).toHaveText("😍");
 });

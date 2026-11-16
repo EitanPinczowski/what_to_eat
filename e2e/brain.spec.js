@@ -9,17 +9,17 @@ test("brain: rate, filter, note, inbox → custom food", async ({ page }) => {
   await expect(page.locator(".inbox")).toContainText("מרק של סבתא");
 
   await page.locator('input[type="search"]').fill("במבה");
-  await expect(page.locator(".food-row")).toHaveCount(1);
+  await expect(page.locator("li.row")).toHaveCount(1);
   await page.locator('[data-on="rate"][data-arg="bamba:4"]').click();
   await expect(page.locator('[data-on="rate"][data-arg="bamba:4"]')).toHaveAttribute("aria-pressed", "true");
   await page.locator('input[type="search"]').fill("");
   await page.locator('[data-on="filter"][data-arg="4"]').click();
-  await expect(page.locator(".food-row")).toHaveCount(1);
+  await expect(page.locator("li.row")).toHaveCount(1);
 
   await page.locator('[data-on="open"][data-arg="bamba"]').click();
   await page.locator("textarea").fill("רק נוגט");
   await page.getByRole("button", { name: "שמירה" }).click();
-  await expect(page.locator(".food-row")).toContainText("📝");
+  await expect(page.locator("li.row")).toContainText("📝");
 
   await page.locator('[data-on="addInbox"]').click();
   await expect(page.locator('[data-input="name"]')).toHaveValue("מרק של סבתא");
@@ -30,5 +30,5 @@ test("brain: rate, filter, note, inbox → custom food", async ({ page }) => {
   await expect(page.locator(".inbox")).toHaveCount(0);
   await page.locator('[data-on="filter"][data-arg="4"]').click();
   await page.locator('input[type="search"]').fill("סבתא");
-  await expect(page.locator(".food-row")).toContainText("שלי");
+  await expect(page.locator("li.row")).toContainText("שלי");
 });

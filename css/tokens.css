@@ -1,11 +1,12 @@
-/* Design tokens — direction A, Rubik "pop" (design/mockup.html). Palette B "berry" (owner pick 2026-11-14): near-white pink bg, plum ink, berry accent, soft pink pop. */
+/* Design tokens: Rubik "pop", palette B "berry" (docs/REVIEW.md). Six text sizes, 48px taps, borders that stay visible in dark. */
 :root {
   --font: "Rubik", system-ui, sans-serif;
   --heavy: 800;
   --radius: 20px;
   --radius-sm: 12px;
   --gap: 12px;
-  --tap: 56px;
+  --tap: 48px;
+  --t1: .75rem; --t2: .875rem; --t3: 1rem; --t4: 1.25rem; --t5: 1.6rem; --t6: 2rem;
 
   --bg: #FBF6FA;
   --fg: #3A1630;
@@ -18,8 +19,9 @@
   --ok: #2fa86b;
   --danger: #d63b3b;
   --ink: #3A1630;
+  --line: #3A1630;
 
-  --border: 2px solid var(--ink);
+  --border: 2px solid var(--line);
   --shadow: 3px 4px 0 var(--ink);
   --shadow-press: 1px 1px 0 var(--ink);
   --ease: cubic-bezier(.2, .9, .3, 1.3);
@@ -28,10 +30,10 @@
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
     --bg: #1F0F1B; --fg: #FBE8F2; --card: #2D1828; --muted: #C9A0B8;
-    --accent: #E8629A; --accent2: #5A2745; --on-accent2: #FBE8F2; --on-accent: #2A0A1C; --ink: #000000;
+    --accent: #E8629A; --accent2: #5A2745; --on-accent2: #FBE8F2; --on-accent: #2A0A1C; --ink: #000000; --line: #A8789A;
   }
 }
 :root[data-theme="dark"] {
   --bg: #1F0F1B; --fg: #FBE8F2; --card: #2D1828; --muted: #C9A0B8;
-    --accent: #E8629A; --accent2: #5A2745; --on-accent2: #FBE8F2; --on-accent: #2A0A1C; --ink: #000000;
+  --accent: #E8629A; --accent2: #5A2745; --on-accent2: #FBE8F2; --on-accent: #2A0A1C; --ink: #000000; --line: #A8789A;
 }

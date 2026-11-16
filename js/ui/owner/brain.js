@@ -47,7 +47,7 @@ export function brainViews({ root, store, stack, views, back, common }) {
       })
       .catch(saveFailed);
 
-  const row = (f, ratings) => html`<li class="food-row">
+  const row = (f, ratings) => html`<li class="row">
       <button class="linkish" data-on="open" data-arg="${f.id}">${raw(foodLabel(f))}${f.custom ? raw(html` <small class="sub">${B.custom}</small>`) : ""}${ratings[f.id]?.n ? " 📝" : ""}</button>
       <span class="rates">${RATES.map((r) => raw(html`<button class="chip" data-on="rate" data-arg="${f.id}:${r}" aria-pressed="${ratings[f.id]?.r === r}" aria-label="${RATING_EMOJI[r]} ${f.name}">${RATING_EMOJI[r]}</button>`))}</span>
     </li>`;
@@ -69,7 +69,7 @@ export function brainViews({ root, store, stack, views, back, common }) {
       <div class="stats">${[4, 3, 2, 1, 0].map((r) => raw(html`<button class="chip" data-on="filter" data-arg="${r}" aria-pressed="${state.r === String(r)}">${RATING_EMOJI[r]} ${st[r]}</button>`))}
         <button class="chip" data-on="filter" data-arg="all" aria-pressed="${state.r === "all"}">${B.all}</button></div>
       ${db.inbox.length ? raw(html`<section class="card inbox"><div class="sub">${B.inbox}</div>
-        ${db.inbox.map((t, i) => raw(html`<div class="row"><b>${t}</b><button class="chip" data-on="addInbox" data-arg="${i}">${B.addTags}</button><button class="chip" data-on="dropInbox" data-arg="${i}" aria-label="${B.dismissLabel(t)}">${B.dismiss}</button></div>`))}</section>`) : ""}
+        ${db.inbox.map((t, i) => raw(html`<div class="line"><b>${t}</b><button class="chip" data-on="addInbox" data-arg="${i}">${B.addTags}</button><button class="chip" data-on="dropInbox" data-arg="${i}" aria-label="${B.dismissLabel(t)}">${B.dismiss}</button></div>`))}</section>`) : ""}
       <input type="search" placeholder="${B.search}" value="${state.q}" data-input="search" aria-label="${B.search}">
       <button class="btn" data-on="newFood">${B.add}</button>
       <ul class="foods">${raw(list())}</ul>`, {

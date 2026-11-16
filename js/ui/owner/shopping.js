@@ -45,7 +45,7 @@ export function shoppingViews({ root, store, stack, views, back, common, ctx }) 
     render(root, html`${raw(back)}
       <h2 class="q">${S.title}</h2>
       ${items.length ? raw(html`<p class="sub" data-testid="shop-left">${S.left(left)}</p>`) : raw(html`<p class="sub">${S.empty}</p>`)}
-      <ul class="shoplist">${items.map((i) => raw(html`<li><label class="food-row"><input type="checkbox" data-input="tick" data-arg="${i.id}" ${i.done ? "checked" : ""}>
+      <ul class="shoplist">${items.map((i) => raw(html`<li><label class="row"><input type="checkbox" data-input="tick" data-arg="${i.id}" ${i.done ? "checked" : ""}>
         <span style="${i.done ? "text-decoration:line-through;opacity:.6" : ""}">${i.text}</span>${i.recipe ? raw(html` <span class="sub">${S.fromRecipe(i.recipe)}</span>`) : ""}</label></li>`))}</ul>
       ${items.some((i) => i.done) ? raw(html`<button class="btn btn-ghost" data-on="clear" data-testid="shop-clear">${S.clear}</button>`) : ""}`, {
       ...common,

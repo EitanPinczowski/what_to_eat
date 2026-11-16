@@ -28,7 +28,7 @@ test("places: add a place, then pick it for a result and log the visit", async (
   await page.locator('[data-on="back"]').click();
   await page.locator('[data-on="go"][data-arg="history"]').click();
   await page.locator('[data-on="pickFor"]').click();
-  await expect(page.locator(".food-row")).toContainText("מגישים פיצה");
+  await expect(page.locator("li.row")).toContainText("מגישים פיצה");
   await page.locator('[data-on="roll"]').click();
   await expect(page.getByTestId("chosen")).toContainText("פיצה של רפי");
   await page.getByTestId("chosen").locator('[data-on="go"]').click();

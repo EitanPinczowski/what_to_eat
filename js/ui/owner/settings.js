@@ -86,7 +86,7 @@ export function settingsViews({ root, store, views, back, common, base, mode }) 
       <section class="card stack" data-testid="push"><b>${G.push.title}</b><span class="sub">${G.push.help}</span>
         <span class="sub" data-testid="push-state" role="status"></span>
         <div class="stack" data-testid="push-actions"></div>
-        <label class="field row"><input type="checkbox" data-testid="notify-open" data-input="notifyOpen" ${s.notifyOpen ? "checked" : ""}> ${G.push.openedLabel}</label>
+        <label class="check"><input type="checkbox" data-testid="notify-open" data-input="notifyOpen" ${s.notifyOpen ? "checked" : ""}> ${G.push.openedLabel}</label>
         <span class="sub">${G.push.openedHelp}</span></section>
       <section class="card stack"><b>${G.join}</b><span class="sub">${G.joinHelp}</span>
         <code class="link" dir="ltr">${join}</code><button class="btn" data-on="copyJoin">${STR.owner.copy}</button></section>
