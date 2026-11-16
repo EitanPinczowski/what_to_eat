@@ -159,7 +159,9 @@ export async function runGuest(root, store, { base = location.origin + location.
     });
   };
 
-  const start = (actions) => {
+  const start = async (actions) => {
+    const his = store.doc("live", "couple")?.his;
+    const cp = his?.length ? await import("./couple.js").catch(() => null) : null; // couple mode: his answers, hidden until she finishes
     screen = actions?.length ? "quiz" : "intro";
     const opened = live?.opened && actions ? live.opened : new Date().toISOString();
     saveLive({ opened, n: actions?.length ?? 0, actions: actions ?? [], trail: [], finished: false });
@@ -168,6 +170,7 @@ export async function runGuest(root, store, { base = location.origin + location.
     startGuestQuiz(root, {
       baseEntry: true,
       weather,
+      quiz: cp?.coupleQuiz(his, store.get(), store.list("history"), weather),
       note: store.doc("live", "quiz")?.note ?? "",
       room: store.get(),
       store,
@@ -178,7 +181,7 @@ export async function runGuest(root, store, { base = location.origin + location.
         screen = `q${p.n}`;
         saveLive({ opened, n: p.n, actions: p.actions, trail: p.trail.slice(-40), finished: false });
       },
-      onFinish: (out) => finishScreen(out, opened),
+      onFinish: (out) => finishScreen(cp ? Object.assign(out, { answers: cp.chipsFor(his), hisBy: cp.byLine(s.me) }) : out, opened),
     });
   };
 

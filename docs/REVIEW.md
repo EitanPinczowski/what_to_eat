@@ -263,3 +263,10 @@ Known gaps: sim average steps 11.8 (target 10, reported only); sim "found" gate 
 - Self-pruning impact is replayed from her last 60 finished quizzes (js/engine/prune.js), not read from the events log: the events carry no top-3 snapshot and the quiz would need an extra read. Same rule: ≥20 asks, <10% top-3 change, never below 2 variants per axis. Shown on the insights screen ("שאלות שירדו מהסבב"). Change: PRUNE_MIN_ASKS / PRUNE_RATE / MIN_VARIANTS.
 - prune.js loads lazily (start-up budget had 57 B of headroom); a quiz created before it loads keeps every variant. `statsFrom` moved from learn.js to js/engine/stats.js for the same reason (tests import it from there).
 - Sim: "learning check" gives a person with a quirk (two questions always answered against the food) 12 quizzes; the quirk food must reach the top 3 or halve its rank (ramen 21 to 3, sushi 12 to 2, pizza 16 to 8).
+
+## W7: couple mode (1e)
+- His answers: three fixed bank questions (mood1, family1, after1) with his own masculine wording (js/data/strings-couple.js). Stored as "qid:i" strings in live/couple (list of at most 3; firestore.rules changed, NOT deployed). Change: edit HIS_QS in js/engine/couple.js.
+- Weight: hers 1, his HIS_W = 0.5 (so she is 2x). Applied once in the engine before her actions replay (applyHis), not counted as asked, so resume is deterministic. Change: HIS_W.
+- Hidden while she answers: the chips render only on her result screen (card.js mountCard), never during the quiz. Her client does read live/couple (rules allow any room holder), so this is hidden in the UI, not secret.
+- The toggle's state is the saved doc: his answers stay selected on the send screen until he switches the toggle off (the send view redraws on every live change).
+- Start-up budget: to fit +~600 B in session.js and app.js, trailing // comments in js/ui/guest/quiz.js were removed. Budgets unchanged.

@@ -2,6 +2,7 @@
 // Layout leaves a band at the bottom for the couple-mode answers (opts.answers: [[label, value], ...]) once those exist.
 import { STR } from "../../data/strings.js";
 import { artSrc, hasPic } from "../pics.js";
+import { esc } from "../dom.js";
 
 const C = STR.card;
 export const CARD = { w: 720, h: 900 };
@@ -97,7 +98,8 @@ export async function shareOrSave(blob, text, nav = globalThis.navigator, save =
 /** Adds the two buttons under the result. The image is drawn on the first tap, not before. */
 export function mountCard(host, out) {
   if (!host || !out?.food) return;
-  host.innerHTML = `<div class="duel card-btns"><button class="btn" data-testid="card-save">${C.save}</button><button class="btn" data-testid="card-share">${C.whatsapp}</button></div>`;
+  const his = out.answers?.length ? `<p class="sub his" data-testid="his"><b>${esc(out.hisBy ?? "")}</b> ${out.answers.map(([, v]) => `<span class="chip">${esc(v)}</span>`).join(" ")}</p>` : "";
+  host.innerHTML = `${his}<div class="duel card-btns"><button class="btn" data-testid="card-save">${C.save}</button><button class="btn" data-testid="card-share">${C.whatsapp}</button></div>`;
   const run = (fn) => async (e) => {
     const b = e.currentTarget;
     b.disabled = true;

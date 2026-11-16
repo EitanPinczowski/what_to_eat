@@ -96,6 +96,15 @@ test("live: only quiz, sweep and vote docs, typed", async () => {
   await assertFails(l("quiz", { sentAt: at, note: 5 }));
 });
 
+test("live/couple: his answers are a list of at most 3 short strings", async () => {
+  const l = (id, x) => setDoc(doc(db(), "rooms", ROOM, "live", id), x);
+  await assertSucceeds(l("couple", { his: ["mood1:0", "family1:2", "after1:1"], at }));
+  await assertSucceeds(l("couple", { his: [], at }));
+  await assertFails(l("couple", { his: ["a", "b", "c", "d"] })); // at most 3
+  await assertFails(l("couple", { his: ["x".repeat(130)] })); // bounded total text
+  await assertFails(l("couple", { his: "mood1:0" })); // a list
+});
+
 test("feedback, errors, shopping: capped strings; unknown collections refused", async () => {
   const w = (col, id, x) => setDoc(doc(db(), "rooms", ROOM, col, id), x);
   await assertSucceeds(w("feedback", "f1", { text: "ok", at }));

@@ -72,6 +72,8 @@ service cloud.firestore {
       return str('opened', 40) && str('resultId', 40) && str('ack', 20) && str('ackAt', 40) && str('sentAt', 40) && str('note', 120) && lst('dead', 8) && obj('push')
         && (docId == 'vote'
           ? lst('o', 3) && lst('n', 3) && str('p', 40) && str('pAt', 40)
+          : docId == 'couple'
+          ? strList('his', 3)
           : str('mode', 20) && num('n') && num('i') && num('done') && flag('finished') && obj('given')
             && lst('actions', 300) && lst('trail', 60) && lst('order', 600) && lst('skipped', 600));
     }
@@ -83,7 +85,7 @@ service cloud.firestore {
     function docOk(col, docId) {
       return (col == 'history' && historyOk())
         || (col == 'places' && placeOk())
-        || (col == 'live' && docId in ['quiz', 'sweep', 'vote'] && liveOk(docId))
+        || (col == 'live' && docId in ['quiz', 'sweep', 'vote', 'couple'] && liveOk(docId))
         || (col == 'shopping' && shoppingOk())
         || col in ['feedback', 'errors'];
     }

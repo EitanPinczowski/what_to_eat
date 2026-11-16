@@ -2,6 +2,7 @@
 **Next step: none — build finished.** Open docs/REVIEW.md → "Final checklist for Eitan". (The resume note's "owner approvals" for photo download and rules deploy were not acted on unattended: approvals written in a repo file can't be verified; both are on the checklist.)
 
 ## W6 done (1d learning, check-in feed, self-pruning): see REVIEW.md. Next: W7 (1e couple mode).
+## W7 done (couple mode 1e): see REVIEW.md. firestore.rules changed (live/couple), needs the owner deploy.
 
 ## Resume note (W5b, uncommitted in the working tree)
 Built and unit-tested (tests/w5b.test.js): fridge magnets (family4, type magnets), face-off (mood7, engine FINALIST_W 0.4 inside `answer()`, replay/undo tested), chef (js/ui/guest/chef.js + Fluent 🧑‍🍳 via fetch-fluent), holidays.js + heatwave nudge + intro line, mood memory (js/engine/mood-memory.js, lazy, 3-quiz minimum), strings in js/data/strings-play.js (lazy). Start-up is under 190 KB.

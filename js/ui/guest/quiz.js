@@ -43,7 +43,7 @@ export function pickReaction(used, rnd = Math.random) {
 /** No motion: unit tests (no document), Playwright (webdriver), globalThis.WTE_NO_MOTION, or prefers-reduced-motion. */
 export const still = () => !globalThis.document || !!globalThis.WTE_NO_MOTION || !!globalThis.navigator?.webdriver || !!globalThis.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
 
-let pruned; // lazy (start-up budget): until it loads, every variant stays
+let pruned;
 import("../../engine/prune.js").then((m) => (pruned = m.prunedVariants), () => {});
 
 /** Foods, prior and engine for a room. */
@@ -60,7 +60,7 @@ export function makeQuiz(room, historyList, { now = new Date(), rnd, weather = n
 export function applyAction(z, a) {
   if (a.k === "a") {
     const q = z.qById.get(a.q);
-    if (q) z.answer(q, a.i); // a v1 question id from a quiz she started before the update: dropped
+    if (q) z.answer(q, a.i);
   }
   else if (a.k === "d") z.duel(z.food(a.a), z.food(a.b), a.c);
   else if (a.k === "t") z.gut(z.food(a.a), z.food(a.b), a.c);
@@ -100,11 +100,11 @@ export function startGuestQuiz(root, opts) {
       applyAction(z, a);
       actions.push(a);
     } catch {
-      break; // stale log (food removed, bank changed): keep what replayed
+      break;
     }
   }
   const doc = root.ownerDocument ?? globalThis.document;
-  doc?.documentElement?.classList.toggle("night", isNight(opts.now ?? new Date())); // warm dark look, 20:00-05:00
+  doc?.documentElement?.classList.toggle("night", isNight(opts.now ?? new Date()));
   root.classList?.toggle("big-text", bigText()); // her "טקסט גדול" choice
   const her = room.settings?.her ?? "";
   const me = room.settings?.me ?? "";
@@ -114,7 +114,7 @@ export function startGuestQuiz(root, opts) {
   const introShown = intro && !actions.length;
   let onIntro = introShown;
   let overlay = false;
-  let pending = false; // an answer is lighting up for ~150 ms; taps and back wait
+  let pending = false;
   const usedReactions = new Set();
   const react = () => {
     const t = still() ? null : pickReaction(usedReactions, opts.reactRnd);
@@ -127,8 +127,8 @@ export function startGuestQuiz(root, opts) {
     setTimeout(() => d.remove(), 900);
   };
   const refineMod = import("../../engine/refine.js"); // "why this?" lines and "Close, but…" nudges: loaded with her first pick, not at start-up
-  let sealed = false; // after the result was sent: back never undoes it (and never resends)
-  const uiSteps = []; // screens the caller shows after the quiz ends (e.g. a failed send); each closer restores the one before
+  let sealed = false;
+  const uiSteps = [];
   const closeOverlay = () => (overlay = false);
   const progress = () => onProgress?.({ n: z.n, p1: z.ranked()[0]?.p ?? 0, trail: [...z.trail], actions: [...actions] });
   const undoOne = () => {
@@ -155,8 +155,8 @@ export function startGuestQuiz(root, opts) {
     overlay = true;
     layer.push(onBack);
   };
-  if (opts.baseEntry) layer.push(onBack); // guest page (nothing below it): back on the very first screen stays instead of leaving the app
-  for (let i = 0; i < actions.length; i++) layer.push(onBack); // a resumed quiz: one entry per replayed step
+  if (opts.baseEntry) layer.push(onBack);
+  for (let i = 0; i < actions.length; i++) layer.push(onBack);
 
   const cravingAnswers = () => [
     ...Object.values(z.known).map((k) => ({ q: k.q, i: k.i, inferred: true })),
@@ -307,11 +307,11 @@ export function startGuestQuiz(root, opts) {
     // playful answer types: a small lazy module swaps in over the plain buttons; those stay for reduced motion or if it fails to load
     if (step.type === "q" && typeOf(step.q) !== "buttons" && root.querySelector && !globalThis.matchMedia?.("(prefers-reduced-motion: reduce)").matches && !globalThis.WTE_NO_MOTION) {
       const on = step, host = root.querySelector(".answers");
-      import(`./answers/${typeOf(on.q)}.js`).then((m) => step === on && host?.isConnected && m.mount(host, on.q, on.order), () => {}); // harmless: the buttons work
+      import(`./answers/${typeOf(on.q)}.js`).then((m) => step === on && host?.isConnected && m.mount(host, on.q, on.order), () => {});
     }
     // two-choice screens also take a left or right swipe (lazy module; taps work without it)
     const two = !root.querySelectorAll ? [] : step.type === "q" ? [...root.querySelectorAll("[data-on=ans]")] : step.type === "duel" || step.type === "gut" ? [...root.querySelectorAll(".duel .food")] : [];
-    if (two.length === 2) import("./swipe.js").then((m) => m.attachSwipe(step.type === "q" ? root : two[0].parentElement, two), () => {}); // harmless: tapping works
+    if (two.length === 2) import("./swipe.js").then((m) => m.attachSwipe(step.type === "q" ? root : two[0].parentElement, two), () => {});
     if (actions.length && step.type === "q") root.classList?.remove("slide"), void root.offsetWidth, root.classList?.add("slide");
   }
 
@@ -326,7 +326,7 @@ export function startGuestQuiz(root, opts) {
       }
       const host = root.querySelector("[data-testid=nudges]");
       if (host) host.innerHTML = html`<p class="sub">${STR.refine.title}</p><div class="chips">${m.nudgesFor(ans).map((k) => raw(html`<button class="btn" data-on="refine" data-arg="${k}">${STR.refine.nudge[k]}</button>`))}</div>`;
-    }, () => {}); // harmless: the options work without the extras
+    }, () => {});
   }
 
   function finish() {
@@ -365,7 +365,7 @@ export function startGuestQuiz(root, opts) {
       const host = onIntro && root.querySelector("[data-testid=like-host]");
       const food = hit && foods.find((f) => f.id === hit.f);
       if (host && food) host.innerHTML = html`<button class="btn like" data-on="like" data-arg="${food.id}" data-testid="like-card">${STR.like.card(STR.like.days[hit.day], food.name)} ${raw(pic(food, "sm"))}</button>`;
-    }, () => {}); // harmless: the welcome screen works without the shortcut
+    }, () => {});
   }
   if (introShown) showIntro();
   else show();

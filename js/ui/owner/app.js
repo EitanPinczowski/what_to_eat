@@ -140,6 +140,7 @@ export async function runOwner(root, store, { base = location.origin + location.
     render(root, html`${raw(topbar(T.sendTitle(s.her)))}
       <label class="sub" for="send-note">${T.noteLabel}</label>
       <input id="send-note" name="note" maxlength="120" autocomplete="off" placeholder="${T.notePlaceholder}" data-testid="note">
+      <div class="stack" data-testid="couple-host"></div>
       <button class="btn" data-on="copy">${T.copy}</button>
       <code class="link" dir="ltr">${link}</code>
       <p class="sub" data-testid="live" role="status">${liveLine(store.doc("live", "quiz"), s.her)}</p>
@@ -147,6 +148,7 @@ export async function runOwner(root, store, { base = location.origin + location.
       ...common,
       copy: async () => (markSent(), toast((await copy(link)) ? T.copied : link)),
     });
+    import("./couple.js").then((m) => m.mountCouple(root.querySelector?.("[data-testid=couple-host]"), store, saveFailed), () => {});
     root.querySelector?.("[data-testid=wa-send]")?.addEventListener("click", () => setTimeout(markSent, 300));
   };
 

@@ -66,3 +66,8 @@ test("rules: every event kind the app writes is allowed by the rule", async () =
   const { EVENT_KINDS } = await import("../js/store/events.js");
   for (const k of EVENT_KINDS) assert.ok(rules.includes(`'${k}'`), k);
 });
+
+test("rules: couple mode, Eitan's answers live in live/couple as a list of at most 3 short strings (1e)", () => {
+  assert.match(rules, /docId in \['quiz', 'sweep', 'vote', 'couple'\]/);
+  assert.match(rules, /docId == 'couple'\s*\?\s*strList\('his', 3\)/);
+});
