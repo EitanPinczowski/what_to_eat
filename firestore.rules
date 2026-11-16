@@ -54,7 +54,7 @@ service cloud.firestore {
 
     function historyOk() {
       return str('f', 40) && str('m', 12) && str('src', 12) && str('place', 40) && str('goAt', 40)
-        && num('price') && num('how') && lst('trail', 60) && lst('top', 10) && lst('ans', 40) && obj('stats');
+        && num('price') && num('how') && lst('trail', 60) && lst('top', 10) && lst('ans', 40) && lst('rej', 10) && num('ib') && obj('stats');
     }
 
     function placeOk() {

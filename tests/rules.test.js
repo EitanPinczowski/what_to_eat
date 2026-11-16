@@ -30,3 +30,7 @@ test("rules: every collection the store uses is listed, and NO_DELETE matches th
 test("rules: place cuisines are a bounded list (F3)", () => {
   assert.match(rules, /function placeOk\(\)[\s\S]*?lst\('cuisines', 8\)/);
 });
+
+test("rules: history rejections are a bounded list and the inbox mark is a number (item 18)", () => {
+  assert.match(rules, /function historyOk\(\)[\s\S]*?lst\('rej', 10\)[\s\S]*?num\('ib'\)/);
+});
