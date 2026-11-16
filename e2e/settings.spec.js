@@ -1,4 +1,5 @@
 import { test, expect } from "@playwright/test";
+import { openMore } from "./helpers.js";
 
 const seedResult = (id) => {
   const p = { v: 1, t: "quiz", id, f: "falafel", fn: "פלאפל", fe: "🧆", m: "take", trail: [] };
@@ -31,7 +32,7 @@ test("settings: names and phones, paste a result link, backup reminder + export,
   expect(newRoom).not.toBe(oldRoom);
   await expect(page.getByTestId("backup")).toHaveCount(0);
   await expect(page.locator(".last .title")).toHaveText("סושי");
-  await page.locator('[data-on="go"][data-arg="send"]').click();
+  await openMore(page, "send"); // her fresh result is on the status card, so send sits behind עוד
   await expect(page.locator("a.btn-primary")).toHaveAttribute("href", /wa\.me\/972500000000/);
   await expect(page.locator("code.link")).toContainText(newRoom);
 });
@@ -60,7 +61,7 @@ test("rotate key: the old link shows 'this link was replaced', not empty data", 
   await page.goto(seedResult("m1"));
   await expect(page.locator(".tiles")).toBeVisible();
   const oldRoom = await page.evaluate(() => localStorage.getItem("mabalach_room"));
-  await page.locator('.tile[data-arg="settings"]').click();
+  await openMore(page, "settings");
   await page.locator('[data-on="rotate"]').click();
   await expect(page.locator(".tiles")).toBeVisible();
   await page.goto(`/?store=local#q=${oldRoom}`);
@@ -82,7 +83,7 @@ test("#r= link: declined import changes nothing; a crafted payload is refused wi
 
 test("room recovery: pasted link rejoins a room (confirm, old id kept); a lost room id comes back from the backup (item 10)", async ({ page }) => {
   await page.goto("/?store=local");
-  await expect(page.locator(".tile")).toHaveCount(10);
+  await expect(page.locator(".tile")).toHaveCount(3);
   const room = await page.evaluate(() => localStorage.getItem("mabalach_room"));
   const readBackup = () => page.evaluate(() => new Promise((res) => {
     const rq = indexedDB.open("mabalach_backup", 1);
@@ -95,17 +96,17 @@ test("room recovery: pasted link rejoins a room (confirm, old id kept); a lost r
   // storage eviction: localStorage loses the id, the backup restores it instead of minting a new room
   await page.evaluate(() => localStorage.removeItem("mabalach_room"));
   await page.reload();
-  await expect(page.locator(".tile")).toHaveCount(10);
+  await expect(page.locator(".tile")).toHaveCount(3);
   expect(await page.evaluate(() => localStorage.getItem("mabalach_room"))).toBe(room);
 
   // pasting a link from another room asks first, then switches and keeps the old id
   const other = "zyxwvutsrqponmlkjihgfedc";
   let asked = 0;
   page.on("dialog", (d) => (asked++, d.accept()));
-  await page.locator('[data-on="go"][data-arg="settings"]').click();
+  await openMore(page, "settings");
   await page.getByTestId("rejoin").locator("input").fill(`https://example.github.io/what_to_eat/#q=${other}`);
   await page.getByTestId("rejoin").locator('button[type="submit"]').click();
-  await expect(page.locator(".tile")).toHaveCount(10);
+  await expect(page.locator(".tile")).toHaveCount(3);
   expect(asked).toBe(1);
   expect(await page.evaluate(() => localStorage.getItem("mabalach_room"))).toBe(other);
   expect(await page.evaluate(() => localStorage.getItem("mabalach_prev_room"))).toBe(room);
@@ -114,7 +115,7 @@ test("room recovery: pasted link rejoins a room (confirm, old id kept); a lost r
 
 test("problems card: lists errors, clear deletes them (item 11)", async ({ page }) => {
   await page.goto("/?store=local");
-  await expect(page.locator(".tile")).toHaveCount(10);
+  await expect(page.locator(".tile")).toHaveCount(3);
   const room = await page.evaluate(() => localStorage.getItem("mabalach_room"));
   await page.evaluate((room) => {
     const key = `mabalach_v1:${room}`;
@@ -125,7 +126,7 @@ test("problems card: lists errors, clear deletes them (item 11)", async ({ page 
   }, room);
   await page.reload();
   page.on("dialog", (d) => d.accept());
-  await page.locator('[data-on="go"][data-arg="settings"]').click();
+  await openMore(page, "settings");
   await expect(page.getByTestId("problems")).toContainText("תקלות (3)");
   await expect(page.getByTestId("problems")).toContainText("boom 1");
   await page.getByTestId("clear-errors").click();

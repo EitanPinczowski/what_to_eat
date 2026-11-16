@@ -48,7 +48,12 @@ for (const scheme of ["light", "dark"]) {
         problems.push(`${name}: ${String(e.message).split("\n")[0]}`);
       }
     };
-    const go = (arg) => page.locator(`.tile[data-on="go"][data-arg="${arg}"], [data-on="go"][data-arg="${arg}"]`).first().click();
+    const go = async (arg) => {
+      const t = () => page.locator(`[data-on="go"][data-arg="${arg}"]`);
+      if (!(await t().count()) && !(await page.locator('[data-arg="more"]').count())) await page.locator('[data-on="back"]').click(); // on the "more" list: back home first
+      if (await t().count()) return t().first().click();
+      await openMore(page, arg);
+    };
     const back = () => page.locator('[data-on="back"]').click();
 
     await page.goto(B + "?store=local");

@@ -121,6 +121,7 @@ export const STR = {
       shopping: { e: "🛒", t: "רשימת קניות" },
       settings: { e: "⚙️", t: "הגדרות" },
     },
+    more: "עוד ⋯",
     soon: "בקרוב",
     sendTitle: (her) => `שאלון ל${her}`,
     sendText: (her, me) => `היי ${her}, בא לך שאנחש מה בא לך לאכול? 😋 — ${me}`,

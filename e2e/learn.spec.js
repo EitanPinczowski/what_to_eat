@@ -1,8 +1,9 @@
 import { test, expect } from "@playwright/test";
+import { openMore } from "./helpers.js";
 
 test("owner: stats card in history and the 'how was it?' prompt", async ({ page }) => {
   await page.goto("/?store=local");
-  await expect(page.locator(".tile")).toHaveCount(10);
+  await expect(page.locator(".tile")).toHaveCount(3);
   const room = await page.evaluate(() => localStorage.getItem("mabalach_room"));
   await page.evaluate((room) => {
     const key = `mabalach_v1:${room}`;
@@ -20,7 +21,7 @@ test("owner: stats card in history and the 'how was it?' prompt", async ({ page 
   await expect(page.getByTestId("how")).toHaveCount(0);
   const exp = await page.evaluate((room) => JSON.parse(localStorage.getItem(`mabalach_v1:${room}`)).room.exp, room);
   expect(exp.pizza).toBe(0.5);
-  await page.locator('[data-on="go"][data-arg="history"]').click();
+  await openMore(page, "history");
   await expect(page.getByTestId("stats")).toContainText("50%");
   await expect(page.getByTestId("stats")).toContainText("11.0");
   await expect(page.getByTestId("stats")).toContainText("חם או קר?");

@@ -1,10 +1,11 @@
 import { test, expect } from "@playwright/test";
+import { openMore } from "./helpers.js";
 
 test("cook: recipe options, add to the shopping list, tick and clear", async ({ page }) => {
   const p = { v: 1, t: "quiz", id: "cook1", f: "shakshuka", fn: "שקשוקה", fe: "🍳", m: "home", price: null, trail: [] };
   page.on("dialog", (d) => d.accept()); // #r= imports ask first
   await page.goto(`/?store=local#r=${Buffer.from(JSON.stringify(p)).toString("base64url")}`);
-  await page.locator('[data-on="go"][data-arg="history"]').click();
+  await openMore(page, "history");
   await page.locator('[data-on="pickFor"]').click();
   await expect(page.getByTestId("recipes")).toContainText("שקשוקה קלאסית");
   await page.locator('[data-on="recipeOpen"]').first().click();

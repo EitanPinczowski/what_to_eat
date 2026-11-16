@@ -1,4 +1,3 @@
-/* Design tokens: Rubik "pop", palette B "berry" (docs/REVIEW.md). Six text sizes, 48px taps, borders that stay visible in dark. */
 :root {
   --font: "Rubik", system-ui, sans-serif;
   --heavy: 800;

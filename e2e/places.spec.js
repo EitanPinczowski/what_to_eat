@@ -1,10 +1,11 @@
 import { test, expect } from "@playwright/test";
+import { openMore } from "./helpers.js";
 
 test("places: add a place, then pick it for a result and log the visit", async ({ page }) => {
   const p = { v: 1, t: "quiz", id: "pick1", f: "pizza", fn: "פיצה", fe: "🍕", m: "delivery", price: 2, trail: [] };
   page.on("dialog", (d) => d.accept()); // #r= imports ask first
   await page.goto(`/?store=local#r=${Buffer.from(JSON.stringify(p)).toString("base64url")}`);
-  await page.locator('[data-on="go"][data-arg="places"]').click();
+  await openMore(page, "places");
   await page.locator('[data-on="add"]').click();
   await page.locator('[data-input="name"]').fill("פיצה של רפי");
   await page.locator('[data-input="city"]').fill("רעננה");
@@ -26,7 +27,7 @@ test("places: add a place, then pick it for a result and log the visit", async (
   await expect(page.locator(".place-row")).toContainText("פיצה של רפי");
 
   await page.locator('[data-on="back"]').click();
-  await page.locator('[data-on="go"][data-arg="history"]').click();
+  await openMore(page, "history");
   await page.locator('[data-on="pickFor"]').click();
   await expect(page.locator("li.row")).toContainText("מגישים פיצה");
   await page.locator('[data-on="roll"]').click();
@@ -57,13 +58,13 @@ test("picker: maps fallback asks where we went and quick-adds the place", async 
   await (await popup).close();
   await page.getByTestId("quick-add").locator("input").fill("סושי בר");
   await page.getByTestId("quick-add").locator('button[type="submit"]').click();
-  await page.locator('[data-on="go"][data-arg="places"]').click();
+  await openMore(page, "places");
   await expect(page.locator(".place-row")).toContainText("סושי בר");
 });
 
 test("picker from home links to a fresh quiz result (item 9)", async ({ page, context }) => {
   await page.goto("/?store=local");
-  await expect(page.locator(".tile")).toHaveCount(10);
+  await expect(page.locator(".tile")).toHaveCount(3);
   const room = await page.evaluate(() => localStorage.getItem("mabalach_room"));
   await page.evaluate((room) => {
     const key = `mabalach_v1:${room}`;

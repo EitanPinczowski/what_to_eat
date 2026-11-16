@@ -1,8 +1,9 @@
 import { test, expect } from "@playwright/test";
+import { openMore } from "./helpers.js";
 
 test("sweep: owner sends, she rates (tap, skip, swipe, undo), extras reach the inbox", async ({ page, context }) => {
   await page.goto("/?store=local");
-  await page.locator('[data-on="go"][data-arg="sweep"]').click();
+  await openMore(page, "sweep");
   const link = await page.locator("code.link").textContent();
   expect(link).toMatch(/#s=[a-z0-9]{24}$/);
 
@@ -30,7 +31,7 @@ test("sweep: owner sends, she rates (tap, skip, swipe, undo), extras reach the i
   await expect(page.getByTestId("sweep-live")).toContainText("סיימה");
 
   await page.locator('[data-on="back"]').click();
-  await page.locator('[data-on="go"][data-arg="brain"]').click();
+  await openMore(page, "brain");
   await expect(page.locator(".inbox")).toContainText("מרק עוף של אמא");
   await page.locator('input[type="search"]').fill(first);
   await expect(page.locator("li.row").first().locator('[aria-pressed="true"]')).toHaveText("😍");

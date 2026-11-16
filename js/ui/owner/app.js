@@ -1,4 +1,4 @@
-// Owner app: home + view stack (send quiz, she's-next-to-me, history). Later steps add brain, places, picker, settings.
+// Owner app: home + view stack.
 import { recentQuizEntry } from "./recent.js";
 import { STR } from "../../data/strings.js";
 import { newId } from "../../share/codec.js";
@@ -6,23 +6,17 @@ import { buildQuizLink } from "../../share/links.js";
 import { waUrl } from "../../share/whatsapp.js";
 import { ViewStack } from "../../router.js";
 import { render, html, raw, toast, copy, confetti, saveFailed, mountSaveStatus } from "../dom.js";
-import { statsFrom, nudgeExp } from "../../engine/learn.js";
-import { QUESTIONS } from "../../data/questions.js";
+import { nudgeExp } from "../../engine/learn.js";
 import { isFirstOfMonth } from "../../engine/wrapped.js";
 import { ACK_CODES, LOGS, LOG_KEEP } from "../../store/store.js";
 import { backupDue } from "./backup-due.js";
+import { pic } from "../pics.js";
 import { liveLine, freshLive } from "./live-status.js";
 
 const T = STR.owner;
+const HOME_TILES = ["local", "picker", "shopping"];
+const MORE_TILES = ["send", "history", "brain", "places", "sweep", "wrapped", "settings"];
 const HOW_AFTER = 2 * 3600e3;
-const fmtDate = (iso) => {
-  try {
-    return new Date(iso).toLocaleDateString("he-IL", { day: "numeric", month: "numeric", weekday: "short" });
-  } catch {
-    return "";
-  }
-};
-
 /** Live status line for the guest's quiz (from rooms/{id}/live/quiz). */
 export function liveStatus(live, her) {
   if (!live?.opened) return T.status.none;
@@ -33,8 +27,8 @@ export function liveStatus(live, her) {
 /** One-tap replies on the result card, shown once she has sent (tap again to clear). */
 export function ackCard(live) {
   if (!live?.finished) return "";
-  return html`<section class="card ackbar" data-testid="ackbar"><div class="sub">${STR.ack.title}</div>
-    <div class="grid choose">${ACK_CODES.map((c) => raw(html`<button class="btn" data-on="ack" data-arg="${c}" aria-pressed="${live.ack === c}"><span class="em">${STR.ack[c].e}</span>${STR.ack[c].t}</button>`))}</div></section>`;
+  return html`<div class="ackbar" data-testid="ackbar"><div class="sub">${STR.ack.title}</div>
+    <div class="grid choose">${ACK_CODES.map((c) => raw(html`<button class="btn" data-on="ack" data-arg="${c}" aria-pressed="${live.ack === c}"><span class="em">${STR.ack[c].e}</span>${STR.ack[c].t}</button>`))}</div></div>`;
 }
 
 /** "Notification sent ✓ / not sent ✗" from the receipt she wrote after her send (live/quiz.push). */
@@ -45,17 +39,17 @@ export function receiptLine(live) {
 
 export async function runOwner(root, store, { base = location.origin + location.pathname, mode } = {}) {
   mountSaveStatus(store, STR.save);
-  // Firestore writes resolve only once the server acks, so never await them on the owner path (offline-first).
+  // never await writes on the owner path (offline-first)
   if (!store.get().settings.ntfy) store.update((db) => (db.settings.ntfy = `mabalach-${newId(16)}`)).catch(saveFailed);
-  // Notifications repair themselves: prune dead subscriptions, keep this phone's current one stored. Loaded after first paint.
+  // notifications repair themselves after first paint
   const repair = () => import("../../push.js").then((m) => m.repairOnStart(store)).catch(saveFailed);
   repair();
   globalThis.navigator?.serviceWorker?.addEventListener?.("message", (e) => e.data?.type === "wte-sub-changed" && repair());
-  // Keep the error and feedback logs at the newest 200 (only when over, so a not-yet-updated rules set is not poked every start).
-  if (LOGS.some((c) => store.list(c).length > LOG_KEEP)) store.trimLogs().catch(() => {}); // harmless: housekeeping, retried next start
+  // keep the logs at the newest 200
+  if (LOGS.some((c) => store.list(c).length > LOG_KEEP)) store.trimLogs().catch(() => {}); // harmless: retried next start
   const views = {};
   const ctx = {};
-  // Changing screen drops the picker's navigation card and stops a running roll (they must not come back after going back).
+  // changing screen drops the picker's nav card and stops a roll
   const stack = new ViewStack((v) => ((ctx.navTo = null), (ctx.rollId = (ctx.rollId ?? 0) + 1), views[v]()));
   const S = () => store.get().settings;
 
@@ -87,13 +81,13 @@ export async function runOwner(root, store, { base = location.origin + location.
     pickFor: (id) => ((ctx.entryId = id), (ctx.pick = null), stack.push("picker")),
   };
 
-  // "How was it?" — ≥2 h after "✅ הולכים" (entry.goAt, set by the picker), one tap 👍/👎.
+  // "how was it?": 2 h after "going" (goAt), one tap
   const pendingHow = () => store.list("history").find((h) => h.goAt && h.how === undefined && Date.now() - new Date(h.goAt) >= HOW_AFTER);
   const howCard = () => {
     const h = pendingHow();
     return h
-      ? html`<section class="card how" data-testid="how"><div>${T.how(h.fn)}</div>
-          <div class="chips"><button class="chip" data-on="how" data-arg="${h.id}:1">👍</button><button class="chip" data-on="how" data-arg="${h.id}:0">👎</button></div></section>`
+      ? html`<div class="how" data-testid="how"><div>${T.how(h.fn)}</div>
+          <div class="chips"><button class="chip" data-on="how" data-arg="${h.id}:1">👍</button><button class="chip" data-on="how" data-arg="${h.id}:0">👎</button></div></div>`
       : "";
   };
   const how = (arg) => {
@@ -110,38 +104,39 @@ export async function runOwner(root, store, { base = location.origin + location.
     toast(T.thanks);
     views.home();
   };
-  const statsCard = (list) => {
-    const st = statsFrom(list);
-    if (!st) return "";
-    const q = QUESTIONS.find((x) => x.id === st.confusing);
-    return html`<section class="card stats-card" data-testid="stats">
-      <div>${T.stats.hit(Math.round(st.hitRate * 100))} · ${T.stats.steps(st.avgSteps.toFixed(1))} · ${T.stats.n(st.n)}</div>
-      ${q ? raw(html`<div class="sub">${T.stats.confusing(q.text)}</div>`) : ""}</section>`;
+  // One status card that follows the quiz: send -> she's answering -> her result (replies, choose a place) -> how was it.
+  const tile = (k) => {
+    const hot = k === "wrapped" && isFirstOfMonth();
+    return html`<button class="btn tile${hot ? " hot" : ""}" data-on="go" data-arg="${k}"><span class="em">${T.tiles[k].e}</span>${T.tiles[k].t}${hot ? raw(html`<small>${STR.wrapped.firstBadge}</small>`) : ""}</button>`;
   };
-
   views.home = () => {
-    const last = store.list("history")[0];
-    const tiles = ["send", "local", "history", "picker", "brain", "places", "sweep", "wrapped", "shopping", "settings"];
+    const live = store.doc("live", "quiz"), her = S().her, hist = store.list("history");
+    const e = recentQuizEntry(hist), busy = live?.opened && !live.finished && !(e && e.at >= live.opened);
+    const r = busy ? null : (e ?? hist[0]);
     render(root, html`
-      <section class="card last">
-        <div class="sub">${T.lastMeal}</div>
-        ${last ? raw(html`<div class="big">${last.fe}</div><h2 class="title">${last.fn}</h2><div class="sub">${fmtDate(last.at)} · ${STR.modeLabel[last.m] ?? ""}</div>`) : raw(html`<p>${T.noMeals}</p>`)}
+      <section class="card last" data-testid="status">
+        ${r ? raw(html`<div class="big">${raw(pic({ id: r.f, emoji: r.fe, name: r.fn }))}</div><h2 class="title">${r.fn}</h2>`) : ""}
+        <p class="sub" data-testid="live">${liveLine(live, her)}</p>
+        ${receiptLine(live) ? raw(html`<p class="sub" data-testid="receipt">${receiptLine(live)}</p>`) : ""}
+        ${raw(ackCard(live))}
+        ${e ? raw(html`<button class="btn btn-primary" data-on="pickFor" data-arg="${e.id}">${T.pickPlace}</button>`) : ""}
+        ${busy || e ? "" : raw(html`<button class="btn btn-primary" data-on="go" data-arg="send">${T.tiles.send.e} ${T.tiles.send.t}</button>`)}
+        ${busy ? "" : raw(howCard())}
       </section>
-      ${raw(ackCard(store.doc("live", "quiz")))}
-      ${raw(howCard())}
-      ${store.list("history").length && backupDue(S()) ? raw(html`<button class="card btn remind" data-on="go" data-arg="settings" data-testid="backup">💾 ${STR.settings.remind}</button>`) : ""}
-      <p class="sub" data-testid="live">${liveLine(store.doc("live", "quiz"), S().her)}</p>
-      ${receiptLine(store.doc("live", "quiz")) ? raw(html`<p class="sub" data-testid="receipt">${receiptLine(store.doc("live", "quiz"))}</p>`) : ""}
-      <div class="tiles">${tiles.map((k) => raw(html`<button class="btn tile${views[k] ? "" : " soon"}${k === "wrapped" && isFirstOfMonth() ? " hot" : ""}" data-on="go" data-arg="${k}"><span class="em">${T.tiles[k].e}</span>${T.tiles[k].t}${k === "wrapped" && isFirstOfMonth() ? raw(html`<small>${STR.wrapped.firstBadge}</small>`) : ""}</button>`))}</div>`, { ...common, how, ack: (c) => store.setAck(store.doc("live", "quiz")?.ack === c ? null : c).catch(saveFailed) });
+      ${hist.length && backupDue(S()) ? raw(html`<button class="card btn remind" data-on="go" data-arg="settings" data-testid="backup">💾 ${STR.settings.remind}</button>`) : ""}
+      <div class="tiles">${HOME_TILES.map((k) => raw(tile(k)))}</div>
+      <button class="btn more${isFirstOfMonth() ? " hot" : ""}" data-on="go" data-arg="more">${T.more}</button>`, { ...common, how, ack: (c) => store.setAck(live?.ack === c ? null : c).catch(saveFailed) });
   };
+  views.more = () =>
+    render(root, html`${raw(back)}<h2 class="q">${T.more}</h2><div class="tiles">${MORE_TILES.map((k) => raw(tile(k)))}</div>`, common);
 
-  // Item 8: sending a link starts a fresh run: her old status (finished, answers, reply) is cleared and the send time stored.
+  // sending a link starts a fresh run: her old status is cleared (item 8)
   const markSent = () => {
     const fresh = freshLive(store.doc("live", "quiz"));
     if (fresh) store.put("live", "quiz", fresh).catch(saveFailed);
   };
 
-  // "opened 3 min ago" keeps counting while a screen with the line is open (text only, no redraw).
+  // the relative time keeps counting (text only)
   setInterval(() => {
     const el = root.querySelector?.("[data-testid=live]");
     if (el && ["home", "send"].includes(stack.top)) el.textContent = liveLine(store.doc("live", "quiz"), S().her);
@@ -160,22 +155,7 @@ export async function runOwner(root, store, { base = location.origin + location.
       ...common,
       copy: async () => (markSent(), toast((await copy(link)) ? T.copied : link)),
     });
-    root.querySelector?.("[data-testid=wa-send]")?.addEventListener("click", () => setTimeout(markSent, 300)); // a plain link: redrawing at once would detach it before the browser follows it
-  };
-
-  views.history = () => {
-    const list = store.list("history");
-    render(root, html`${raw(back)}
-      <h2 class="q">${T.historyTitle}</h2>
-      ${raw(statsCard(list))}
-      ${list.length ? "" : raw(html`<p class="sub">${T.noHistory}</p>`)}
-      ${list.map((h) => raw(html`<article class="card hist">
-        <div class="line"><span class="em">${h.fe}</span><b>${h.fn}</b><span class="sub">${fmtDate(h.at)}</span></div>
-        <div class="sub">${STR.modeLabel[h.m] ?? ""}${h.price ? ` · ${"₪".repeat(h.price)}` : ""}</div>
-        ${h.note ? raw(html`<p class="note">“${h.note}”</p>`) : ""}
-        ${h.trail?.length ? raw(html`<details><summary>${T.trail}</summary><ol>${h.trail.map((t) => raw(html`<li>${t}</li>`))}</ol></details>`) : ""}
-        <button class="btn btn-ghost" data-on="pickFor" data-arg="${h.id}">${T.pickPlace}</button>
-      </article>`))}`, common);
+    root.querySelector?.("[data-testid=wa-send]")?.addEventListener("click", () => setTimeout(markSent, 300));
   };
 
   // "She's next to me": the same quiz on this phone, saved straight to history.
@@ -187,7 +167,7 @@ export async function runOwner(root, store, { base = location.origin + location.
       room: store.get(),
       history: store.list("history"),
       intro: false,
-      onExit: () => stack.back(), // first question: her back bar leaves this view like the old owner button did
+      onExit: () => stack.back(),
       onFinish: (out) =>
         finishForm(inner, out, T.localSend, async (form) => {
           const entry = resultEntry(out, form);
@@ -199,14 +179,13 @@ export async function runOwner(root, store, { base = location.origin + location.
     });
   };
 
-  // Screens load on first use (sw.js still precaches every file, so they work offline). A stub stands in for each
-  // view a module defines; the real module overwrites all of them, then the tapped one runs.
+  // screens load on first use; a stub per view, the module overwrites them
   const lazy = (keys, load, make) => {
     let loading = null;
     const stubs = {};
     for (const k of keys)
       stubs[k] = async (...args) => {
-        const top = stack.top; // she may go back while the module loads: then this screen must not draw over the new one
+        const top = stack.top;
         try {
           loading ??= load().then((m) => make(m));
           await loading;
@@ -221,6 +200,7 @@ export async function runOwner(root, store, { base = location.origin + location.
     Object.assign(views, stubs);
   };
   lazy(["brain", "food", "foodForm"], () => import("./brain.js"), (m) => m.brainViews({ root, store, stack, views, back, common }));
+  lazy(["history"], () => import("./history.js"), (m) => m.historyViews({ root, store, views, back, common }));
   lazy(["sweep"], () => import("./send-sweep.js"), (m) => m.sweepViews({ root, store, views, back, common, base }));
   lazy(["wrapped"], () => import("./send-wrapped.js"), (m) => m.wrappedViews({ root, store, views, back, common, base }));
   lazy(["places", "tryForm", "placeForm", "picker"], () => import("./places.js"), (m) => m.placesViews({ root, store, stack, views, back, common, ctx }));

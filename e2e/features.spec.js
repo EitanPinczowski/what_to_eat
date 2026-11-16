@@ -1,4 +1,5 @@
 import { test, expect } from "@playwright/test";
+import { openMore } from "./helpers.js";
 
 const ROOM_KEY = "mabalach_room";
 const readRoom = (page) =>
@@ -24,7 +25,7 @@ test.beforeEach(async ({ context }) => {
 });
 
 async function placesForm(page, link) {
-  await page.locator('[data-on="go"][data-arg="places"]').click();
+  await openMore(page, "places");
   await page.getByTestId("try-add").click();
   await page.getByTestId("try-link").fill(link);
 }
@@ -135,7 +136,7 @@ test("monthly recap link opens, shows cards and swipes with the buttons", async 
 
 test("back gesture: owner sub-screens go one step back and never leave the app", async ({ page }) => {
   await page.goto("/?store=local");
-  await page.locator('.tile[data-arg="places"]').click();
+  await openMore(page, "places");
   await page.locator('[data-on="add"]').click();
   await expect(page.locator('[data-input="name"]')).toBeVisible();
   await page.goBack();
@@ -143,7 +144,7 @@ test("back gesture: owner sub-screens go one step back and never leave the app",
   await page.goBack();
   await expect(page.locator(".tiles")).toBeVisible(); // home
   expect(page.url()).toContain("localhost:8000");
-  await page.locator('.tile[data-arg="settings"]').click();
+  await openMore(page, "settings");
   await page.goBack();
   await expect(page.locator(".tiles")).toBeVisible();
 });
@@ -165,18 +166,18 @@ test("back gesture: mid-quiz goes one question back and stays in the app", async
 
 test("settings: a pasted site address is normalised, saved and survives a reload", async ({ page }) => {
   await page.goto("/?store=local");
-  await page.locator('.tile[data-arg="settings"]').click();
+  await openMore(page, "settings");
   await page.locator('input[name="base"]').fill("Https://EitanPinczowski.github.io/what_to_eat/ ");
   await page.getByRole("button", { name: "שמירה" }).click();
   await expect(page.locator('input[name="base"]')).toHaveValue("https://eitanpinczowski.github.io/what_to_eat/");
   await page.reload();
-  await page.locator('.tile[data-arg="settings"]').click();
+  await openMore(page, "settings");
   await expect(page.locator('input[name="base"]')).toHaveValue("https://eitanpinczowski.github.io/what_to_eat/");
   await page.locator('[data-on="back"]').click();
-  await page.locator('.tile[data-arg="send"]').click();
+  await page.locator('[data-on="go"][data-arg="send"]').click();
   await expect(page.locator("code.link")).toContainText("https://eitanpinczowski.github.io/what_to_eat/#q=");
   await page.locator('[data-on="back"]').click();
-  await page.locator('.tile[data-arg="settings"]').click();
+  await openMore(page, "settings");
   await page.locator('input[name="base"]').fill("not an address");
   await page.getByRole("button", { name: "שמירה" }).click();
   await expect(page.locator('input[name="base"]')).toHaveValue("not an address"); // refused, not saved
@@ -198,7 +199,7 @@ for (const [state, setup, text, perm] of [
     page.on("request", (r) => /ntfy|wte-push|fcm|push/.test(r.url()) && !r.url().includes("localhost") && calls.push(r.url()));
     await page.addInitScript(setup, perm);
     await page.goto("/?store=local");
-    await page.locator('.tile[data-arg="settings"]').click();
+    await openMore(page, "settings");
     await expect(page.getByTestId("push-state")).toContainText(text);
     if (state === "off") await expect(page.locator('[data-on="pushOn"]')).toBeVisible();
     else await expect(page.locator('[data-on="pushOn"]')).toHaveCount(0);
@@ -223,11 +224,11 @@ test("back gesture: opening and leaving the 'she's next to me' quiz repeatedly k
 
 test("settings: the 'she opened the quiz' alert is off by default and the choice sticks", async ({ page }) => {
   await page.goto("/?store=local");
-  await page.locator('.tile[data-arg="settings"]').click();
+  await openMore(page, "settings");
   const box = page.getByTestId("notify-open");
   await expect(box).not.toBeChecked();
   await box.check();
   await page.locator('[data-on="back"]').click();
-  await page.locator('.tile[data-arg="settings"]').click();
+  await openMore(page, "settings");
   await expect(page.getByTestId("notify-open")).toBeChecked();
 });

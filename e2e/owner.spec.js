@@ -1,8 +1,9 @@
 import { test, expect } from "@playwright/test";
+import { openMore } from "./helpers.js";
 
 test("owner: home tiles, send-quiz link, live status from her tab, toast on result", async ({ page, context }) => {
   await page.goto("/?store=local");
-  await expect(page.locator(".tile")).toHaveCount(10);
+  await expect(page.locator(".tile")).toHaveCount(3);
   await page.locator('[data-on="go"][data-arg="send"]').click();
   const link = await page.locator("code.link").textContent();
   expect(link).toMatch(/#q=[a-z0-9]{24}$/);
@@ -25,7 +26,7 @@ test("owner: home tiles, send-quiz link, live status from her tab, toast on resu
   await expect(page.getByTestId("live")).toContainText("סיימה");
 
   await page.locator('[data-on="back"]').click();
-  await page.locator('[data-on="go"][data-arg="history"]').click();
+  await openMore(page, "history");
   await expect(page.locator(".hist")).toHaveCount(1);
   await expect(page.locator(".hist b")).toHaveText("סושי");
 });
