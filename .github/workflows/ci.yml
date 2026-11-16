@@ -75,6 +75,7 @@ jobs:
           for f in index.html credits.html photos.html css js img design manifest.webmanifest sw.js; do
             if [ -e "$f" ]; then cp -r "$f" _site/; fi
           done
+          mkdir _site/tools && cp tools/picks-lib.mjs tools/candidates.json _site/tools/ # photos.html picker
       - name: Stamp the service worker version
         run: sed -i "s/__VERSION__/${GITHUB_SHA::8}/" _site/sw.js
       - uses: actions/upload-pages-artifact@v3

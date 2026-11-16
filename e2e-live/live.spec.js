@@ -38,3 +38,7 @@ test("a guest link renders the first Hebrew screen (not answered)", async ({ pag
 test("the credits page linked from Settings is published", async ({ request }) => {
   expect((await request.get("./credits.html")).status()).toBe(200);
 });
+
+test("the photo picker page has what it loads (photos.html)", async ({ request }) => {
+  for (const f of ["./photos.html", "./tools/picks-lib.mjs", "./tools/candidates.json"]) expect((await request.get(f)).status(), f).toBe(200);
+});
