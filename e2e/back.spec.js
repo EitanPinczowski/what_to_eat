@@ -97,7 +97,7 @@ test("hungry express shortlist: back from the pick of 3 and from the finish scre
   const id = "e2eback0000000000000000b";
   const errors = [];
   await open(page, id, errors);
-  await page.locator('[data-on="ans"][data-arg="3"]').click(); // 🦖
+  await page.locator('[data-on="ans"][data-arg="2"]').click(); // 🦖 (index 2 of 3)
   for (let i = 0; i < 12 && (await kind(page)) !== "pick"; i++) await page.locator(NEXT).first().click();
   expect(await kind(page)).toBe("pick");
   expect(await page.locator('[data-on="pick"]').count()).toBe(3);

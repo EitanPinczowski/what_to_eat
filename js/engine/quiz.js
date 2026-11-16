@@ -16,7 +16,7 @@ const RELATED = 0.15;
 const GRID_SIZE = 9;
 const PICK_SIZE = 8;
 const MAX_WRONG = 4;
-const MAX_Q = 7;
+const MAX_Q = 7; // at most 7 questions; then the guess or the 3 options (those, a duel and the grid are screens, not questions)
 const EXPRESS_Q = 3;
 const QUOTA = 2;
 const KNOWN_W = 0.5;
@@ -364,7 +364,7 @@ export class FoodQuiz {
     const nq = this.s.asked.length;
     if (this.s.big && nq >= EXPRESS_Q)
       return { type: "pick", express: true, items: ranked.slice(0, SHORTLIST_SIZE).map((x) => x.f) };
-    if (n >= MAX_Q) return this.guessStep(ranked);
+    if (nq >= MAX_Q) return this.guessStep(ranked);
     if (!nq) return this.qStep(this.bestQuestion(ranked).q);
 
     const best = this.bestQuestion(ranked);

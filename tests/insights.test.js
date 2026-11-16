@@ -48,26 +48,26 @@ test("guessViewBy groups guesses by weather or weekday with first-guess share an
 });
 
 test("uselessQuestions: a question that never moves the top guess is listed, one that does is not", () => {
-  const q = QUESTIONS.find((x) => x.id === "hunger");
-  const same = QUESTIONS.find((x) => x.id === "veto");
+  const q = QUESTIONS.find((x) => x.id === "hunger1");
+  const same = QUESTIONS.find((x) => x.id === "mood1");
   // every entry answers the same two questions the same way, so after the first entry's answers the top food is stable
-  const hist = Array.from({ length: 6 }, () => ({ ans: ["hunger:2", "veto:0"] }));
+  const hist = Array.from({ length: 6 }, () => ({ ans: ["hunger1:2", "mood1:0"] }));
   const out = uselessQuestions(hist, foods, QUESTIONS);
   assert.ok(Array.isArray(out));
   for (const u of out) {
     assert.ok(u.asked >= 5 && u.rate <= 20, u.id);
     assert.equal(typeof u.text, "string");
   }
-  assert.ok(!out.some((u) => u.id === "hunger"), "the first answer always changes the top guess");
+  assert.ok(!out.some((u) => u.id === "hunger1"), "the first answer always changes the top guess");
   assert.ok(q && same);
-  assert.deepEqual(uselessQuestions([{ ans: ["hunger:2"] }], foods, QUESTIONS), [], "too few answers");
-  assert.deepEqual(uselessQuestions([{ ans: ["nope:1", "hunger:99", "garbage"] }], foods, QUESTIONS), [], "unknown ids are skipped");
+  assert.deepEqual(uselessQuestions([{ ans: ["hunger1:2"] }], foods, QUESTIONS), [], "too few answers");
+  assert.deepEqual(uselessQuestions([{ ans: ["nope:1", "hunger1:99", "garbage"] }], foods, QUESTIONS), [], "unknown ids are skipped");
 });
 
 test("uselessQuestions: a question whose answers change no scores is reported", () => {
   const noop = { id: "noop", text: "שאלה בלי השפעה", answers: [{ e: "a", t: "א", fx: {} }, { e: "b", t: "ב", fx: {} }] };
-  const hunger = QUESTIONS.find((x) => x.id === "hunger");
-  const hist = Array.from({ length: 6 }, () => ({ ans: ["hunger:2", "noop:1"] }));
+  const hunger = QUESTIONS.find((x) => x.id === "hunger1");
+  const hist = Array.from({ length: 6 }, () => ({ ans: ["hunger1:2", "noop:1"] }));
   const out = uselessQuestions(hist, foods, [hunger, noop]);
   assert.deepEqual(out.map((u) => [u.id, u.asked, u.changed, u.rate]), [["noop", 6, 0, 0]]);
 });

@@ -11,7 +11,7 @@ import { FoodQuiz } from "../js/engine/quiz.js";
 const foods = buildFoods(FOODS);
 const seeded = (seed = 1) => () => ((seed = (seed * 16807) % 2147483647) / 2147483647);
 const quiz = (prior = {}) => new FoodQuiz(foods, QUESTIONS, prior, { rnd: seeded() });
-const q = (id) => QUESTIONS.find((x) => x.id === id);
+const q = (axis, k = 1) => QUESTIONS.find((x) => x.id === axis + k); // the first variant of an axis
 
 test("jaccard", () => {
   assert.equal(jaccard(["a", "b"], ["a", "b"]), 1);
@@ -43,26 +43,30 @@ test("prior: ratings, recent (R2), time of day and season (R12)", () => {
   assert.equal(late.bamba, 0.5);
 });
 
-test("starters come first in order: hunger, then cuisine (item 14); the rest is by information gain", () => {
+test("the quiz goes by stages: hunger first, then body, mood, craving, feel; each axis once (item 14)", () => {
   const z = quiz();
-  const ids = [];
-  for (let i = 0; i < 2; i++) {
+  const seen = [];
+  for (let i = 0; i < 7; i++) {
     const s = z.next();
-    assert.equal(s.type, "q");
-    ids.push(s.q.id);
-    z.answer(s.q, 0);
+    if (s.type !== "q") break;
+    seen.push(s.q);
+    z.answer(s.q, s.order[0]);
   }
-  assert.deepEqual(ids, ["hunger", "cuisine"]);
+  assert.equal(seen[0].axis, "hunger");
+  assert.equal(seen[0].answers.length, 3, "the first question has 3 answers");
+  const stages = seen.map((x) => x.stage);
+  assert.deepEqual(stages, [...stages].sort(), "stages never go back");
+  assert.equal(new Set(seen.map((x) => x.axis)).size, seen.length, "one question per axis");
 });
 
 test("ordered questions keep their order, others shuffle (R10)", () => {
   const z = quiz();
-  assert.deepEqual(z.next().order, [0, 1, 2, 3]);
-  z.answer(q("hunger"), 2);
+  assert.deepEqual(z.next().order, [0, 1, 2]);
+  z.answer(q("hunger"), 1);
   let shuffled = false;
   for (let i = 0; i < 10; i++) {
-    const s = new FoodQuiz(foods, QUESTIONS, {}, { rnd: seeded(i + 2) }).qStep(q("vibe"));
-    if (s.order.join() !== "0,1,2,3") shuffled = true;
+    const s = new FoodQuiz(foods, QUESTIONS, {}, { rnd: seeded(i + 2) }).qStep(q("mood"));
+    if (s.order.join() !== "0,1,2") shuffled = true;
   }
   assert.ok(shuffled);
 });
@@ -72,36 +76,48 @@ test("answers move scores; skip does not (R5)", () => {
   z.answer(q("hunger"), 0); // snack
   assert.ok(z.s.score.bamba > z.s.score.burger);
   const before = { ...z.s.score };
-  z.answer(q("vibe"), -1);
+  z.answer(q("mood"), -1);
   assert.deepEqual(z.s.score, before);
   assert.equal(z.n, 2);
   assert.match(z.trail.at(-1), /🤷‍♀️/);
 });
 
 test("🦖 hunger halves healthy effects (R11)", () => {
+  const vibe = q("vibe");
+  const light = vibe.answers[2];
+  const f = foods.find((x) => x.id === "poke");
+  const normal = quiz().delta(f, vibe, light);
   const z = quiz();
-  z.answer(q("hunger"), 3);
+  z.answer(q("hunger"), 2);
   assert.equal(z.s.big, true);
-  const vibeLight = q("vibe").answers[2];
-  const f = z.byId.get("poke");
-  assert.equal(z.delta(f, q("vibe"), vibeLight), 2.5 + 2.5 * 0.5);
+  assert.equal(z.delta(z.byId.get("poke"), vibe, light), normal - light.fx.healthy * 0.5);
+  assert.ok(light.fx.healthy > 0 && f.tags.includes("healthy"));
 });
 
 test("weight w scales playful questions (R8)", () => {
   const z = quiz();
-  assert.equal(z.delta(z.byId.get("pizza"), q("flight"), q("flight").answers[0]), 3 * 0.7);
+  const play = { id: "play1", axis: "play", text: "?", w: 0.7, answers: [{ e: "a", t: "a", fx: { italian: 3 } }, { e: "b", t: "b", fx: { sweet: 3 } }] };
+  const f = z.byId.get("pizza");
+  assert.equal(z.delta(f, play, play.answers[0]), f.set.has("italian") ? 3 * 0.7 : 0);
+  assert.equal(z.delta(f, { ...play, w: 1 }, play.answers[0]), f.set.has("italian") ? 3 : 0);
+  const sweet = z.byId.get("choco_cake");
+  assert.equal(z.delta(sweet, play, play.answers[1]), 3 * 0.7);
 });
 
-test("need: spice question is skipped when nothing spicy is in play", () => {
+test("need: the spice question waits until something salty, spicy or a meal is in play", () => {
   const z = quiz();
-  const top = foods.filter((f) => f.tags[0] === "dessert").map((f) => ({ f, p: 1 }));
-  assert.equal(z.value(q("spice"), top), 0);
-  assert.ok(z.value(q("temp"), top) > 0);
+  const sweetOnly = foods.filter((f) => f.tags[0] === "dessert" && !f.tags.some((t) => ["salty", "spicy", "meal"].includes(t))).map((f) => ({ f, p: 1 }));
+  assert.ok(sweetOnly.length > 3);
+  assert.ok(q("kick").need.includes("spicy"));
+  assert.equal(z.inPlay(q("kick"), z.ranked()), true);
+  assert.equal(z.inPlay(q("kick"), sweetOnly), false);
+  assert.equal(z.value(q("kick"), sweetOnly), 0);
+  assert.ok(z.value(q("warmth"), sweetOnly) > 0);
 });
 
 test("grid vetoes lower the food and spread to similar foods; the grid comes once", () => {
   const z = new FoodQuiz(foods, QUESTIONS, {}, { rnd: seeded(), pickBelow: 0 });
-  z.answer(q("hunger"), 2);
+  z.answer(q("hunger"), 1);
   const items = z.ranked().slice(0, 9).map((x) => x.f);
   const before = { ...z.s.score };
   z.grid(items, ["shawarma"]);
@@ -113,7 +129,7 @@ test("grid vetoes lower the food and spread to similar foods; the grid comes onc
 
 test("duel picks the most different of the top 2–7 and scores the winner", () => {
   const z = quiz();
-  z.answer(q("hunger"), 2);
+  z.answer(q("hunger"), 1);
   const ranked = z.ranked();
   const [a, b] = z.duelPair(ranked);
   assert.equal(a.id, ranked[0].f.id);
@@ -159,7 +175,7 @@ test("undo restores the previous state and trail", () => {
   const z = quiz();
   z.answer(q("hunger"), 0);
   const snap = JSON.stringify(z.s);
-  z.answer(q("vibe"), 1);
+  z.answer(q("mood"), 1);
   assert.ok(z.undo());
   assert.equal(JSON.stringify(z.s), snap);
   assert.equal(z.trail.length, 1);
@@ -192,9 +208,9 @@ test("mood title follows the food's tags", () => {
   assert.equal(moodFor(null), "בדיוק מה שבא לך 😋");
 });
 
-test("🦖 express quiz: hunger, cuisine, two best questions, then a pick of 3 distinct foods (item 17)", () => {
+test("🦖 express quiz: hunger, one mood question, one sensation question, then a pick of 3 distinct foods (item 17)", () => {
   const z = quiz();
-  z.answer(q("hunger"), 3);
+  z.answer(q("hunger"), 2);
   let s;
   for (let i = 0; i < 10; i++) {
     s = z.next();
@@ -208,8 +224,11 @@ test("🦖 express quiz: hunger, cuisine, two best questions, then a pick of 3 d
   assert.equal(s.express, true);
   assert.equal(s.items.length, 3);
   assert.equal(new Set(s.items.map((f) => f.id)).size, 3);
-  assert.equal(z.n, 4);
-  assert.deepEqual(z.s.asked.slice(0, 2), ["hunger", "cuisine"]);
+  assert.equal(z.n, 3);
+  const axes = z.s.asked.map((id) => z.qById.get(id).axis);
+  assert.equal(axes[0], "hunger");
+  assert.equal(z.qById.get(z.s.asked[1]).stage, 2);
+  assert.ok(["bite", "warmth", "after"].includes(axes[2]));
 });
 
 test("item 13: unsure at guess time → 3 distinct options; sure → one guess; none → they are out and the quiz goes on", () => {
@@ -256,12 +275,12 @@ test("item 19: free text matches whole words and lists every food that fits", ()
   assert.deepEqual(z.result, { free: "פס" });
 });
 
-test("item 19: 'לערב הזה' only in the evening (17:00-04:00)", async () => {
+test("item 19: a question with a daytime wording changes only in the evening (17:00-04:00)", async () => {
   const { questionText, isEvening } = await import("../js/data/questions.js");
-  const vibe = QUESTIONS.find((x) => x.id === "vibe");
+  const vibe = { text: "איזה וייב יש לערב הזה?", textDay: "איזה וייב יש עכשיו?" };
   const at = (h) => new Date(2026, 0, 1, h, 0);
   for (const h of [17, 21, 23, 0, 3]) (assert.ok(isEvening(at(h))), assert.match(questionText(vibe, at(h)), /לערב הזה/));
   for (const h of [4, 8, 12, 16]) (assert.ok(!isEvening(at(h))), assert.doesNotMatch(questionText(vibe, at(h)), /לערב/));
-  const hunger = QUESTIONS.find((x) => x.id === "hunger");
+  const hunger = q("hunger");
   assert.equal(questionText(hunger, at(10)), hunger.text); // other questions never change
 });

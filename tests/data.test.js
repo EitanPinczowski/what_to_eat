@@ -2,7 +2,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { FOODS } from "../js/data/foods.js";
 import { CUISINES } from "../js/data/cuisines.js";
-import { QUESTIONS } from "../js/data/questions.js";
+import { QUESTIONS, AXES } from "../js/data/questions.js";
 import { TAGS, KINDS, ALL_TAGS } from "../js/data/tags.js";
 import { STR } from "../js/data/strings.js";
 
@@ -37,25 +37,48 @@ test("foods: no two foods share the exact same tag set", () => {
   }
 });
 
-test("questions: unique ids, 2–4 answers, known tags, starters 1–2 (hunger, cuisine)", () => {
+test("questions: unique ids, 12 axes in 4 stages, 2–4 answers (a 5-stop slider is the exception), known tags, a real effect each", () => {
   const ids = new Set();
   for (const q of QUESTIONS) {
     assert.ok(!ids.has(q.id), q.id);
     ids.add(q.id);
+    assert.match(q.id.slice(q.axis.length), /^\d+$/);
+    assert.ok([1, 2, 3, 4].includes(q.stage), q.id);
     assert.ok(q.text.trim().endsWith("?"), `${q.id} is a question`);
-    assert.ok(q.answers.length >= 2 && q.answers.length <= (q.id === "cuisine" ? CUISINES.length : 4), q.id);
+    assert.ok(q.slider ? q.answers.length === 5 : q.answers.length >= 2 && q.answers.length <= 4, `${q.id}: ${q.answers.length} answers`);
     for (const a of q.answers) {
       assert.ok(a.e && a.t, q.id);
-      assert.ok(a.t.split(/\s+/).length <= 5, `${q.id}: answer too long "${a.t}"`);
+      assert.ok(a.t.split(/\s+/).length <= 6, `${q.id}: answer too long "${a.t}"`);
+      assert.ok(Object.keys(a.fx).length > 0 || a.dyn, `${q.id}: "${a.t}" has no effect`);
       for (const tag of Object.keys(a.fx)) assert.ok(TAGS[tag] || (tag.startsWith("c:") && CUISINES.includes(tag.slice(2))), `${q.id}: unknown tag ${tag}`);
     }
     for (const tag of q.need ?? []) assert.ok(TAGS[tag], q.id);
   }
-  const starts = QUESTIONS.filter((q) => q.start).map((q) => q.start).sort();
-  assert.deepEqual(starts, [1, 2]);
-  assert.equal(QUESTIONS.find((q) => q.start === 1).id, "hunger");
-  assert.equal(QUESTIONS.find((q) => q.start === 2).id, "cuisine");
+  assert.equal(AXES.length, 12);
+  assert.ok(QUESTIONS.length >= 30, `${QUESTIONS.length} questions`);
+  for (const axis of AXES) {
+    const vs = QUESTIONS.filter((q) => q.axis === axis);
+    assert.ok(vs.length >= 2, `axis ${axis} has ${vs.length} variants`);
+    assert.equal(new Set(vs.map((q) => q.stage)).size, 1, `${axis}: one stage`);
+  }
+  const first = QUESTIONS.filter((q) => q.axis === "hunger" && !q.slider && q.answers.length === 3);
+  assert.ok(first.length >= 2, "the opening question has 3 answers, in at least two wordings");
+  assert.ok(QUESTIONS.filter((q) => q.slider).every((q) => q.answers.length === 5));
   assert.ok(QUESTIONS.filter((q) => q.w).length <= 3);
+});
+
+test("the bank has no skip, \"don't know\" or \"whatever\" answer, anywhere (owner rule)", () => {
+  const SKIP = /🤷|לא משנה|לא יודע|אין לי דעה|מה שבא|whatever|skip|don.?t know/i;
+  for (const q of QUESTIONS) for (const a of q.answers) assert.doesNotMatch(`${a.e} ${a.t}`, SKIP, `${q.id}: "${a.t}"`);
+});
+
+test("retired v1 questions load on demand and still resolve old ids", async () => {
+  const { findQuestion } = await import("../js/data/questions.js");
+  assert.equal((await findQuestion("hunger1")).axis, "hunger");
+  const old = await findQuestion("cuisine");
+  assert.equal(old.retired, true);
+  assert.equal(old.answers.length, 8);
+  assert.equal(await findQuestion("no-such-question"), undefined);
 });
 
 test("every answer tag matches at least one food", () => {

@@ -32,11 +32,12 @@ test("replaying recorded actions rebuilds the same engine state", () => {
   const room = emptyRoom();
   const now = new Date(2026, 0, 1, 13);
   const a = makeQuiz(room, [], { now, rnd: () => 0.3 });
-  const log = [{ k: "a", q: "hunger", i: 2 }, { k: "a", q: "vibe", i: -1 }, { k: "g", v: ["pizza"] }, { k: "x", f: "sushi", r: "no" }, { k: "d", a: "burger", b: "falafel", c: "a" }];
+  const log = [{ k: "a", q: "hunger1", i: 1 }, { k: "a", q: "vibe", i: 0 }, { k: "a", q: "mood1", i: -1 }, { k: "g", v: ["pizza"] }, { k: "x", f: "sushi", r: "no" }, { k: "d", a: "burger", b: "falafel", c: "a" }];
   for (const x of log) applyAction(a, x);
   const b = makeQuiz(room, [], { now, rnd: () => 0.9 });
   for (const x of log) applyAction(b, x);
   assert.deepEqual(b.s, a.s);
+  assert.deepEqual(a.s.asked, ["hunger1", "mood1"], "the v1 id \"vibe\" from before the update is skipped");
   applyAction(b, { k: "c", t: "פיצה" });
   assert.deepEqual(b.result, { f: "pizza" });
 });

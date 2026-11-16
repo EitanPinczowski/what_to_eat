@@ -25,7 +25,10 @@ export function makeQuiz(room, historyList, { now = new Date(), rnd, weather = n
 
 /** Apply one recorded action to the engine. */
 export function applyAction(z, a) {
-  if (a.k === "a") z.answer(z.questions.find((q) => q.id === a.q), a.i);
+  if (a.k === "a") {
+    const q = z.qById.get(a.q);
+    if (q) z.answer(q, a.i); // a v1 question id from a quiz she started before the update: dropped
+  }
   else if (a.k === "d") z.duel(z.food(a.a), z.food(a.b), a.c);
   else if (a.k === "g") z.grid([], a.v ?? []);
   else if (a.k === "x") z.guessResult(z.food(a.f), a.r);
