@@ -22,6 +22,7 @@ test.beforeEach(async ({ page }) => {
 
 for (const scheme of ["light", "dark"]) {
   test(`owner screens (${scheme})`, async ({ page }) => {
+    test.setTimeout(120000); // ten screens, each loaded and scanned; WebKit is slower
     await page.emulateMedia({ colorScheme: scheme });
     await page.addInitScript(
       ([room, record]) => {
@@ -47,6 +48,7 @@ for (const scheme of ["light", "dark"]) {
   });
 
   test(`her quiz screens (${scheme})`, async ({ page }) => {
+    test.setTimeout(90000);
     await page.emulateMedia({ colorScheme: scheme });
     await page.goto(`/?store=local#q=${GUEST}`);
     await page.getByRole("button", { name: "יאללה, תנחש" }).waitFor();
