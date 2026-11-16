@@ -4,6 +4,8 @@ import { jaccard } from "./similarity.js";
 export const T = 1.3;
 export const NOISE_EPS = 0.15; // item 14: chance an answer is random instead of matching her food (the answer model; tuned in tests/sim.js, docs/REVIEW.md)
 export const ANSWER_TAU = 1; // answers a food scores higher on are likelier (softmax of the fx deltas / tau); 0 = only the single best answer
+const CONFIDENT_P = 0.65; // item 15: the top food this likely ends the quiz (was 0.5: it stopped before telling near-twins apart)
+const TWIN = 0.6; // jaccard from which two foods count as near-twins
 const MIN_GAIN = 0.03; // nats: below this no step is worth asking, so the quiz guesses
 const REPEAT_COST = 0.02; // nats off a question per already-asked question that probes the same tags
 const NEAR_BEST = 0.9; // questions within this share of the best gain are picked at random (variety)
@@ -59,11 +61,9 @@ export class FoodQuiz {
     };
     this.trail = [];
     this.stack = [];
-    this.eps = opts.eps ?? NOISE_EPS;
-    this.confP = opts.confP;
-    this.m3 = opts.m3;
-    this.tau = opts.tau ?? ANSWER_TAU;
-    this.minGain = opts.minGain ?? MIN_GAIN;
+    this.eps = NOISE_EPS;
+    this.tau = ANSWER_TAU;
+    this.minGain = MIN_GAIN;
     this.likCache = new Map();
     this.dimCache = new Map();
     this.memo = new Map(); // state → the step shown there: undo lands on the very same screen (same question order, same duel)
@@ -240,8 +240,9 @@ export class FoodQuiz {
     const p1 = a.p;
     const p2 = b?.p ?? 0;
     const n = this.s.n;
-    if (p1 >= (this.confP ?? 0.5) || n >= 16) return true;
-    if (this.m3 && n >= 5 && p1 + (b?.p ?? 0) + (ranked[2]?.p ?? 0) >= this.m3) return true;
+    if (p1 >= CONFIDENT_P || n >= 16) return true;
+    const twin = ranked.slice(1, 3).some((x) => jaccard(this.byId.get(a.f.id).set, this.byId.get(x.f.id).set) >= TWIN); // near-twins at the top: keep asking until one of them is clearly ahead
+    if (twin && n < 12) return false;
     if (this.s.big) return (n >= 4 && p1 >= 0.2 && p1 >= 1.5 * p2) || n >= 10;
     return n >= 6 && p1 >= 0.25 && p1 >= 1.8 * p2;
   }
@@ -290,7 +291,7 @@ export class FoodQuiz {
 
     const n = this.s.n;
     if (this.s.big && n >= EXPRESS_AT)
-      return { type: "pick", express: true, items: this.shortlist(ranked) };
+      return { type: "pick", express: true, items: ranked.slice(0, SHORTLIST_SIZE).map((x) => x.f) };
 
     // Every step is scored by expected information gain; the grid and duel only win when they beat the best question.
     const best = this.bestQuestion(ranked);

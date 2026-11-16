@@ -89,8 +89,8 @@ export const QUESTIONS = [
     a("🍽️", "משהו מסודר", { street: -1.5, resto: 1 }),
   ] },
   { id: "sweets", need: ["sweet", "dessert"], text: "איזה מתוק?", answers: [
-    a("🍫", "שוקולד", { choco: 3.5 }),
-    a("🍓", "פירות", { fruit: 3.5 }),
+    a("🍫", "שוקולד", { choco: 4.5 }),
+    a("🍓", "פירות", { fruit: 4.5 }),
     a("🍦", "קר וקרמי", { cold: 2, creamy: 2 }),
     a("🥐", "מאפה", { doughy: 2.5 }),
   ] },

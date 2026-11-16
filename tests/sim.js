@@ -13,18 +13,13 @@ const VERBOSE = process.argv.includes("--verbose");
 const NOISE = 0.15;
 const TARGETS = { found: 0.945, steps: 10, express: 0.25 };
 // Honest accuracy (docs/REVIEW.md): regression floors = measured value rounded down to 5 points; PRODUCT = report-only goals.
-const FLOORS = { first: 0.25, top3: 0.80 }; // at noise 0.15, tired, learned history
+const FLOORS = { first: 0.60, top3: 0.93, never: 6 }; // never = foods that are never the first guess at noise 0 (item 15) // at noise 0.15, tired, learned history
 const PRODUCT = { first: 0.45, top3: 0.85, steps: 9 };
 const LEVELS = [0, 0.15, 0.3];
 const TIRED_AFTER = 8, TIRED_ADD = 0.1; // found was 0.95; no-skip rule (1.6) costs ~1 trial in 475 — see docs/REVIEW.md
 
 const TUNE = {}; // tuning only: PICK_BELOW=0.4 PICK_DISTINCT=0 node tests/sim.js
 if (process.env.PICK_BELOW) TUNE.pickBelow = Number(process.env.PICK_BELOW);
-if (process.env.CONFP) TUNE.confP = Number(process.env.CONFP);
-if (process.env.M3) TUNE.m3 = Number(process.env.M3);
-if (process.env.MING) TUNE.minGain = Number(process.env.MING);
-if (process.env.TAU) TUNE.tau = Number(process.env.TAU);
-if (process.env.EPS) TUNE.eps = Number(process.env.EPS);
 if (process.env.PICK_DISTINCT) TUNE.pickDistinct = process.env.PICK_DISTINCT !== "0";
 const foods = buildFoods(FOODS);
 const rng = (seed) => () => ((seed = (seed * 16807) % 2147483647) / 2147483647);
@@ -33,20 +28,21 @@ function play(target, rnd, learned = {}, noiseAt = () => NOISE) {
   const z = new FoodQuiz(foods, QUESTIONS, {}, { rnd, learned, ...TUNE });
   const ans = [];
   const judge = new FoodQuiz(foods, QUESTIONS); // the simulated user judges by the raw answer effects
+  const jt = judge.byId.get(target.id);
   const offered = []; // food ids shown as guesses / picks, in order
   let first = null, guesses = 0, inPick = false;
   const answer = (q, i) => (i >= 0 && ans.push([q.id, i]), z.answer(q, i));
 
   const sim = (f) => (f.id === target.id ? 1 : jaccard(f.tags, target.tags));
   const lean = (q) => {
-    const sc = q.answers.map((a) => foods.reduce((s, f) => s + (f.id === target.id ? 0 : judge.delta(f, q, a)), 0));
+    const sc = q.answers.map((a) => judge.foods.reduce((s, f) => s + (f.id === target.id ? 0 : judge.delta(f, q, a)), 0));
     return sc.indexOf(Math.min(...sc));
   };
   for (let i = 0; i < 40; i++) {
     const s = z.next();
     if (s.type === "done") break;
     if (s.type === "q") {
-      const ds = s.q.answers.map((a) => judge.delta(target, s.q, a));
+      const ds = s.q.answers.map((a) => judge.delta(jt, s.q, a)); // jt carries the cuisine tags (c:<id>) she answers by
       const max = Math.max(...ds);
       if (rnd() < noiseAt(z.n)) answer(s.q, Math.floor(rnd() * ds.length));
       else if (ds.every((d) => d === 0)) answer(s.q, lean(s.q)); // no skip on her screens (R5): she leans toward foods like her target
@@ -75,13 +71,13 @@ function play(target, rnd, learned = {}, noiseAt = () => NOISE) {
         continue;
       }
       z.choose(hit ?? "—");
-      return { exact: false, found: !!hit, steps: z.n + 1, ans, express: !!s.express || (!!s.unsure && z.s.big), first, top3: inPick || offered.slice(0, 3).includes(target.id), guesses };
+      return { exact: false, found: !!hit, steps: z.n + 1, ans, express: !!s.express || (!!s.unsure && z.s.big), first, top3: inPick || offered.slice(0, 3).includes(target.id), guesses, win: offered[0] };
     }
   }
   const ok = z.result?.f === target.id;
   if (z.result?.f && !offered.length) offered.push(z.result.f);
   first ??= ok;
-  return { exact: ok, found: ok, steps: z.n, ans, express: false, first, top3: offered.slice(0, 3).includes(target.id), guesses };
+  return { exact: ok, found: ok, steps: z.n, ans, express: false, first, top3: offered.slice(0, 3).includes(target.id), guesses, win: offered[0] };
 }
 
 function coverage() {
@@ -155,6 +151,7 @@ console.log(`sim: with learning exact ${pct(LX)} (baseline ${pct(R.exact)}, ${Ob
 // Honest accuracy: first guess / top 3 / guesses shown, at three noise levels, noise +0.10 after step 8,
 // each starting from a history of one earlier quiz per food (learned bonuses), not an empty one.
 const table = {};
+const perFood = {};
 for (const lv of LEVELS) {
   const noiseAt = (n) => lv + (n > TIRED_AFTER ? TIRED_ADD : 0);
   const h = [];
@@ -162,12 +159,17 @@ for (const lv of LEVELS) {
   for (const f of foods) h.push({ f: f.id, ans: play(f, rng(5 + k++ * 104729), {}, noiseAt).ans });
   const lrn = learnFrom(h, foods);
   let m = 0, fi = 0, t3 = 0, gs = 0, st = 0, xr = 0, xh = 0;
+  const per = new Map(foods.map((f) => [f.id, { first: 0, top3: 0, wins: {} }]));
   for (const f of foods)
     for (let t = 0; t < TRIALS; t++) {
       const r = play(f, rng(31 + m++ * 7919), lrn, noiseAt);
+      const p = per.get(f.id);
+      p.first += r.first; p.top3 += r.top3;
+      if (!r.first && r.win) p.wins[r.win] = (p.wins[r.win] || 0) + 1;
       fi += r.first; t3 += r.top3; gs += r.guesses; st += r.steps;
       if (r.express) (xr++, (xh += r.found));
     }
+  perFood[lv] = per;
   table[lv] = { first: fi / m, top3: t3 / m, guesses: gs / m, steps: st / m, express: xr ? xh / xr : 1 };
 }
 console.log(`sim: honest accuracy (tired after step ${TIRED_AFTER}: +${TIRED_ADD} noise; learned history; ${foods.length} foods x ${TRIALS})`);
@@ -176,10 +178,24 @@ for (const lv of LEVELS) {
   const t = table[lv];
   console.log(`${lv.toFixed(2)}  | ${pct(t.first).padStart(4)} | ${pct(t.top3).padStart(4)} | ${t.guesses.toFixed(1)} | ${t.steps.toFixed(1)} | ${pct(t.express)}`);
 }
+// Report-only per-food view (--foods): never first guess, rarely in the top 3, and who wins instead.
+if (process.argv.includes("--foods")) {
+  for (const lv of [0, 0.15].filter((l) => perFood[l])) {
+    console.log(`per-food at noise ${lv}: never first / top3 under half / confused with`);
+    for (const [id, p] of perFood[lv]) {
+      if (p.first > 0 && p.top3 / TRIALS >= 0.5) continue;
+      const w = Object.entries(p.wins).sort((a, b) => b[1] - a[1]).slice(0, 3).map(([k, v]) => `${k}x${v}`).join(" ");
+      console.log(`  ${id}: first ${p.first}/${TRIALS} top3 ${p.top3}/${TRIALS} <- ${w}`);
+    }
+  }
+}
+// Every food must be the first guess at least sometimes with a perfect guest (noise 0).
+const never = [...(perFood[0] ?? [])].filter(([, p]) => p.first === 0).map(([id]) => id);
+if (never.length) console.log(`sim: never the first guess at noise 0 (${never.length}): ${never.join(", ")}`);
 const H = table[0.15];
 if (H.first < PRODUCT.first || H.top3 < PRODUCT.top3 || H.steps > PRODUCT.steps) console.log(`sim: report-only product targets not met at noise 0.15`);
-const honest = H.first >= FLOORS.first && H.top3 >= FLOORS.top3;
-if (!honest) console.log(`sim: regression floor missed at noise 0.15: first ${pct(H.first)} (>=${pct(FLOORS.first)}), top3 ${pct(H.top3)} (>=${pct(FLOORS.top3)})`);
+const honest = H.first >= FLOORS.first && H.top3 >= FLOORS.top3 && never.length <= FLOORS.never;
+if (!honest) console.log(`sim: regression floor missed at noise 0.15: first ${pct(H.first)} (>=${pct(FLOORS.first)}), top3 ${pct(H.top3)} (>=${pct(FLOORS.top3)}), never-first foods ${never.length} (<=${FLOORS.never})`);
 const ok = honest && R.found >= TARGETS.found && XF >= TARGETS.express && LX >= R.exact - 0.02;
 if (R.steps > TARGETS.steps) console.log(`sim: WARN average steps ${R.steps.toFixed(1)} > ${TARGETS.steps}`);
 console.log(ok ? "sim: PASS" : "sim: BELOW TARGET");
