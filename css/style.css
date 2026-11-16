@@ -39,8 +39,8 @@ code.link{display:block;padding:8px;font-size:var(--t2);word-break:break-all;col
 .craving-card .line{justify-content:space-between}
 .chips{display:flex;flex-wrap:wrap;gap:6px;min-height:28px}
 .chip{padding:3px 10px;border-radius:99px;background:var(--accent);color:#fff;font-size:var(--t2);animation:chipin .3s var(--ease)}
-.chip.soft{opacity:.55}
-.chip.empty{background:none;color:inherit;opacity:.6;padding-inline:0}
+.chip.soft{border-style:dashed;background:transparent}
+.chip.empty{background:none;color:inherit;font-style:italic;padding-inline:0}
 .craving-line{margin:0 0 4px}
 @keyframes chipin{from{transform:scale(.7);opacity:0}}
 @media (prefers-reduced-motion:reduce){.chip{animation:none}}
