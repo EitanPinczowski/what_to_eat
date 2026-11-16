@@ -41,7 +41,7 @@ test("owner home: heavy owner screens are not in its static graph", () => {
 // Budgets sit a little above today's sizes (docs/REVIEW.md, item 20). Raise them on purpose, not by accident.
 test("size budget: start-up graph and whole shell", () => {
   const start = sizeOf(staticGraph(ENTRIES));
-  assert.ok(start <= 175 * 1024, `start-up modules ${start} bytes`);
+  assert.ok(start <= 177 * 1024, `start-up modules ${start} bytes`);
   const sw = readFileSync("sw.js", "utf8");
   const shell = JSON.parse(sw.slice(sw.indexOf("const SHELL = ") + 14, sw.indexOf("];", sw.indexOf("const SHELL = ")) + 1)).filter((f) => f !== "./");
   const total = sizeOf(shell);

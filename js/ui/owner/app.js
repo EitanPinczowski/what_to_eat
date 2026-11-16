@@ -9,7 +9,7 @@ import { render, html, raw, toast, copy, confetti, saveFailed, mountSaveStatus }
 import { statsFrom, nudgeExp } from "../../engine/learn.js";
 import { QUESTIONS } from "../../data/questions.js";
 import { isFirstOfMonth } from "../../engine/wrapped.js";
-import { ACK_CODES } from "../../store/store.js";
+import { ACK_CODES, LOGS, LOG_KEEP } from "../../store/store.js";
 import { backupDue } from "./backup-due.js";
 import { liveLine, freshLive } from "./live-status.js";
 
@@ -51,6 +51,8 @@ export async function runOwner(root, store, { base = location.origin + location.
   const repair = () => import("../../push.js").then((m) => m.repairOnStart(store)).catch(saveFailed);
   repair();
   globalThis.navigator?.serviceWorker?.addEventListener?.("message", (e) => e.data?.type === "wte-sub-changed" && repair());
+  // Keep the error and feedback logs at the newest 200 (only when over, so a not-yet-updated rules set is not poked every start).
+  if (LOGS.some((c) => store.list(c).length > LOG_KEEP)) store.trimLogs().catch(() => {}); // harmless: housekeeping, retried next start
   const views = {};
   const ctx = {};
   // Changing screen drops the picker's navigation card and stops a running roll (they must not come back after going back).

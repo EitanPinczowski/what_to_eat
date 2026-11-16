@@ -114,7 +114,7 @@ service cloud.firestore {
           && idOk() && docId.size() <= 64 && roomLive()
           && smallDoc() && capped() && docOk(col, docId);
         allow delete: if signedIn()
-          && col in ['history', 'places', 'live', 'shopping'];
+          && col in ['history', 'places', 'live', 'feedback', 'errors', 'shopping'];
       }
     }
 

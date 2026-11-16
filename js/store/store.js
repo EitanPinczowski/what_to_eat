@@ -38,8 +38,14 @@ export function migrate(room) {
   return r;
 }
 
-/** Subcollections whose docs the rules do not let a client delete: "rotate key" overwrites them with a tombstone instead. */
-export const NO_DELETE = ["feedback", "errors"];
+/** Subcollections whose docs the rules do not let a client delete. Empty since item 11 (the logs can be trimmed). */
+export const NO_DELETE = [];
+// "Rotate key" still overwrites these two with a tombstone instead of deleting: it works with old and new rules alike.
+const TOMBSTONE = ["feedback", "errors"];
+
+/** Log collections the owner may trim, and how many docs are kept on start. */
+export const LOGS = ["errors", "feedback"];
+export const LOG_KEEP = 200;
 
 const isStr = (x, n) => typeof x === "string" && x.length <= n;
 const MAX_RATES = 400;
@@ -182,7 +188,7 @@ export class Store {
     const ops = [];
     for (const c of COLLECTIONS)
       for (const id of Object.keys(this.cols[c])) {
-        ops.push(NO_DELETE.includes(c) ? this._writeDoc(c, id, { moved: true, at }) : this._writeDoc(c, id, null));
+        ops.push(TOMBSTONE.includes(c) ? this._writeDoc(c, id, { moved: true, at }) : this._writeDoc(c, id, null));
         this.cols[c] = {};
       }
     await Promise.allSettled(ops);
@@ -382,6 +388,22 @@ export class Store {
     const id = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
     await this.put("errors", id, { at: new Date().toISOString(), ...e });
     for (const d of this.list("errors").slice(MAX_ERRORS)) await this.remove("errors", d.id);
+  }
+
+  /** Delete the oldest docs of the log collections beyond `keep` (newest kept). Returns how many were removed. */
+  async trimLogs(keep = LOG_KEEP) {
+    let n = 0;
+    for (const c of LOGS)
+      for (const d of this.list(c).slice(keep)) (await this.remove(c, d.id), n++);
+    return n;
+  }
+
+  /** Delete every doc of one log collection ("errors" | "feedback"). Returns how many were removed. */
+  async clearLog(col) {
+    if (!LOGS.includes(col)) throw new Error(`not a log: ${col}`);
+    const all = this.list(col);
+    for (const d of all) await this.remove(col, d.id);
+    return all.length;
   }
 
   exportJSON() {

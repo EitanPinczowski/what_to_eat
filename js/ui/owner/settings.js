@@ -11,6 +11,7 @@ import { addSub, removeSub, hasSub, pushSupport, subscribeThisDevice, currentSub
 import { installKind, installHelp } from "../../pwa.js";
 import { withTimeout } from "../guest/session.js";
 import { BACKUP_EVERY, backupDue } from "./backup-due.js";
+import { relTime } from "./live-status.js";
 
 const G = STR.settings;
 /**
@@ -52,6 +53,21 @@ export async function moveToNewRoom(store, { keepData = true, storage = localSto
   return id;
 }
 
+const clip = (t, n) => (String(t ?? "").length > n ? String(t).slice(0, n - 1) + "…" : String(t ?? ""));
+
+/** Item 11: the problems card (last 20 errors) and the feedback list (last 5), each with a clear button. */
+export function problemsCard(store, now = Date.now()) {
+  const P = STR.settings.problems;
+  const errs = store.list("errors");
+  const fb = store.list("feedback");
+  return html`<section class="card stack" data-testid="problems"><b>${P.title(errs.length)}</b>
+    ${errs.length ? raw(html`<ul class="foods">${errs.slice(0, 20).map((e) => raw(html`<li class="sub"><span dir="ltr">${clip(e.msg, 90)}</span> · ${e.screen ?? ""} · ${relTime(e.at, now)}</li>`))}</ul>
+      <button class="btn btn-ghost" data-on="clearLog" data-arg="errors" data-testid="clear-errors">${P.clear}</button>`) : raw(html`<span class="sub">${P.none}</span>`)}
+    <b>${P.feedbackTitle(fb.length)}</b>
+    ${fb.length ? raw(html`<ul class="foods">${fb.slice(0, 5).map((e) => raw(html`<li class="sub">${clip(e.text, 120)} · ${relTime(e.at, now)}</li>`))}</ul>
+      <button class="btn btn-ghost" data-on="clearLog" data-arg="feedback" data-testid="clear-feedback">${P.clear}</button>`) : raw(html`<span class="sub">${P.feedbackNone}</span>`)}</section>`;
+}
+
 export function settingsViews({ root, store, views, back, common, base, mode }) {
   views.settings = () => {
     const s = store.get().settings;
@@ -84,6 +100,7 @@ export function settingsViews({ root, store, views, back, common, base, mode }) 
       <section class="card stack install"><b>${STR.install.title}</b><span class="sub">${installHelp(installKind())}</span>
         ${globalThis.__installPrompt ? raw(html`<button class="btn" data-on="install">${STR.install.button}</button>`) : ""}
         ${installKind() !== "ios" ? raw(html`<span class="sub">${STR.install.ios}</span>`) : ""}</section>
+      ${raw(problemsCard(store))}
       <button class="btn btn-ghost" data-on="rotate">${G.rotate}</button>
       <button class="btn btn-ghost" data-on="reset">${G.reset}</button>`, {
       ...common,
@@ -166,6 +183,16 @@ export function settingsViews({ root, store, views, back, common, base, mode }) 
         if (res === "declined") return;
         toast(STR.joined);
         location.reload();
+      },
+      clearLog: async (col) => {
+        if (!confirm(G.problems.clearAsk)) return;
+        try {
+          await withTimeout(store.clearLog(col), WRITE_TIMEOUT);
+          toast(G.problems.cleared);
+        } catch {
+          toast(G.problems.clearFail);
+        }
+        views.settings();
       },
       export: () => {
         const blob = new Blob([store.exportJSON()], { type: "application/json" });

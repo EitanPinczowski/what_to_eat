@@ -111,3 +111,25 @@ test("room recovery: pasted link rejoins a room (confirm, old id kept); a lost r
   expect(await page.evaluate(() => localStorage.getItem("mabalach_prev_room"))).toBe(room);
   await expect.poll(readBackup).toBe(other);
 });
+
+test("problems card: lists errors, clear deletes them (item 11)", async ({ page }) => {
+  await page.goto("/?store=local");
+  await expect(page.locator(".tile")).toHaveCount(10);
+  const room = await page.evaluate(() => localStorage.getItem("mabalach_room"));
+  await page.evaluate((room) => {
+    const key = `mabalach_v1:${room}`;
+    const d = JSON.parse(localStorage.getItem(key));
+    const now = Date.now();
+    d.cols.errors = Object.fromEntries([1, 2, 3].map((i) => [`e${i}`, { at: new Date(now - i * 60e3).toISOString(), msg: `boom ${i}`, screen: "quiz" }]));
+    localStorage.setItem(key, JSON.stringify(d));
+  }, room);
+  await page.reload();
+  page.on("dialog", (d) => d.accept());
+  await page.locator('[data-on="go"][data-arg="settings"]').click();
+  await expect(page.getByTestId("problems")).toContainText("תקלות (3)");
+  await expect(page.getByTestId("problems")).toContainText("boom 1");
+  await page.getByTestId("clear-errors").click();
+  await expect(page.getByTestId("problems")).toContainText("תקלות (0)");
+  const left = await page.evaluate((r) => Object.keys(JSON.parse(localStorage.getItem(`mabalach_v1:${r}`)).cols.errors ?? {}).length, room);
+  expect(left).toBe(0);
+});
