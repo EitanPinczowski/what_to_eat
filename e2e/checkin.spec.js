@@ -6,9 +6,11 @@ async function toSent(page, room) {
     const sub = { endpoint: "https://fcm.googleapis.com/fcm/send/e2e", keys: { p256dh: "p", auth: "a" } };
     window.__subscribed = 0;
     if (!window.PushManager) window.PushManager = function () {};
+    if (!window.Notification) window.Notification = function () {}; // WebKit in CI has no Notification object
     Object.defineProperty(window.Notification, "permission", { get: () => "default", configurable: true });
     window.Notification.requestPermission = async () => "granted";
     const reg = { pushManager: { getSubscription: async () => null, subscribe: async () => (window.__subscribed++, { toJSON: () => sub }) } };
+    if (!navigator.serviceWorker) Object.defineProperty(navigator, "serviceWorker", { value: {}, configurable: true });
     Object.defineProperty(navigator.serviceWorker, "getRegistration", { value: async () => reg, configurable: true });
   });
   await page.goto(`/?store=local#q=${room}`);
