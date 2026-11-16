@@ -8,11 +8,16 @@
     "sim": "node tests/sim.js",
     "e2e": "playwright test --reporter=line",
     "test": "npm run test:unit && npm run sim && npm run e2e",
-    "test:prepush": "npm run test:unit && npm run sim && playwright test --reporter=line --project=pixel",
-    "prepare": "git config core.hooksPath .githooks"
+    "test:prepush": "npm run test:unit && npm run sim && npm run test:emu && playwright test --reporter=line --project=pixel",
+    "prepare": "git config core.hooksPath .githooks",
+    "test:emu": "firebase emulators:exec --only firestore,auth --project demo-wte \"node --test --test-concurrency=1 tests-emu/*.emu.test.js\""
   },
   "devDependencies": {
+    "@axe-core/playwright": "^4.14.0",
+    "@firebase/rules-unit-testing": "^6.0.0",
     "@playwright/test": "^1.49.0",
+    "firebase": "^13.3.0",
+    "firebase-tools": "^15.36.0",
     "sharp": "^0.35.5"
   }
 }

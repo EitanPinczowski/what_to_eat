@@ -27,6 +27,16 @@ jobs:
           node-version: lts/*
           cache: npm
       - run: npm ci
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+      - uses: actions/cache@v4
+        with:
+          path: ~/.cache/firebase/emulators
+          key: firebase-emulators-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
+      - name: Firestore rules and two-device round trip (emulator, demo project)
+        run: npm run test:emu
       - run: npx playwright install --with-deps chromium webkit
       - run: npm run test:unit && npm run sim && npx playwright test --reporter=line --fail-on-flaky-tests
       - name: Phone alert on failure
