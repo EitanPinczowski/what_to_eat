@@ -5,7 +5,7 @@ import { newId } from "../../share/codec.js";
 import { buildJoinLink, parseHash } from "../../share/links.js";
 import { normPhone } from "../../share/whatsapp.js";
 import { ROOM_KEY, openStore } from "../../store/open.js";
-import { render, html, raw, toast, copy } from "../dom.js";
+import { render, html, raw, toast, copy, saveFailed } from "../dom.js";
 import { addSub, removeSub, hasSub, pushSupport, subscribeThisDevice, currentSub, unsubscribeThisDevice, notifyAll } from "../../push.js";
 import { installKind, installHelp } from "../../pwa.js";
 import { withTimeout } from "../guest/session.js";
@@ -104,7 +104,7 @@ export function settingsViews({ root, store, views, back, common, base, mode }) 
       },
       pushOff: async () => {
         const ep = await unsubscribeThisDevice();
-        if (ep) await store.update((db) => (db.settings.push = removeSub(db.settings.push, ep))).catch(() => {});
+        if (ep) await store.update((db) => (db.settings.push = removeSub(db.settings.push, ep))).catch(saveFailed);
         toast(G.push.offDone);
         views.settings();
       },
@@ -157,7 +157,7 @@ export function settingsViews({ root, store, views, back, common, base, mode }) 
         a.download = `mabalach-backup-${new Date().toISOString().slice(0, 10)}.json`;
         a.click();
         setTimeout(() => URL.revokeObjectURL(a.href), 1000);
-        store.update((db) => (db.settings.lastBackup = new Date().toISOString())).catch(() => {});
+        store.update((db) => (db.settings.lastBackup = new Date().toISOString())).catch(saveFailed);
       },
       restore: async (_v, _e, el) => {
         const file = el.files?.[0];

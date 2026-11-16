@@ -48,7 +48,7 @@ async function boot() {
     return mod.runSweep(root, store);
   }
   const owner = import("./ui/owner/app.js");
-  owner.catch(() => {});
+  owner.catch(() => {}); // harmless: optional / best effort, nothing to tell the user
   const [store] = await Promise.all([openStore(ownerRoomId(), { mode: route.mode, fast: route.kind !== "r" }), pics]);
   if (guardMoved(store)) return;
   if (route.kind === "r") {
@@ -85,7 +85,7 @@ registerSW((apply) => {
     if (k) bar.remove();
   });
   document.body.append(bar);
-}).catch(() => {});
+}).catch(() => {}); // harmless: optional / best effort, nothing to tell the user
 
 // Android/desktop Chrome: keep the install prompt for the button in settings.
 addEventListener("beforeinstallprompt", (e) => {

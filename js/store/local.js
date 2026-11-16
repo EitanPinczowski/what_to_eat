@@ -18,7 +18,7 @@ export class LocalStore extends Store {
     try {
       const d = JSON.parse(this.storage.getItem(this.key) ?? "null");
       if (d && typeof d === "object") return d;
-    } catch {}
+    } catch {} // harmless: optional storage / network extra, the app works without it
     return { room: null, cols: Object.fromEntries(COLLECTIONS.map((c) => [c, {}])) };
   }
   _write(d) {

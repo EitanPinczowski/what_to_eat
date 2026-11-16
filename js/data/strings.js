@@ -354,6 +354,12 @@ export const STR = {
     button: "📲 להתקין עכשיו",
   },
 
+  // Save marker (owner and guest). Worded so it fits both: no gendered verbs.
+  save: {
+    pending: "ממתין לשליחה…",
+    saved: "נשמר ✓",
+    fail: "השמירה לא הצליחה 😕 אפשר לנסות שוב",
+  },
   feedback: {
     open: "💬 משהו לא עבד?",
     text: "מה קרה?",

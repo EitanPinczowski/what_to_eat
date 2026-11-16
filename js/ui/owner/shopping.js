@@ -1,7 +1,7 @@
 // Owner: recipe detail + the shared shopping list (a `shopping` collection in the room, so both phones see it).
 import { STR } from "../../data/strings.js";
 import { findRecipe } from "../../data/recipes.js";
-import { render, html, raw, toast } from "../dom.js";
+import { render, html, raw, toast, saveFailed } from "../dom.js";
 
 const S = STR.shop;
 const K = STR.picker;
@@ -34,7 +34,7 @@ export function shoppingViews({ root, store, stack, views, back, common, ctx }) 
       <button class="btn btn-ghost" data-on="go" data-arg="shopping">${S.openList}</button>`, {
       ...common,
       addAll: () => {
-        store.addShopping(r.ing, r.title).then((n) => toast(S.added(n))).catch(() => {});
+        store.addShopping(r.ing, r.title).then((n) => toast(S.added(n))).catch(saveFailed);
       },
     });
   };
@@ -49,8 +49,8 @@ export function shoppingViews({ root, store, stack, views, back, common, ctx }) 
         <span style="${i.done ? "text-decoration:line-through;opacity:.6" : ""}">${i.text}</span>${i.recipe ? raw(html` <span class="sub">${S.fromRecipe(i.recipe)}</span>`) : ""}</label></li>`))}</ul>
       ${items.some((i) => i.done) ? raw(html`<button class="btn btn-ghost" data-on="clear" data-testid="shop-clear">${S.clear}</button>`) : ""}`, {
       ...common,
-      tick: (_v, _e, el) => store.tickShopping(el.dataset.arg, el.checked).catch(() => {}),
-      clear: () => store.clearDoneShopping().then((n) => toast(S.cleared(n))).catch(() => {}),
+      tick: (_v, _e, el) => store.tickShopping(el.dataset.arg, el.checked).catch(saveFailed),
+      clear: () => store.clearDoneShopping().then((n) => toast(S.cleared(n))).catch(saveFailed),
     });
   };
 }

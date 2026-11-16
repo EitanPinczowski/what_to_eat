@@ -5,7 +5,7 @@ import { newId } from "../../share/codec.js";
 import { buildResultLink } from "../../share/links.js";
 import { waUrl } from "../../share/whatsapp.js";
 import { pic, catLabel, foodLabel } from "../pics.js";
-import { render, html, raw, confetti } from "../dom.js";
+import { render, html, raw, confetti, saveFailed, mountSaveStatus } from "../dom.js";
 import { startGuestQuiz, backBar } from "./quiz.js";
 import { VOTE_NONE } from "../../store/store.js";
 import { fetchWeather, cachedWeather } from "../../weather.js";
@@ -44,7 +44,7 @@ export function installErrorLog(store, screen, win = globalThis.window) {
   let left = 10;
   const log = (msg, stack) => {
     if (left-- <= 0) return;
-    store.logError({ msg: cut(msg, 300), stack: cut(stack, 1500), screen: cut(screen(), 40), ua: ua() }).catch(() => {});
+    store.logError({ msg: cut(msg, 300), stack: cut(stack, 1500), screen: cut(screen(), 40), ua: ua() }).catch(() => {}); // harmless: optional / best effort, nothing to tell the user
   };
   win?.addEventListener("error", (e) => log(e.message, e.error?.stack));
   win?.addEventListener("unhandledrejection", (e) => log(e.reason?.message ?? e.reason, e.reason?.stack));
@@ -107,10 +107,11 @@ export async function runGuest(root, store, { base = location.origin + location.
   const s = room.settings;
   let screen = "intro";
   installErrorLog(store, () => screen);
+  mountSaveStatus(store, STR.save);
   notifyOpened(s, { sent: false }); // once per page open (opt-in setting, off by default)
 
   const live = store.doc("live", "quiz");
-  const saveLive = (data) => store.put("live", "quiz", { ...data, at: new Date().toISOString() }).catch(() => {});
+  const saveLive = (data) => store.put("live", "quiz", { ...data, at: new Date().toISOString() }).catch(saveFailed);
 
   const feedback = (back) => {
     const prev = screen;
@@ -123,7 +124,7 @@ export async function runGuest(root, store, { base = location.origin + location.
       <button class="btn back" data-on="back">${STR.feedback.back}</button>`, {
       send: async (fd) => {
         const t = cut(fd.get("t"), 500).trim();
-        if (t) await withTimeout(store.put("feedback", newId(12), { at: new Date().toISOString(), text: t, screen: prev, ua: ua() }), 4000).catch(() => {});
+        if (t) await withTimeout(store.put("feedback", newId(12), { at: new Date().toISOString(), text: t, screen: prev, ua: ua() }), 4000).catch(saveFailed);
         render(root, html`<p class="sub" role="status">${STR.feedback.thanks}</p>
           <button class="btn" data-on="back" autofocus>${STR.feedback.back}</button>`, { back: () => ((screen = prev), back()) });
       },
@@ -138,7 +139,7 @@ export async function runGuest(root, store, { base = location.origin + location.
     saveLive({ opened, n: actions?.length ?? 0, actions: actions ?? [], trail: [], finished: false });
     // Never wait for the network before the first screen: use the saved reading and refresh it in the background for next time.
     const weather = actions?.length ? null : cachedWeather(room.settings?.city);
-    if (!actions?.length && !weather) fetchWeather(room.settings?.city).catch(() => {});
+    if (!actions?.length && !weather) fetchWeather(room.settings?.city).catch(() => {}); // harmless: optional / best effort, nothing to tell the user
     startGuestQuiz(root, {
       baseEntry: true,
       weather,
@@ -234,7 +235,7 @@ export async function runGuest(root, store, { base = location.origin + location.
         const code = b?.dataset.arg;
         if (!code || !(code === VOTE_NONE || store.vote()?.ids.includes(code))) return;
         if (!voteTap(lastVote, code, store.vote()?.pick)) return;
-        store.castVote(code).catch(() => {}); // local copy updates synchronously; the write may wait on the network
+        store.castVote(code).catch(saveFailed); // local copy updates synchronously; the write may wait on the network
         ping(s.ntfy, STR.vote.ntfy(s.her));
         notifyAll(s, "vote");
       });

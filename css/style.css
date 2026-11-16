@@ -42,6 +42,11 @@ h1 { margin: 24px 0 8px; font-size: 2rem; font-weight: var(--heavy); color: var(
   background: var(--fg); color: var(--bg); border-radius: var(--radius-sm); text-align: center; z-index: 10;
 }
 
+.savemark {
+  position: fixed; top: 6px; inset-inline-start: 8px; padding: 2px 8px; font-size: 0.75rem; opacity: 0.8; pointer-events: none;
+  background: var(--bg); color: var(--fg); border-radius: var(--radius-sm); z-index: 9;
+}
+
 @media (prefers-reduced-motion: reduce) {
   * { transition: none !important; animation: none !important; }
 }

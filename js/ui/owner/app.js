@@ -4,7 +4,7 @@ import { newId } from "../../share/codec.js";
 import { buildQuizLink } from "../../share/links.js";
 import { waUrl } from "../../share/whatsapp.js";
 import { ViewStack } from "../../router.js";
-import { render, html, raw, toast, copy, confetti } from "../dom.js";
+import { render, html, raw, toast, copy, confetti, saveFailed, mountSaveStatus } from "../dom.js";
 import { statsFrom, nudgeExp } from "../../engine/learn.js";
 import { QUESTIONS } from "../../data/questions.js";
 import { isFirstOfMonth } from "../../engine/wrapped.js";
@@ -36,8 +36,9 @@ export function ackCard(live) {
 }
 
 export async function runOwner(root, store, { base = location.origin + location.pathname, mode } = {}) {
+  mountSaveStatus(store, STR.save);
   // Firestore writes resolve only once the server acks, so never await them on the owner path (offline-first).
-  if (!store.get().settings.ntfy) store.update((db) => (db.settings.ntfy = `mabalach-${newId(16)}`)).catch(() => {});
+  if (!store.get().settings.ntfy) store.update((db) => (db.settings.ntfy = `mabalach-${newId(16)}`)).catch(saveFailed);
   const views = {};
   const ctx = {};
   // Changing screen drops the picker's navigation card and stops a running roll (they must not come back after going back).
@@ -50,7 +51,7 @@ export async function runOwner(root, store, { base = location.origin + location.
   const collect = () => {
     if (collecting) return;
     collecting = true;
-    store.collectInbox().catch(() => {}).finally(() => (collecting = false));
+    store.collectInbox().catch(saveFailed).finally(() => (collecting = false));
   };
   collect();
   store.subscribe((what) => {
@@ -86,11 +87,11 @@ export async function runOwner(root, store, { base = location.origin + location.
     const h = store.doc("history", id);
     if (!h) return;
     const up = v === "1";
-    store.put("history", id, { ...h, how: up ? 1 : -1 }).catch(() => {});
-    if (h.f) store.update((db) => (db.exp = nudgeExp(db.exp ?? {}, h.f, up))).catch(() => {});
+    store.put("history", id, { ...h, how: up ? 1 : -1 }).catch(saveFailed);
+    if (h.f) store.update((db) => (db.exp = nudgeExp(db.exp ?? {}, h.f, up))).catch(saveFailed);
     if (h.place && store.doc("places", h.place)) {
       const p = store.doc("places", h.place);
-      store.put("places", h.place, { ...p, rating: Math.max(0, Math.min(5, (p.rating ?? 3) + (up ? 0.5 : -0.5))) }).catch(() => {});
+      store.put("places", h.place, { ...p, rating: Math.max(0, Math.min(5, (p.rating ?? 3) + (up ? 0.5 : -0.5))) }).catch(saveFailed);
     }
     toast(T.thanks);
     views.home();
@@ -116,7 +117,7 @@ export async function runOwner(root, store, { base = location.origin + location.
       ${raw(howCard())}
       ${store.list("history").length && backupDue(S()) ? raw(html`<button class="card btn remind" data-on="go" data-arg="settings" data-testid="backup">💾 ${STR.settings.remind}</button>`) : ""}
       <p class="sub" data-testid="live">${liveStatus(store.doc("live", "quiz"), S().her)}</p>
-      <div class="tiles">${tiles.map((k) => raw(html`<button class="btn tile${views[k] ? "" : " soon"}${k === "wrapped" && isFirstOfMonth() ? " hot" : ""}" data-on="go" data-arg="${k}"><span class="em">${T.tiles[k].e}</span>${T.tiles[k].t}${k === "wrapped" && isFirstOfMonth() ? raw(html`<small>${STR.wrapped.firstBadge}</small>`) : ""}</button>`))}</div>`, { ...common, how, ack: (c) => store.setAck(store.doc("live", "quiz")?.ack === c ? null : c).catch(() => {}) });
+      <div class="tiles">${tiles.map((k) => raw(html`<button class="btn tile${views[k] ? "" : " soon"}${k === "wrapped" && isFirstOfMonth() ? " hot" : ""}" data-on="go" data-arg="${k}"><span class="em">${T.tiles[k].e}</span>${T.tiles[k].t}${k === "wrapped" && isFirstOfMonth() ? raw(html`<small>${STR.wrapped.firstBadge}</small>`) : ""}</button>`))}</div>`, { ...common, how, ack: (c) => store.setAck(store.doc("live", "quiz")?.ack === c ? null : c).catch(saveFailed) });
   };
 
   views.send = () => {
@@ -163,7 +164,7 @@ export async function runOwner(root, store, { base = location.origin + location.
         finishForm(inner, out, T.localSend, async (form) => {
           const entry = resultEntry(out, form);
           out.seal?.();
-          store.put("history", newId(16), { ...entry, src: "local" }).catch(() => {});
+          store.put("history", newId(16), { ...entry, src: "local" }).catch(saveFailed);
           toast(T.saved);
           stack.reset("home");
         }),

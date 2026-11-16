@@ -18,7 +18,7 @@ const cache = {
     mem.set(k, v);
     try {
       globalThis.localStorage?.setItem(k, JSON.stringify(v));
-    } catch {}
+    } catch {} // harmless: optional storage / network extra, the app works without it
   },
 };
 
@@ -48,7 +48,7 @@ export async function placeFor(city, { f = globalThis.fetch, timeout = 3000 } = 
       cache.set(key, p);
       return p;
     }
-  } catch {}
+  } catch {} // harmless: optional storage / network extra, the app works without it
   return DEFAULT_PLACE;
 }
 

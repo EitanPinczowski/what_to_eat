@@ -4,7 +4,7 @@ import { STR } from "../../data/strings.js";
 import { buildFoods } from "../../engine/foods.js";
 import { buildSweepLink } from "../../share/links.js";
 import { waUrl } from "../../share/whatsapp.js";
-import { render, html, raw, toast, copy } from "../dom.js";
+import { render, html, raw, toast, copy, saveFailed } from "../dom.js";
 import { sweepOrder } from "../guest/sweep.js";
 
 const W = STR.sweep;
@@ -39,7 +39,7 @@ export function sweepViews({ root, store, views, back, common, base }) {
       // Choosing a mode resets the sweep so her next open starts a fresh deck.
       mode: (mode) => {
         const order = sweepOrder(foods, db.ratings, mode);
-        store.put("live", "sweep", { mode, order, i: 0, skipped: [], given: {}, n: order.length, finished: false }).catch(() => {});
+        store.put("live", "sweep", { mode, order, i: 0, skipped: [], given: {}, n: order.length, finished: false }).catch(saveFailed);
         views.sweep();
       },
     });

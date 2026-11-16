@@ -8,7 +8,7 @@ import { newId } from "../../share/codec.js";
 import { buildResultLink } from "../../share/links.js";
 import { waUrl } from "../../share/whatsapp.js";
 import { pic, catLabel, foodLabel } from "../pics.js";
-import { render, html, raw, confetti } from "../dom.js";
+import { render, html, raw, confetti, saveFailed } from "../dom.js";
 import { BackLayer } from "../../router.js";
 import { withTimeout, ping, installErrorLog } from "./session.js";
 import { notifyAll } from "../../push.js";
@@ -53,7 +53,7 @@ export async function runSweep(root, store, { base = location.origin + location.
   const save = (extra = {}) =>
     store
       .put("live", "sweep", { mode: st.mode, order: st.order, i: st.i, skipped: st.skipped, given: st.given, n: st.order.length, finished: false, at: new Date().toISOString(), ...extra })
-      .catch(() => {});
+      .catch(saveFailed);
 
   const layer = BackLayer.shared().scope();
   const rate = (id, r) => {
@@ -61,7 +61,7 @@ export async function runSweep(root, store, { base = location.origin + location.
     st.undo.push({ i: st.i, skipped: [...st.skipped], id, before: store.get().ratings[id] ?? null });
     if (r) {
       st.given[id] = r;
-      store.update((db) => (db.ratings[id] = { ...(db.ratings[id] ?? {}), r })).catch(() => {});
+      store.update((db) => (db.ratings[id] = { ...(db.ratings[id] ?? {}), r })).catch(saveFailed);
     } else st.skipped.push(id);
     st.i++;
     save();
@@ -74,7 +74,7 @@ export async function runSweep(root, store, { base = location.origin + location.
       st.i = u.i;
       st.skipped = u.skipped;
       delete st.given[u.id];
-      store.update((db) => (u.before ? (db.ratings[u.id] = u.before) : delete db.ratings[u.id])).catch(() => {});
+      store.update((db) => (u.before ? (db.ratings[u.id] = u.before) : delete db.ratings[u.id])).catch(saveFailed);
       save();
       card();
     };
@@ -96,7 +96,7 @@ export async function runSweep(root, store, { base = location.origin + location.
       const n = v.trim().slice(0, 200);
       st.notes[id] = n;
       clearTimeout(st.noteTimer);
-      st.noteTimer = setTimeout(() => store.update((db) => (db.ratings[id] = { ...(db.ratings[id] ?? { r: 0 }), ...(n ? { n } : {}) })).catch(() => {}), 600);
+      st.noteTimer = setTimeout(() => store.update((db) => (db.ratings[id] = { ...(db.ratings[id] ?? { r: 0 }), ...(n ? { n } : {}) })).catch(saveFailed), 600);
     },
     redoSkipped: () => {
       st.order = [...st.order.slice(0, st.i), ...st.skipped];

@@ -5,7 +5,7 @@ import { TAGS, TAG_GROUPS, KINDS } from "../../data/tags.js";
 import { RATING_EMOJI } from "../../data/constants.js";
 import { buildFoods } from "../../engine/foods.js";
 import { newId } from "../../share/codec.js";
-import { render, html, raw, toast } from "../dom.js";
+import { render, html, raw, toast, saveFailed } from "../dom.js";
 import { pic, catLabel, foodLabel } from "../pics.js";
 
 const B = STR.brain;
@@ -45,7 +45,7 @@ export function brainViews({ root, store, stack, views, back, common }) {
         const cur = db.ratings[id] ?? {};
         db.ratings[id] = { ...cur, r: cur.r === r ? 0 : r };
       })
-      .catch(() => {});
+      .catch(saveFailed);
 
   const row = (f, ratings) => html`<li class="food-row">
       <button class="linkish" data-on="open" data-arg="${f.id}">${raw(foodLabel(f))}${f.custom ? raw(html` <small class="sub">${B.custom}</small>`) : ""}${ratings[f.id]?.n ? " 📝" : ""}</button>
@@ -84,7 +84,7 @@ export function brainViews({ root, store, stack, views, back, common }) {
       open: (id) => ((state.open = id), stack.push("food")),
       newFood: () => ((state.form = { name: "", emoji: "", kind: "meal", tags: [] }), stack.push("foodForm")),
       addInbox: (i) => ((state.form = { name: db.inbox[i], emoji: "", kind: "meal", tags: [], inbox: db.inbox[i] }), stack.push("foodForm")),
-      dropInbox: (i) => (store.update((d) => d.inbox.splice(Number(i), 1)).catch(() => {}), views.brain()),
+      dropInbox: (i) => (store.update((d) => d.inbox.splice(Number(i), 1)).catch(saveFailed), views.brain()),
     });
   };
 
@@ -112,13 +112,13 @@ export function brainViews({ root, store, stack, views, back, common }) {
             if (n) db.ratings[f.id].n = n;
             else delete db.ratings[f.id].n;
           })
-          .catch(() => {});
+          .catch(saveFailed);
         toast(STR.owner.saved);
         stack.back();
       },
       edit: () => ((state.form = { id: f.id, name: f.name, emoji: f.emoji, kind: f.tags[0], tags: f.tags.slice(1) }), stack.push("foodForm")),
       del: () => {
-        store.update((db) => ((db.custom = db.custom.filter((c) => c.id !== f.id)), delete db.ratings[f.id])).catch(() => {});
+        store.update((db) => ((db.custom = db.custom.filter((c) => c.id !== f.id)), delete db.ratings[f.id])).catch(saveFailed);
         stack.back();
       },
     });
@@ -152,7 +152,7 @@ export function brainViews({ root, store, stack, views, back, common }) {
               db.custom = [...db.custom.filter((c) => c.id !== made.id), made];
               if (form.inbox) db.inbox = db.inbox.filter((x) => x !== form.inbox);
             })
-            .catch(() => {});
+            .catch(saveFailed);
           state.form = null;
           toast(STR.owner.saved);
           stack.back();

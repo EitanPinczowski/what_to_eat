@@ -11,7 +11,7 @@ import { parsePlaceLink } from "../../places/links.js";
 import { recipesFor } from "../../data/recipes.js";
 import { recipeBlock } from "./shopping.js";
 import { VOTE_MAX, VOTE_MIN, VOTE_NONE } from "../../store/store.js";
-import { render, html, raw, toast } from "../dom.js";
+import { render, html, raw, toast, saveFailed } from "../dom.js";
 
 const L = STR.places;
 const K = STR.picker;
@@ -81,7 +81,7 @@ export function placesViews({ root, store, stack, views, back, common, ctx }) {
           if (!r) return toast(L.tryBad);
           const name = d.name.trim().slice(0, 60);
           if (!name) return ((ask = true), draw(), toast(L.tryAsk));
-          store.put("places", newId(12), { name, city: store.get().settings.city ?? "", modes: ["sit", "take"], foods: [], cuisines: [], price: 2, rating: 3, link: r.url, note: "", shabbat: false, hours: [], visits: [], wantTry: true }).catch(() => {});
+          store.put("places", newId(12), { name, city: store.get().settings.city ?? "", modes: ["sit", "take"], foods: [], cuisines: [], price: 2, rating: 3, link: r.url, note: "", shabbat: false, hours: [], visits: [], wantTry: true }).catch(saveFailed);
           toast(STR.owner.saved);
           stack.back();
         },
@@ -155,11 +155,11 @@ export function placesViews({ root, store, stack, views, back, common, ctx }) {
           const { id = newId(12), ...data } = p;
           // Keep only complete ranges; none left = no hours = always eligible.
           const hours = (data.hours ?? []).filter((h) => h.o && h.c).sort((a, b) => a.d - b.d);
-          store.put("places", id, { ...data, cuisines: CUISINES.filter((c) => (data.cuisines ?? []).includes(c)), hours, name: data.name.trim().slice(0, 60), link: /^https?:\/\//.test(data.link) ? data.link : "" }).catch(() => {});
+          store.put("places", id, { ...data, cuisines: CUISINES.filter((c) => (data.cuisines ?? []).includes(c)), hours, name: data.name.trim().slice(0, 60), link: /^https?:\/\//.test(data.link) ? data.link : "" }).catch(saveFailed);
           toast(STR.owner.saved);
           stack.back();
         },
-        del: () => (store.remove("places", p.id).catch(() => {}), stack.back()),
+        del: () => (store.remove("places", p.id).catch(saveFailed), stack.back()),
       });
     draw();
   };
@@ -254,11 +254,11 @@ export function placesViews({ root, store, stack, views, back, common, ctx }) {
       },
       // Firestore writes resolve only on server ack: start them, never await (the local copy is updated synchronously).
       voteSend: () => {
-        store.sendVote(st.sel ?? []).catch(() => {});
+        store.sendVote(st.sel ?? []).catch(saveFailed);
         ((st.sel = []), (seenPick = null));
         views.picker();
       },
-      voteClear: () => (store.clearVote().catch(() => {}), (st.sel = []), (seenPick = null), views.picker()),
+      voteClear: () => (store.clearVote().catch(saveFailed), (st.sel = []), (seenPick = null), views.picker()),
       // Opening a fallback link counts as "we're going"; then ask where, to save the place in two taps.
       fallback: (_a, e, el) => {
         window.open(el.href, "_blank", "noopener");
@@ -271,7 +271,7 @@ export function placesViews({ root, store, stack, views, back, common, ctx }) {
         if (!name) return;
         const id = newId(12);
         const mode = st.mode && st.mode !== "home" ? [st.mode] : [];
-        store.put("places", id, { name, city: st.city ?? "", modes: mode, foods: st.food ? [st.food] : [], cuisines: food?.cuisine ?? [], price: st.budget ?? 2, rating: 3, link: "", note: "", shabbat: false, visits: [new Date().toISOString()] }).catch(() => {});
+        store.put("places", id, { name, city: st.city ?? "", modes: mode, foods: st.food ? [st.food] : [], cuisines: food?.cuisine ?? [], price: st.budget ?? 2, rating: 3, link: "", note: "", shabbat: false, visits: [new Date().toISOString()] }).catch(saveFailed);
         markGoing(id);
         ctx.quickAdd = false;
         toast(K.logged);
@@ -304,13 +304,13 @@ export function placesViews({ root, store, stack, views, back, common, ctx }) {
     const now = new Date().toISOString();
     if (ctx.entryId) {
       const h = store.doc("history", ctx.entryId);
-      if (h) store.put("history", ctx.entryId, { ...h, goAt: now, ...(placeId ? { place: placeId } : {}) }).catch(() => {});
+      if (h) store.put("history", ctx.entryId, { ...h, goAt: now, ...(placeId ? { place: placeId } : {}) }).catch(saveFailed);
     }
   }
 
   function goTo(placeId, st) {
     const p = placeId && store.doc("places", placeId);
-    if (p) store.put("places", placeId, { ...p, visits: [...(p.visits ?? []), new Date().toISOString()].slice(-30) }).catch(() => {});
+    if (p) store.put("places", placeId, { ...p, visits: [...(p.visits ?? []), new Date().toISOString()].slice(-30) }).catch(saveFailed);
     markGoing(placeId);
     toast(K.logged);
     if (p) ((ctx.navTo = p), views.picker());
