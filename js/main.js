@@ -49,7 +49,7 @@ async function boot() {
   const roomId = ownerRoomId();
   import("./store/room-backup.js").then((m) => m.backupRoom()).catch(() => {}); // harmless: the backup is a second chance only
   const owner = import("./ui/owner/app.js");
-  owner.catch(() => {}); // harmless: best effort
+  owner.catch(() => {}); // harmless: skip
   const [store] = await Promise.all([openStore(roomId, { mode: route.mode, fast: route.kind !== "r" }), pics]);
   if (guardMoved(store)) return;
   if (route.kind === "r") {
@@ -83,7 +83,7 @@ registerSW((apply) => {
     if (k) bar.remove();
   });
   document.body.append(bar);
-}).catch(() => {}); // harmless: best effort
+}).catch(() => {}); // harmless: skip
 
 addEventListener("beforeinstallprompt", (e) => {
   e.preventDefault();

@@ -68,6 +68,7 @@ export function render(root, markup, handlers = {}) {
 }
 
 export function toast(msg, ms = 2500) {
+  for (const x of document.querySelectorAll(".toast")) if (x.textContent === msg) return;
   const t = document.createElement("div");
   t.className = "toast";
   t.setAttribute("role", "status");
@@ -103,6 +104,7 @@ export function saveStatus(store, { show, fail }, str, { delay = 600, hold = 150
     } else if (e.state === "error") {
       if (!e.pending) show(null);
       if (e.col === "errors") return console.error("error log failed", e.error);
+      if (e.error?.code === "resource-exhausted") return import("../busy.js").then((m) => m.tellBusy());
       fail(str.fail);
       const now = Date.now();
       if (e.col !== "feedback" && now - lastLog > 60000) {

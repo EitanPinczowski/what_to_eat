@@ -157,3 +157,19 @@ test("notifyAll offers the key once when the relay says unregistered", async () 
   assert.deepEqual(await notifyAll({ push: [sub(1)] }, "vote", g), [401]);
   bindRoom(null);
 });
+
+test("notifyRecorded: a 410 from the relay is recorded in the live quiz doc (opened and sweep sends)", async () => {
+  const { bindRoom, notifyRecorded, epHash } = await import("../js/push.js");
+  const docs = { "live/quiz": { id: "quiz", sentAt: "x", dead: ["aaaaaaaa"] } };
+  const store = { roomId: "r".repeat(24), get: () => ({ pushKey: "k".repeat(32) }), update: async () => {}, doc: (c, id) => docs[`${c}/${id}`], put: async (c, id, d) => (docs[`${c}/${id}`] = { id, ...d }) };
+  bindRoom(store);
+  const gone = sub(7);
+  const f = async (_u, o) => ({ status: JSON.parse(o.body).sub.endpoint === gone.endpoint ? 410 : 201, json: async () => ({}) });
+  const codes = await notifyRecorded({ push: [sub(1), gone] }, "sweep", f);
+  assert.deepEqual(codes, [201, 410]);
+  assert.deepEqual(docs["live/quiz"].dead, ["aaaaaaaa", epHash(gone.endpoint)]);
+  assert.equal(docs["live/quiz"].sentAt, "x");
+  docs["live/quiz"] = undefined; // no live doc yet: nothing is written, nothing breaks
+  assert.deepEqual(await notifyRecorded({ push: [gone] }, "opened", f), [410]);
+  assert.equal(docs["live/quiz"], undefined);
+});

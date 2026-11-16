@@ -21,7 +21,7 @@ const EXPRESS_Q = 3;
 const QUOTA = 2;
 const KNOWN_W = 0.5;
 const PAIR_W = 0.6;
-export const FINALIST_W = 0.4; // face-off: the winner counts fully, the finalist 0.4x
+export const FINALIST_W = 0.4;
 const NEED_MASS = 0.3;
 const FEEL = ["bite", "warmth", "after"];
 const SHORTLIST_SIZE = 3;
@@ -432,7 +432,7 @@ export class FoodQuiz {
     }
     const as = idx.map((i) => q.answers[i]);
     if (as.some((a) => a.big)) this.s.big = true;
-    const off = q.type === "faceoff" && idx.length === 2; // [winner, finalist]
+    const off = q.type === "faceoff" && idx.length === 2;
     idx.forEach((i, k) => this.soft(q, i, off ? (k ? FINALIST_W : 1) : idx.length > 1 ? PAIR_W : 1));
     this.trail.push(`${q.text} → ${as.map((a) => `${a.e} ${a.t}`).join(off ? " › " : " + ")}`);
   }

@@ -109,3 +109,22 @@ test("Firebase cannot be reached at start: a friendly offline message with a ret
   await expect(page.locator('[data-on="retry"]')).toBeVisible();
   await expect(page.locator("#app")).not.toBeEmpty();
 });
+
+test("the free-tier limit (ntfy answers 429): one calm toast, the quiz still finishes", async ({ page }) => {
+  const errors = [];
+  page.on("pageerror", (e) => errors.push(e.message));
+  await page.route(/ntfy\.sh/, (r) => r.fulfill({ status: 429, body: "limit" }));
+  await page.addInitScript(() => {
+    if (sessionStorage.getItem("seeded")) return;
+    sessionStorage.setItem("seeded", "1");
+    localStorage.setItem("mabalach_room", "e2ebusy00000000000000000");
+    localStorage.setItem("mabalach_v1:e2ebusy00000000000000000", JSON.stringify({ room: { settings: { ntfy: "e2e-busy-topic" } }, cols: {} }));
+  });
+  await page.goto("/?store=local#q=e2ebusy00000000000000000");
+  await page.getByRole("button", { name: "יאללה, תנחש" }).click();
+  await playToResult(page);
+  await page.locator('[data-on="send"]').first().click();
+  await expect(page.locator(".toast", { hasText: "השרת עמוס היום" })).toHaveCount(1, { timeout: 10000 });
+  await noBlank(page);
+  expect(errors).toEqual([]);
+});

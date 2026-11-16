@@ -72,3 +72,8 @@ test("rules: couple mode, Eitan's answers live in live/couple as a list of at mo
   assert.match(rules, /docId in \['quiz', 'sweep', 'vote', 'couple'\]/);
   assert.match(rules, /docId == 'couple'\s*\?\s*strList\('his', 3\)/);
 });
+
+test("rules: deletes need the same room check as writes (bounded id, live room), also for the event log", () => {
+  assert.match(rules, /allow delete: if signedIn\(\)\s*&& col in \[[^\]]*\]\s*&& idOk\(\) && roomLive\(\);/);
+  assert.match(rules, /match \/events\/\{eventId\} \{[\s\S]*?allow delete: if signedIn\(\) && idOk\(\) && roomLive\(\);/);
+});

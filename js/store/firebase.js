@@ -52,7 +52,7 @@ export class FirebaseStore extends Store {
     try {
       const d = JSON.parse(this.storage?.getItem(this.snapKey) ?? "null");
       if (d?.roomId === this.roomId && d.room && d.cols && !d.room.moved) return { room: d.room, cols: d.cols };
-    } catch {} // harmless: optional storage / network extra, the app works without it
+    } catch {} // harmless: skip
     return null;
   }
 
@@ -62,7 +62,7 @@ export class FirebaseStore extends Store {
       this._snapTimer = null;
       try {
         this.storage?.setItem(this.snapKey, JSON.stringify({ roomId: this.roomId, room: this.room, cols: this.cols }));
-      } catch {} // harmless: optional storage / network extra, the app works without it
+      } catch {} // harmless: skip
     }, 800);
   }
 
@@ -124,6 +124,10 @@ export class FirebaseStore extends Store {
     const ref = this.sdk.doc(this.roomRef, col, id);
     if (doc) await this.sdk.setDoc(ref, doc);
     else await this.sdk.deleteDoc(ref);
+  }
+
+  _track(col, write) {
+    return super._track(col, () => write().catch((e) => (e?.code === "resource-exhausted" ? import("../busy.js").then((m) => m.retryBusy(write, e)) : Promise.reject(e))));
   }
 
   close() {

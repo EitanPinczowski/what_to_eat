@@ -281,3 +281,11 @@ Known gaps: sim average steps 11.8 (target 10, reported only); sim "found" gate 
 - Rate limit: 60 sends per hour per room hash, then 429; kept in Blob (`rate/<hash>.json`), read-modify-write, best effort (parallel requests can slip a few through). The older in-memory 20 per 10 min per endpoint stays. Change: ROOM_RATE.
 - CI alert (`x-ci-token` + CI_ALERT_TOKEN) is untouched and needs no room signature.
 - **W9 (boss): whole-shell budget 380 → 400 KB** (owner asked to raise the app size limit). About 20 KB more per app update; first screen unchanged (start-up stays 190 KB).
+
+## W10: read diet, graceful degrade, known issues
+- Read diet: no getDocs; each collection listener's first snapshot is the initial read (js/store/firebase.js).
+- Busy handling: js/busy.js (lazy). Firestore resource-exhausted, relay 402/429 and ntfy 429 give one calm toast (strings-play.js `busy`, once a minute); Firestore writes retry twice (2 s, 6 s) then stop. Change the waits in `retryBusy`.
+- Settings double toast: `toast()` skips a message already on screen. Dead subscriptions: `notifyRecorded` (opened and sweep sends) writes 410s into live/quiz.dead.
+- Log deletes: rules now need `idOk() && roomLive()`; firestore.rules CHANGED, needs `firebase deploy --only firestore:rules` + `node tools/check-firebase.mjs`.
+- NOT done: collection-doc flicker before the first snapshot (start-up budget has 1 byte of headroom; needs room to merge optimistic edits by updatedAt). To change: raise the 190 KB start-up budget on purpose, or move store code lazy.
+- Start-up: trimmed trailing comments in start-up files to fit; the "harmless" tags are shortened to "harmless: skip".

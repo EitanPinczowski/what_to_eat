@@ -32,7 +32,8 @@ export function voteTap(last, code, pick, now = Date.now()) {
 export async function ping(topic, text, f = globalThis.fetch) {
   if (!topic) return false;
   try {
-    await f(`https://ntfy.sh/${encodeURIComponent(topic)}`, { method: "POST", body: text });
+    const r = await f(`https://ntfy.sh/${encodeURIComponent(topic)}`, { method: "POST", body: text });
+    if (r?.status === 429) import("../../busy.js").then((m) => m.tellBusy());
     return true;
   } catch {
     return false;
@@ -44,7 +45,7 @@ export function installErrorLog(store, screen, win = globalThis.window) {
   let left = 10;
   const log = (msg, stack) => {
     if (left-- <= 0) return;
-    store.logError({ msg: cut(msg, 300), stack: cut(stack, 1500), screen: cut(screen(), 40), ua: ua() }).catch(() => {}); // harmless: best effort
+    store.logError({ msg: cut(msg, 300), stack: cut(stack, 1500), screen: cut(screen(), 40), ua: ua() }).catch(() => {}); // harmless: skip
   };
   win?.addEventListener("error", (e) => log(e.message, e.error?.stack));
   win?.addEventListener("unhandledrejection", (e) => log(e.reason?.message ?? e.reason, e.reason?.stack));
@@ -119,7 +120,7 @@ export async function runGuest(root, store, { base = location.origin + location.
   let screen = "intro";
   installErrorLog(store, () => screen);
   mountSaveStatus(store, STR.save);
-  push().then((m) => (m.bindRoom(store), m.notifyOpened(s, { sent: false }))).catch(() => {}); // harmless: opt-in ping, once per page open
+  push().then((m) => (m.bindRoom(store), m.notifyOpened(s, { sent: false }))).catch(() => {}); // harmless: skip
 
   const live = store.doc("live", "quiz");
   const carry = () => {
@@ -166,7 +167,7 @@ export async function runGuest(root, store, { base = location.origin + location.
     const opened = live?.opened && actions ? live.opened : new Date().toISOString();
     saveLive({ opened, n: actions?.length ?? 0, actions: actions ?? [], trail: [], finished: false });
     const weather = actions?.length ? null : cachedWeather(room.settings?.city);
-    if (!actions?.length && !weather) fetchWeather(room.settings?.city).catch(() => {}); // harmless: best effort
+    if (!actions?.length && !weather) fetchWeather(room.settings?.city).catch(() => {}); // harmless: skip
     startGuestQuiz(root, {
       baseEntry: true,
       weather,

@@ -115,7 +115,7 @@ service cloud.firestore {
       allow create, update: if signedIn() && idOk() && roomDocOk();
       allow list, delete: if false;
 
-      // Item 29: the event log. Create-only (no update), fixed keys, typed and bounded; any signed-in client may trim it (delete).
+      // Item 29: the event log. Create-only (no update), fixed keys, typed and bounded; a signed-in client of a live room may trim it (delete).
       function eventOk() {
         let d = request.resource.data;
         return d.keys().toSet().difference(['k', 'at', 's', 'h', 'd', 'dv', 'w', 't', 'n', 'q', 'a', 'f', 'r', 'p', 'ok'].toSet()).size() == 0
@@ -131,7 +131,7 @@ service cloud.firestore {
         allow read: if signedIn();
         allow create: if signedIn() && idOk() && eventId.size() <= 64 && roomLive() && eventOk();
         allow update: if false;
-        allow delete: if signedIn();
+        allow delete: if signedIn() && idOk() && roomLive();
       }
 
       match /{col}/{docId} {
@@ -142,7 +142,8 @@ service cloud.firestore {
           && idOk() && docId.size() <= 64 && roomLive()
           && smallDoc() && capped() && docOk(col, docId);
         allow delete: if signedIn()
-          && col in ['history', 'places', 'live', 'feedback', 'errors', 'shopping'];
+          && col in ['history', 'places', 'live', 'feedback', 'errors', 'shopping']
+          && idOk() && roomLive();
       }
     }
 

@@ -155,3 +155,21 @@ test("delete list: every collection of the store can be deleted; the log tombsto
   }
   await assertFails(deleteDoc(doc(db(), "rooms", ROOM, "secrets", "z1"))); // collections outside the list stay protected
 });
+
+test("log deletes: only inside a live room (same check as writes)", async () => {
+  const ref = (room, col, id) => doc(db(), "rooms", room, col, id);
+  await env.withSecurityRulesDisabled(async (c) => {
+    const f = c.firestore();
+    await setDoc(doc(f, "rooms", OTHER, "feedback", "f1"), { at });
+    await setDoc(doc(f, "rooms", OTHER, "events", "e1"), { k: "sent", at });
+    await setDoc(doc(f, "rooms", "short", "feedback", "f1"), { at });
+    await setDoc(doc(f, "rooms", ROOM, "feedback", "f1"), { at });
+  });
+  await assertSucceeds(deleteDoc(ref(ROOM, "feedback", "f1")));
+  await assertFails(deleteDoc(ref(OTHER, "feedback", "f1"))); // no room doc: not a member's room
+  await assertFails(deleteDoc(ref(OTHER, "events", "e1")));
+  await assertFails(deleteDoc(ref("short", "feedback", "f1"))); // id out of bounds
+  await assertFails(deleteDoc(doc(anon(), "rooms", ROOM, "feedback", "f1")));
+  await env.withSecurityRulesDisabled(async (c) => setDoc(doc(c.firestore(), "rooms", ROOM), { v: 1, moved: true, at }));
+  await assertFails(deleteDoc(ref(ROOM, "events", "e1"))); // retired room
+});

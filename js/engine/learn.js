@@ -24,7 +24,7 @@ export function learnFrom(entries, foods) {
     if (es.length < MIN_SEEN) continue;
     const loc = mass(es), o = {};
     for (const g of new Set([...loc.keys(), ...all.keys()])) o[g] = 0.5 * ((loc.get(g) ?? 0) - (all.get(g) ?? 0));
-    for (const e of es) if (e.how) for (const g of byId.get(e.f)) o[g] += 0.15 * Math.sign(e.how) * wOf(e); // 👍/👎 of that quiz
+    for (const e of es) if (e.how) for (const g of byId.get(e.f)) o[g] += 0.15 * Math.sign(e.how) * wOf(e);
     for (const g in o) if (Math.abs(o[g]) >= 0.05) (out[k] ??= {})[g] = Math.max(-CAP, Math.min(CAP, Math.round(o[g] * 100) / 100));
   }
   return out;

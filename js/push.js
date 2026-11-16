@@ -37,7 +37,7 @@ export function relayBody(sub, kind, food) {
 export function notifyOpened(settings, state, f = globalThis.fetch, opts) {
   if (!settings?.notifyOpen || state.sent) return Promise.resolve([]);
   state.sent = true;
-  return notifyAll(settings, "opened", f, opts);
+  return notifyRecorded(settings, "opened", f, opts);
 }
 
 /** Short stable id for an endpoint (FNV-1a, 8 hex). Lets the live quiz doc name a dead subscription without storing its URL. */
@@ -116,7 +116,7 @@ async function sendEach(settings, kind, f, { timeout = 4000, url = RELAY_URL, fo
   const subs = (settings?.push ?? []).filter(valid);
   if (!k || !subs.length || typeof f !== "function") return [];
   const key = bound?.roomId ? await ensureKey(bound, timeout) : null;
-  return Promise.all(subs.map(async (sub) => {
+  const out = await Promise.all(subs.map(async (sub) => {
     const ctl = typeof AbortController === "function" ? new AbortController() : null;
     const t = setTimeout(() => ctl?.abort(), timeout);
     try {
@@ -133,6 +133,8 @@ async function sendEach(settings, kind, f, { timeout = 4000, url = RELAY_URL, fo
       clearTimeout(t);
     }
   }));
+  if (out.some((r) => r.code === 402 || r.code === 429)) import("./busy.js").then((m) => m.tellBusy()).catch(() => {}); // harmless: optional toast
+  return out;
 }
 
 /** Signed POST of one JSON body to a relay endpoint (same HMAC and first-use key as send). Resolves to the status code, 0 = no answer; never rejects. */
@@ -165,6 +167,17 @@ export async function notifyAll(settings, kind, f = globalThis.fetch, opts = {})
 export async function notifyReport(settings, kind, f = globalThis.fetch, opts = {}) {
   const res = await sendEach(settings, kind, f, opts);
   return res.length ? sendReport(res.map((r) => r.sub), res.map((r) => r.code)) : null;
+}
+
+/** notifyAll that also records dead subscriptions (relay 410) in the live quiz doc, the same path as the main send. Resolves to the status codes. */
+export async function notifyRecorded(settings, kind, f = globalThis.fetch, opts = {}) {
+  const r = await notifyReport(settings, kind, f, opts);
+  const cur = bound?.doc?.("live", "quiz");
+  if (r?.dead.length && cur) {
+    const { id: _id, ...rest } = cur;
+    await bound.put("live", "quiz", { ...rest, dead: mergeDead(cur.dead, r.dead) }).catch(() => {}); // harmless: best effort
+  }
+  return r?.receipt.codes ?? [];
 }
 
 /** "unsupported" | "blocked" | "off" (can ask) | "on" (permission granted; subscription checked separately). */
