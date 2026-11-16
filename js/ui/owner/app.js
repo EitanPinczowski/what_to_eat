@@ -35,10 +35,20 @@ export function ackCard(live) {
     <div class="grid choose">${ACK_CODES.map((c) => raw(html`<button class="btn" data-on="ack" data-arg="${c}" aria-pressed="${live.ack === c}"><span class="em">${STR.ack[c].e}</span>${STR.ack[c].t}</button>`))}</div></section>`;
 }
 
+/** "Notification sent ✓ / not sent ✗" from the receipt she wrote after her send (live/quiz.push). */
+export function receiptLine(live) {
+  if (!live?.finished || !live.push || typeof live.push.ok !== "boolean") return "";
+  return live.push.ok ? T.receipt.ok : T.receipt.fail;
+}
+
 export async function runOwner(root, store, { base = location.origin + location.pathname, mode } = {}) {
   mountSaveStatus(store, STR.save);
   // Firestore writes resolve only once the server acks, so never await them on the owner path (offline-first).
   if (!store.get().settings.ntfy) store.update((db) => (db.settings.ntfy = `mabalach-${newId(16)}`)).catch(saveFailed);
+  // Notifications repair themselves: prune dead subscriptions, keep this phone's current one stored. Loaded after first paint.
+  const repair = () => import("../../push.js").then((m) => m.repairOnStart(store)).catch(saveFailed);
+  repair();
+  globalThis.navigator?.serviceWorker?.addEventListener?.("message", (e) => e.data?.type === "wte-sub-changed" && repair());
   const views = {};
   const ctx = {};
   // Changing screen drops the picker's navigation card and stops a running roll (they must not come back after going back).
@@ -117,6 +127,7 @@ export async function runOwner(root, store, { base = location.origin + location.
       ${raw(howCard())}
       ${store.list("history").length && backupDue(S()) ? raw(html`<button class="card btn remind" data-on="go" data-arg="settings" data-testid="backup">💾 ${STR.settings.remind}</button>`) : ""}
       <p class="sub" data-testid="live">${liveStatus(store.doc("live", "quiz"), S().her)}</p>
+      ${receiptLine(store.doc("live", "quiz")) ? raw(html`<p class="sub" data-testid="receipt">${receiptLine(store.doc("live", "quiz"))}</p>`) : ""}
       <div class="tiles">${tiles.map((k) => raw(html`<button class="btn tile${views[k] ? "" : " soon"}${k === "wrapped" && isFirstOfMonth() ? " hot" : ""}" data-on="go" data-arg="${k}"><span class="em">${T.tiles[k].e}</span>${T.tiles[k].t}${k === "wrapped" && isFirstOfMonth() ? raw(html`<small>${STR.wrapped.firstBadge}</small>`) : ""}</button>`))}</div>`, { ...common, how, ack: (c) => store.setAck(store.doc("live", "quiz")?.ack === c ? null : c).catch(saveFailed) });
   };
 

@@ -133,6 +133,11 @@ export const STR = {
       step: (her, n) => `${her} פתחה · שאלה ${n}`,
       done: (her) => `${her} סיימה! 🎉`,
     },
+    // Delivery receipt of the notification she triggered (live/quiz.push).
+    receipt: {
+      ok: "ההתראה אליך נשלחה ✓",
+      fail: "ההתראה אליך לא נשלחה ✗ — אולי להפעיל אותה מחדש בהגדרות",
+    },
     newResult: (her, fn) => `${her} בחרה: ${fn} 🎉`,
     historyTitle: "היסטוריה",
     noHistory: "עוד אין כלום כאן.",

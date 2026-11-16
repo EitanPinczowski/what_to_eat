@@ -136,3 +136,18 @@ self.addEventListener("notificationclick", (e) => {
     }),
   );
 });
+
+// The push service rotated or expired this phone's subscription: subscribe again with the same key and tell the open
+// app (a worker cannot reach Firestore). The owner app also re-checks its subscription on every start, so a missed message is repaired then.
+// Keep in sync with VAPID_PUBLIC_KEY in js/push.js (tests/push.test.js checks).
+const VAPID_PUBLIC_KEY = "BMjWrD2gEyJKEaCD8HW5TtXu3DkbQlCViPoA1sFP2YqCUjdQTsHpOFxCKHco_IaO04a90XRv8TxXBdBWF-0Oo2Y";
+const keyBytes = (s) => Uint8Array.from(atob((s + "=".repeat((4 - (s.length % 4)) % 4)).replace(/-/g, "+").replace(/_/g, "/")), (c) => c.charCodeAt(0));
+self.addEventListener("pushsubscriptionchange", (e) => {
+  e.waitUntil(
+    (async () => {
+      const sub = e.newSubscription ?? (await self.registration.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: e.oldSubscription?.options?.applicationServerKey ?? keyBytes(VAPID_PUBLIC_KEY) }));
+      const list = await self.clients.matchAll({ type: "window", includeUncontrolled: true });
+      for (const c of list) c.postMessage({ type: "wte-sub-changed", sub: sub.toJSON() });
+    })().catch((err) => console.error("pushsubscriptionchange", err)),
+  );
+});

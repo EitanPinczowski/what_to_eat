@@ -1,5 +1,5 @@
 // Guest session: live doc + resume, finish/send, ntfy ping, feedback, error log, #r= WhatsApp fallback.
-import { notifyAll, notifyOpened, pushFood } from "../../push.js";
+import { notifyOpened, notifyReport, mergeDead, pushFood } from "../../push.js";
 import { STR } from "../../data/strings.js";
 import { newId } from "../../share/codec.js";
 import { buildResultLink } from "../../share/links.js";
@@ -111,7 +111,24 @@ export async function runGuest(root, store, { base = location.origin + location.
   notifyOpened(s, { sent: false }); // once per page open (opt-in setting, off by default)
 
   const live = store.doc("live", "quiz");
-  const saveLive = (data) => store.put("live", "quiz", { ...data, at: new Date().toISOString() }).catch(saveFailed);
+  // put() replaces the doc: keep what Eitan's side wrote (send time) and the dead-subscription list she found.
+  const carry = () => {
+    const cur = store.doc("live", "quiz");
+    return { ...(cur?.sentAt ? { sentAt: cur.sentAt } : {}), ...(cur?.dead?.length ? { dead: cur.dead } : {}) };
+  };
+  const saveLive = (data) => store.put("live", "quiz", { ...data, ...carry(), at: new Date().toISOString() }).catch(saveFailed);
+
+  // After a notification send: write the delivery receipt (quiz only) and the subscriptions the relay called gone (410)
+  // into live/quiz. She never edits the room doc; Eitan's app prunes `dead` on its next start (js/push.js repairOnStart).
+  const notifyRecord = async (kind, opts) => {
+    const r = await notifyReport(s, kind, undefined, opts);
+    if (!r) return;
+    const cur = store.doc("live", "quiz");
+    if (!cur) return;
+    const dead = mergeDead(cur.dead, r.dead);
+    const { id: _id, ...rest } = cur;
+    await store.put("live", "quiz", { ...rest, ...(kind === "quiz" ? { push: r.receipt } : {}), ...(dead.length ? { dead } : {}) });
+  };
 
   const feedback = (back) => {
     const prev = screen;
@@ -164,12 +181,12 @@ export async function runGuest(root, store, { base = location.origin + location.
           await withTimeout(
             Promise.all([
               store.put("history", id, { ...entry, src: "live" }),
-              store.put("live", "quiz", { opened, n: out.trail.length, actions: [], trail: entry.trail, finished: true, resultId: id, at: entry.at }),
+              store.put("live", "quiz", { opened, n: out.trail.length, actions: [], trail: entry.trail, finished: true, resultId: id, at: entry.at, ...carry() }),
             ]),
             SEND_TIMEOUT,
           );
           ping(s.ntfy, STR.ntfy(s.her));
-          notifyAll(s, "quiz", undefined, { food: pushFood(out.food) });
+          notifyRecord("quiz", { food: pushFood(out.food) }).catch(saveFailed);
           sent(); // stays sealed: back on the sent screen never undoes or resends the result
         } catch {
           out.seal?.(false);
@@ -237,7 +254,7 @@ export async function runGuest(root, store, { base = location.origin + location.
         if (!voteTap(lastVote, code, store.vote()?.pick)) return;
         store.castVote(code).catch(saveFailed); // local copy updates synchronously; the write may wait on the network
         ping(s.ntfy, STR.vote.ntfy(s.her));
-        notifyAll(s, "vote");
+        notifyRecord("vote").catch(saveFailed);
       });
     }
   };

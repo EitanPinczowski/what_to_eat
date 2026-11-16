@@ -6,7 +6,7 @@ import { buildJoinLink, parseHash } from "../../share/links.js";
 import { normPhone } from "../../share/whatsapp.js";
 import { ROOM_KEY, openStore } from "../../store/open.js";
 import { render, html, raw, toast, copy, saveFailed } from "../dom.js";
-import { addSub, removeSub, hasSub, pushSupport, subscribeThisDevice, currentSub, unsubscribeThisDevice, notifyAll } from "../../push.js";
+import { addSub, removeSub, hasSub, pushSupport, subscribeThisDevice, currentSub, unsubscribeThisDevice, notifyAll, knownEndpoint, rememberEndpoint, epHash, pruneDead } from "../../push.js";
 import { installKind, installHelp } from "../../pwa.js";
 import { withTimeout } from "../guest/session.js";
 import { BACKUP_EVERY, backupDue } from "./backup-due.js";
@@ -86,8 +86,11 @@ export function settingsViews({ root, store, views, back, common, base, mode }) 
       ...common,
       pushOn: async () => {
         try {
-          const sub = await subscribeThisDevice();
-          await withTimeout(store.update((db) => (db.settings.push = addSub(db.settings.push, sub))), WRITE_TIMEOUT);
+          // fresh: a stored subscription may be dead, so ask the push service for a new one and replace the old entries
+          const old = [knownEndpoint(), (await currentSub())?.endpoint].filter(Boolean);
+          const sub = await subscribeThisDevice(undefined, undefined, { fresh: true });
+          await withTimeout(store.update((db) => (db.settings.push = addSub(old.reduce(removeSub, db.settings.push), sub))), WRITE_TIMEOUT);
+          rememberEndpoint(sub.endpoint);
           toast(G.push.done);
         } catch (e) {
           toast(e?.message === "denied" ? G.push.denied : e?.message === "timeout" ? G.offline : G.push.fail);
@@ -101,9 +104,12 @@ export function settingsViews({ root, store, views, back, common, base, mode }) 
       pushTest: async () => {
         const res = await notifyAll({ push: [await currentSub()].filter(Boolean) }, "test");
         toast(res.some((c) => c === 201) ? G.push.testSent : G.push.testFail);
+        const cur = await currentSub();
+        if (cur && res.includes(410)) store.update((db) => (db.settings.push = pruneDead(db.settings.push, [epHash(cur.endpoint)]))).catch(saveFailed); // the relay says it is gone: drop it
       },
       pushOff: async () => {
         const ep = await unsubscribeThisDevice();
+        rememberEndpoint("");
         if (ep) await store.update((db) => (db.settings.push = removeSub(db.settings.push, ep))).catch(saveFailed);
         toast(G.push.offDone);
         views.settings();
