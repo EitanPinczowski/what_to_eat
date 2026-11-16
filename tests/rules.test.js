@@ -34,3 +34,7 @@ test("rules: place cuisines are a bounded list (F3)", () => {
 test("rules: history rejections are a bounded list and the inbox mark is a number (item 18)", () => {
   assert.match(rules, /function historyOk\(\)[\s\S]*?lst\('rej', 10\)[\s\S]*?num\('ib'\)/);
 });
+
+test("rules: live status sentAt, dead list and push receipt are typed (items 7–8)", () => {
+  assert.match(rules, /function liveOk\(docId\)[\s\S]*?str\('sentAt', 40\) && lst\('dead', 8\) && obj\('push'\)/);
+});
