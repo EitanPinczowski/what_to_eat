@@ -106,7 +106,6 @@ export const STR = {
   // Owner screens (Eitan).
   owner: {
     home: "בית",
-    back: "→ חזרה",
     lastMeal: "הארוחה האחרונה",
     noMeals: "עוד אין ארוחות. אולי לשלוח לה שאלון?",
     tiles: {

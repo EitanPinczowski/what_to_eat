@@ -6,7 +6,7 @@ import { buildJoinLink, parseHash } from "../../share/links.js";
 import { normPhone } from "../../share/whatsapp.js";
 import { ROOM_KEY, openStore } from "../../store/open.js";
 import { rejoinFromLink } from "../../store/room-backup.js";
-import { render, html, raw, toast, copy, saveFailed } from "../dom.js";
+import { render, html, raw, toast, copy, saveFailed, topbar } from "../dom.js";
 import { addSub, removeSub, hasSub, pushSupport, subscribeThisDevice, currentSub, unsubscribeThisDevice, notifyAll, knownEndpoint, rememberEndpoint, epHash, pruneDead } from "../../push.js";
 import { installKind, installHelp } from "../../pwa.js";
 import { withTimeout } from "../guest/session.js";
@@ -68,18 +68,17 @@ export function problemsCard(store, now = Date.now()) {
       <button class="btn btn-ghost" data-on="clearLog" data-arg="feedback" data-testid="clear-feedback">${P.clear}</button>`) : raw(html`<span class="sub">${P.feedbackNone}</span>`)}</section>`;
 }
 
-export function settingsViews({ root, store, views, back, common, base, mode }) {
+export function settingsViews({ root, store, views, common, base, mode }) {
   views.settings = () => {
     const s = store.get().settings;
     const join = buildJoinLink(s.base || base, store.roomId);
     const field = (k, label, extra = "") => raw(html`<label class="field">${label}<input name="${k}" value="${s[k] ?? ""}" ${raw(extra)}></label>`);
-    render(root, html`${raw(back)}
-      <h2 class="q">${G.title}</h2>
+    render(root, html`${raw(topbar(G.title))}
       <form data-submit="save" class="stack">
         ${field("her", G.her, 'maxlength="30"')}${field("me", G.me, 'maxlength="30"')}
         ${field("herPhone", G.herPhone, 'inputmode="tel" dir="ltr" maxlength="20"')}${field("myPhone", G.myPhone, 'inputmode="tel" dir="ltr" maxlength="20"')}
         ${field("city", G.city, 'maxlength="40"')}${field("base", G.base, 'dir="ltr" inputmode="url" autocapitalize="off" autocorrect="off" spellcheck="false" maxlength="200"')}
-        <button class="btn btn-primary" type="submit">${G.save}</button>
+        <button class="btn btn-primary act" type="submit">${G.save}</button>
       </form>
       <section class="card stack"><b>${G.ntfy}</b><span class="sub">${G.ntfyHelp}</span>
         <code class="link" dir="ltr">https://ntfy.sh/${s.ntfy}</code></section>

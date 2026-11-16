@@ -3,7 +3,7 @@ import { STR } from "../../data/strings.js";
 import { buildWrappedLink } from "../../share/links.js";
 import { waUrl } from "../../share/whatsapp.js";
 import { wrappedSummary, prevMonth, isFirstOfMonth } from "../../engine/wrapped.js";
-import { render, html, raw, toast, copy } from "../dom.js";
+import { render, html, raw, toast, copy, topbar } from "../dom.js";
 
 const W = STR.wrapped;
 
@@ -15,20 +15,19 @@ export function wrappedFor(store, now = new Date()) {
   return { ...s, her: room.settings.her, me: room.settings.me };
 }
 
-export function wrappedViews({ root, store, views, back, common, base }) {
+export function wrappedViews({ root, store, views, common, base }) {
   views.wrapped = () => {
     const s = wrappedFor(store);
     const st = store.get().settings;
     const month = W.month(s.mo);
     const link = buildWrappedLink(st.base || base, s);
     const text = `${W.sendText(st.her, st.me, month)}\n${link}`;
-    render(root, html`${raw(back)}
-      <h2 class="q">${W.ownerTitle(st.her)}</h2>
+    render(root, html`${raw(topbar(W.ownerTitle(st.her)))}
       <p class="sub">${W.ownerFor(month)} · ${W.ownerN(s.n)}</p>
       ${s.enough ? "" : raw(html`<p class="sub" data-testid="wr-few">${W.ownerFew}</p>`)}
-      <a class="btn btn-primary" href="${waUrl(text, st.herPhone)}" target="_blank" rel="noopener">${STR.owner.whatsapp}</a>
       <button class="btn" data-on="copy">${STR.owner.copy}</button>
-      <code class="link" dir="ltr">${link}</code>`, {
+      <code class="link" dir="ltr">${link}</code>
+      <a class="btn btn-primary act" href="${waUrl(text, st.herPhone)}" target="_blank" rel="noopener">${STR.owner.whatsapp}</a>`, {
       ...common,
       copy: async () => toast((await copy(link)) ? STR.owner.copied : link),
     });

@@ -11,7 +11,7 @@ import { parsePlaceLink } from "../../places/links.js";
 import { recipesFor } from "../../data/recipes.js";
 import { recipeBlock } from "./shopping.js";
 import { VOTE_MAX, VOTE_MIN, VOTE_NONE } from "../../store/store.js";
-import { render, html, raw, toast, saveFailed } from "../dom.js";
+import { render, html, raw, toast, saveFailed, topbar } from "../dom.js";
 
 const L = STR.places;
 const K = STR.picker;
@@ -29,7 +29,7 @@ export function reasonText(r, food) {
 
 export const closesText = (r) => (r.closesIn ? K.closesSoon(r.closesIn) : "");
 
-export function placesViews({ root, store, stack, views, back, common, ctx }) {
+export function placesViews({ root, store, stack, views, common, ctx }) {
   const foods = () => buildFoods(FOODS, store.get().custom);
   const cities = () => [...new Set([store.get().settings.city, ...store.list("places").map((p) => p.city)].filter(Boolean))];
 
@@ -39,8 +39,7 @@ export function placesViews({ root, store, stack, views, back, common, ctx }) {
     const list = store.list("places").filter((p) => !fc || (p.cuisines ?? []).includes(fc));
     const byCity = {};
     for (const p of list) (byCity[p.city || "—"] ??= []).push(p);
-    render(root, html`${raw(back)}
-      <h2 class="q">${L.title}</h2>
+    render(root, html`${raw(topbar(L.title))}
       <button class="btn" data-on="add">${L.add}</button>
       <button class="btn" data-on="tryAdd" data-testid="try-add">${L.tryAdd}</button>
       <div class="chips" data-testid="cuisine-filter">${raw(html`<button class="chip" data-on="cfilter" data-arg="" aria-pressed="${!fc}">${L.filterAll}</button>`)}${CUISINES.map((c) => raw(html`<button class="chip" data-on="cfilter" data-arg="${c}" aria-pressed="${fc === c}">${cuisineLabel(c)}</button>`))}</div>
@@ -60,11 +59,10 @@ export function placesViews({ root, store, stack, views, back, common, ctx }) {
     const d = ctx.tryDraft;
     let ask = false;
     const draw = () =>
-      render(root, html`${raw(back)}
-        <h2 class="q">${L.tryTitle}</h2>
+      render(root, html`${raw(topbar(L.tryTitle))}
         <label class="field">${L.tryLink}<input data-input="link" value="${d.link}" maxlength="300" dir="ltr" inputmode="url" data-testid="try-link"></label>
         <label class="field">${ask ? L.tryAsk : L.tryName}<input data-input="name" value="${d.name}" maxlength="60" data-testid="try-name"></label>
-        <button class="btn btn-primary" data-on="save" data-testid="try-save">${L.save}</button>`, {
+        <button class="btn btn-primary act" data-on="save" data-testid="try-save">${L.save}</button>`, {
         ...common,
         link: (v, _e, el) => {
           d.link = v.trim();
@@ -102,8 +100,7 @@ export function placesViews({ root, store, stack, views, back, common, ctx }) {
       root.querySelector(".matches").innerHTML = matches().map((f) => chip("serve", f.id, `${f.emoji} ${f.name}`, false).s).join("");
     };
     const draw = () =>
-      render(root, html`${raw(back)}
-        <h2 class="q">${p.id ? L.edit : L.add}</h2>
+      render(root, html`${raw(topbar(p.id ? L.edit : L.add))}
         <label class="field">${L.name}<input data-input="name" value="${p.name}" maxlength="60" autofocus></label>
         <label class="field">${L.city}<input data-input="city" value="${p.city}" maxlength="40" list="cities"><datalist id="cities">${cities().map((c) => raw(html`<option value="${c}">`))}</datalist></label>
         <div class="field">${L.modes}<div class="chips">${PLACE_MODES.map((m) => chip("mode", m, STR.modeLabel[m], p.modes.includes(m)))}</div></div>
@@ -121,8 +118,8 @@ export function placesViews({ root, store, stack, views, back, common, ctx }) {
             <input type="time" data-input="hour" data-day="${d}" data-k="o" value="${r?.o ?? ""}" aria-label="${L.opensAt} ${dn}">
             <input type="time" data-input="hour" data-day="${d}" data-k="c" value="${r?.c ?? ""}" aria-label="${L.closesAt} ${dn}"></div>`);
         })}</div>
-        <button class="btn btn-primary" data-on="save">${L.save}</button>
-        ${p.id ? raw(html`<button class="btn btn-ghost" data-on="del">${L.del}</button>`) : ""}`, {
+        ${p.id ? raw(html`<button class="btn btn-ghost" data-on="del">${L.del}</button>`) : ""}
+        <button class="btn btn-primary act" data-on="save">${L.save}</button>`, {
         ...common,
         name: (v) => (p.name = v),
         city: (v) => (p.city = v.trim()),
@@ -174,17 +171,17 @@ export function placesViews({ root, store, stack, views, back, common, ctx }) {
     seenPick = p;
     if (p && stack.top === "picker" && !ctx.navTo) views.picker();
   });
-  const voteCard = (st) => {
+  const voteCard = (st, prim) => {
     const v = store.vote();
     const sel = st.sel ?? [];
     const send = sel.length >= VOTE_MIN
-      ? html`<button class="btn btn-primary" data-on="voteSend" data-testid="vote-send">${K.voteSend(her(), sel.length)}</button>`
+      ? html`<button class="btn" data-on="voteSend" data-testid="vote-send">${K.voteSend(her(), sel.length)}</button>`
       : html`<p class="sub">${K.voteNeed(her())}</p>`;
     if (!v) return sel.length ? send : "";
     const idx = v.ids.indexOf(v.pick);
     const line = v.pick === VOTE_NONE ? K.voteNone(her()) : idx >= 0 ? K.votePicked(her(), v.names[idx]) : K.voteSent(her());
     return html`<section class="card chosen" data-testid="vote-status"><h3 class="title" role="status">${line}</h3>
-      ${idx >= 0 && store.doc("places", v.pick) ? raw(html`<button class="btn btn-primary" data-on="go" data-arg="${v.pick}" data-testid="vote-go">${K.go}</button>`) : ""}
+      ${idx >= 0 && store.doc("places", v.pick) ? raw(html`<button class="btn" data-on="go" data-arg="${v.pick}" data-testid="vote-go">${K.go}</button>`) : ""}
       <button class="btn btn-ghost" data-on="voteClear">${K.voteClear}</button></section>${sel.length ? raw(send) : ""}`;
   };
 
@@ -194,9 +191,9 @@ export function placesViews({ root, store, stack, views, back, common, ctx }) {
       const n = navLinks(ctx.navTo);
       render(root, html`<h2 class="q">${STR.picker.navTitle}</h2>
         <section class="card chosen" data-testid="nav"><div class="big" aria-hidden="true">🎯</div><h3 class="title">${ctx.navTo.name}</h3>
-          <div class="stack"><a class="btn btn-primary" href="${n.waze}" target="_blank" rel="noopener" data-testid="nav-waze">${STR.picker.waze}</a>
-          <a class="btn" href="${n.maps}" target="_blank" rel="noopener" data-testid="nav-maps">${STR.picker.gmaps}</a>
-          <button class="btn btn-ghost" data-on="navDone">${STR.picker.navDone}</button></div></section>`, { navDone: () => ((ctx.navTo = null), done()) });
+          <div class="stack"><a class="btn" href="${n.maps}" target="_blank" rel="noopener" data-testid="nav-maps">${STR.picker.gmaps}</a>
+          <button class="btn btn-ghost" data-on="navDone">${STR.picker.navDone}</button></div></section>
+        <a class="btn btn-primary act" href="${n.waze}" target="_blank" rel="noopener" data-testid="nav-waze">${STR.picker.waze}</a>`, { navDone: () => ((ctx.navTo = null), done()) });
       return;
     }
     const entry = ctx.entryId ? store.doc("history", ctx.entryId) : null;
@@ -214,17 +211,17 @@ export function placesViews({ root, store, stack, views, back, common, ctx }) {
     const { list: scored, noneOfKind } = pickPlaces(store.list("places"), all, { food, mode: st.mode, city: st.city, budget: st.budget, novel: !!st.novel });
     const chip = (on, arg, text, pressed) => raw(html`<button class="chip" data-on="${on}" data-arg="${arg}" aria-pressed="${pressed}">${text}</button>`);
     const q = [label, st.city].filter(Boolean).join(" ");
-    render(root, html`${raw(back)}
-      <h2 class="q">${K.title}</h2>
+    // exactly one main button: the chosen place's "go", else the quick-add form's save, else the roll
+    const prim = st.chosen ? "go" : ctx.quickAdd ? "quick" : scored.length && st.mode !== "home" ? "roll" : "";
+    render(root, html`${raw(topbar(K.title))}
       <label class="field">${K.food}<select data-input="food"><option value="">${K.anyFood}</option>${all.map((f) => raw(html`<option value="${f.id}" ${f.id === st.food ? "selected" : ""}>${f.emoji} ${f.name}</option>`))}</select></label>
       <div class="field">${K.mode}<div class="chips">${PLACE_MODES.map((m) => chip("mode", m, STR.modeLabel[m], st.mode === m))}${chip("mode", "home", STR.modeLabel.home, st.mode === "home")}</div></div>
       <div class="field"><div class="chips">${chip("novel", "", K.novel, !!st.novel)}</div></div>
       <div class="field">${K.city}<div class="chips">${chip("city", "", K.anyCity, !st.city)}${cities().map((c) => chip("city", c, c, st.city === c))}</div></div>
       ${raw(voteCard(st))}
-      ${st.chosen ? raw(html`<section class="card chosen" data-testid="chosen"><div class="big" aria-hidden="true">🎯</div><h3 class="title">${st.chosen}</h3>
-          <button class="btn btn-primary" data-on="go" data-arg="${st.chosenId ?? ""}">${K.go}</button></section>`) : ""}
+      ${st.chosen ? raw(html`<section class="card chosen" data-testid="chosen"><div class="big" aria-hidden="true">🎯</div><h3 class="title">${st.chosen}</h3></section>`) : ""}
       ${scored.length && noneOfKind && st.mode !== "home" ? raw(html`<p class="sub" data-testid="none-of-kind">${K.noneOfKind((food?.cuisine ?? []).map((c) => STR.cuisine.options[c][1]).join(", "))}</p>`) : ""}
-      ${scored.length && st.mode !== "home" ? raw(html`<button class="btn btn-primary" data-on="roll">${K.roll}</button>
+      ${scored.length && st.mode !== "home" ? raw(html`${prim === "roll" ? "" : raw(html`<button class="btn" data-on="roll">${K.roll}</button>`)}
         <ul class="foods">${scored.map((r) => raw(html`<li class="row"><button class="linkish" data-on="choose" data-arg="${r.place.id}"><b>${r.place.name}</b> <span class="sub">${reasonText(r, food)}</span> ${r.closesIn ? raw(html`<span class="sub" data-testid="closes-soon">⏰ ${closesText(r)}</span>`) : ""}</button><button class="chip" data-on="voteToggle" data-arg="${r.place.id}" aria-pressed="${(st.sel ?? []).includes(r.place.id)}">${(st.sel ?? []).includes(r.place.id) ? K.voteIn : K.voteAdd}</button><span class="sub">${r.score}</span></li>`))}</ul>`) : raw(html`<p class="sub">${st.mode === "home" ? "" : K.none}</p>`)}
       <div class="stack fallbacks">
         ${st.mode === "home" ? raw(recipeBlock(recipesFor(food?.id, label), label || "")) : raw(html`<a class="btn" href="${mapsUrl(q || "אוכל")}" target="_blank" rel="noopener" data-on="fallback">${K.maps(q)}</a>`)}
@@ -235,7 +232,8 @@ export function placesViews({ root, store, stack, views, back, common, ctx }) {
       ${ctx.quickAdd ? raw(html`<form class="card stack" data-submit="quick" data-testid="quick-add"><b>${K.whereWent}</b>
           <input name="name" maxlength="60" placeholder="${K.whereWentPh}" autofocus>
           <button class="btn btn-primary" type="submit">${K.quickSave}</button>
-          <button class="btn btn-ghost" type="button" data-on="noQuick">${K.skip}</button></form>`) : ""}`, {
+          <button class="btn btn-ghost" type="button" data-on="noQuick">${K.skip}</button></form>`) : ""}
+      ${prim === "go" ? raw(html`<button class="btn btn-primary act" data-on="go" data-arg="${st.chosenId ?? ""}" data-testid="chosen-go">${K.go}</button>`) : prim === "roll" ? raw(html`<button class="btn btn-primary act" data-on="roll">${K.roll}</button>`) : ""}`, {
       ...common,
       food: (v) => ((st.food = v || null), (st.free = ""), (st.chosen = null), views.picker()),
       mode: (m) => ((st.mode = st.mode === m ? null : m), (st.chosen = null), views.picker()),
@@ -289,7 +287,7 @@ export function placesViews({ root, store, stack, views, back, common, ctx }) {
     const box = document.createElement("div");
     box.className = "card chosen slot";
     box.setAttribute("aria-hidden", "true");
-    root.querySelector(".q").after(box);
+    root.querySelector(".topbar").after(box);
     const reduce = globalThis.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
     const tick = () => {
       if (ctx.rollId !== rollId || !box.isConnected) return; // left the screen: the roll must not pull her back

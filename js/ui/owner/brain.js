@@ -5,7 +5,7 @@ import { TAGS, TAG_GROUPS, KINDS } from "../../data/tags.js";
 import { RATING_EMOJI } from "../../data/constants.js";
 import { buildFoods } from "../../engine/foods.js";
 import { newId } from "../../share/codec.js";
-import { render, html, raw, toast, saveFailed } from "../dom.js";
+import { render, html, raw, toast, saveFailed, topbar } from "../dom.js";
 import { pic, catLabel, foodLabel } from "../pics.js";
 
 const B = STR.brain;
@@ -36,7 +36,7 @@ export function makeCustomFood({ name, emoji, kind, tags }) {
   return { id: `c_${newId(8)}`, name: n, emoji: String(emoji || "🍽️").slice(0, 8), tags: [k, ...rest] };
 }
 
-export function brainViews({ root, store, stack, views, back, common }) {
+export function brainViews({ root, store, stack, views, common }) {
   const state = { q: "", r: "all" };
   const foods = () => buildFoods(FOODS, store.get().custom);
   const rate = (id, r) =>
@@ -64,8 +64,7 @@ export function brainViews({ root, store, stack, views, back, common }) {
   views.brain = () => {
     const db = store.get();
     const st = ratingStats(foods(), db.ratings);
-    render(root, html`${raw(back)}
-      <h2 class="q">${B.title(db.settings.her)}</h2>
+    render(root, html`${raw(topbar(B.title(db.settings.her)))}
       <div class="stats">${[4, 3, 2, 1, 0].map((r) => raw(html`<button class="chip" data-on="filter" data-arg="${r}" aria-pressed="${state.r === String(r)}">${RATING_EMOJI[r]} ${st[r]}</button>`))}
         <button class="chip" data-on="filter" data-arg="all" aria-pressed="${state.r === "all"}">${B.all}</button></div>
       ${db.inbox.length ? raw(html`<section class="card inbox"><div class="sub">${B.inbox}</div>
@@ -93,15 +92,15 @@ export function brainViews({ root, store, stack, views, back, common }) {
     const f = foods().find((x) => x.id === state.open);
     if (!f) return stack.back();
     const cur = store.get().ratings[f.id] ?? {};
-    render(root, html`${raw(back)}
-      <div class="big">${raw(pic(f))}</div><h2 class="title">${f.name}</h2><p class="cat">${catLabel(f)}</p>
+    render(root, html`${raw(topbar(f.name))}
+      <div class="big">${raw(pic(f))}</div><p class="cat">${catLabel(f)}</p>
       <p class="sub">${f.tags.map((t) => TAGS[t]).join(" · ")}</p>
       <div class="rates big-rates">${RATES.map((r) => raw(html`<button class="chip" data-on="rate" data-arg="${r}" aria-pressed="${cur.r === r}">${RATING_EMOJI[r]}</button>`))}</div>
       <form data-submit="note" class="stack">
         <textarea name="n" rows="2" maxlength="200" placeholder="${B.note}">${cur.n ?? ""}</textarea>
-        <button class="btn btn-primary" type="submit">${B.save}</button>
-      </form>
-      ${f.custom ? raw(html`<button class="btn" data-on="edit">${F.edit}</button><button class="btn btn-ghost" data-on="del">${B.del}</button>`) : ""}`, {
+        ${f.custom ? raw(html`<button class="btn" type="button" data-on="edit">${F.edit}</button><button class="btn btn-ghost" type="button" data-on="del">${B.del}</button>`) : ""}
+        <button class="btn btn-primary act" type="submit">${B.save}</button>
+      </form>`, {
       ...common,
       rate: (r) => (rate(f.id, Number(r)), views.food()),
       note: (fd) => {
@@ -128,13 +127,12 @@ export function brainViews({ root, store, stack, views, back, common }) {
     const form = state.form ?? { name: "", emoji: "", kind: "meal", tags: [] };
     const groups = Object.entries(TAG_GROUPS).filter(([g]) => g !== "kind");
     const draw = () =>
-      render(root, html`${raw(back)}
-        <h2 class="q">${form.id ? F.edit : F.title}</h2>
+      render(root, html`${raw(topbar(form.id ? F.edit : F.title))}
         <label class="field">${F.name}<input data-input="name" value="${form.name}" maxlength="40" autofocus></label>
         <label class="field">${F.emoji}<input data-input="emoji" value="${form.emoji}" maxlength="8" placeholder="🍽️"></label>
         <div class="field">${F.kind}<div class="chips">${KINDS.map((k) => raw(html`<button class="chip" data-on="kind" data-arg="${k}" aria-pressed="${form.kind === k}">${TAGS[k]}</button>`))}</div></div>
         <div class="field">${F.tags}${groups.map(([, tags]) => raw(html`<div class="chips">${tags.map((t) => raw(html`<button class="chip" data-on="tag" data-arg="${t}" aria-pressed="${form.tags.includes(t)}">${TAGS[t]}</button>`))}</div>`))}</div>
-        <button class="btn btn-primary" data-on="save">${F.save}</button>`, {
+        <button class="btn btn-primary act" data-on="save">${F.save}</button>`, {
         ...common,
         name: (v) => (form.name = v),
         emoji: (v) => (form.emoji = v),

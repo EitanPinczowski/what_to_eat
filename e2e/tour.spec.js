@@ -112,7 +112,7 @@ for (const scheme of ["light", "dark"]) {
       await page.locator('[data-on="roll"]').click();
       await page.getByTestId("chosen").waitFor({ timeout: 8000 });
       await shot(page, "picker-chosen");
-      await page.getByTestId("chosen").locator('[data-on="go"]').click();
+      await page.getByTestId("chosen-go").click();
       await page.getByTestId("nav").waitFor();
       await shot(page, "navigation-card");
       await page.getByTestId("nav").locator('[data-on="navDone"]').click();

@@ -1,4 +1,5 @@
 // Tiny DOM helpers (PLAN.md §5.6). render() = innerHTML + click delegation via data-on / data-arg.
+import { STR } from "../data/strings.js";
 const ESC = { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" };
 export const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ESC[c]);
 
@@ -13,6 +14,8 @@ export function html(strings, ...vals) {
 }
 export const raw = (s) => ({ __raw: true, s: String(s) });
 
+/** Compact top bar of an inner screen: back arrow (points right in RTL) + the title. */
+export const topbar = (title) => html`<header class="topbar"><button class="back-ic" data-on="back" aria-label="${STR.backAria}">→</button><h2 class="q">${title}</h2></header>`;
 const bound = new WeakMap();
 
 /**

@@ -5,7 +5,7 @@ import { newId } from "../../share/codec.js";
 import { buildQuizLink } from "../../share/links.js";
 import { waUrl } from "../../share/whatsapp.js";
 import { ViewStack } from "../../router.js";
-import { render, html, raw, toast, copy, confetti, saveFailed, mountSaveStatus } from "../dom.js";
+import { render, html, raw, toast, copy, confetti, saveFailed, mountSaveStatus, topbar } from "../dom.js";
 import { nudgeExp } from "../../engine/learn.js";
 import { isFirstOfMonth } from "../../engine/wrapped.js";
 import { ACK_CODES, LOGS, LOG_KEEP } from "../../store/store.js";
@@ -74,7 +74,6 @@ export async function runOwner(root, store, { base = location.origin + location.
     if (["history", "live", "room"].includes(what) && ["home", "send", "history", "sweep"].includes(stack.top)) views[stack.top]();
   });
 
-  const back = html`<button class="btn back" data-on="back">${T.back}</button>`;
   const common = {
     back: () => stack.back(),
     go: (v) => (v === "picker" && ((ctx.entryId = recentQuizEntry(store.list("history"))?.id ?? null), (ctx.pick = null)), views[v] ? stack.push(v) : toast(T.soon)),
@@ -128,7 +127,7 @@ export async function runOwner(root, store, { base = location.origin + location.
       <button class="btn more${isFirstOfMonth() ? " hot" : ""}" data-on="go" data-arg="more">${T.more}</button>`, { ...common, how, ack: (c) => store.setAck(live?.ack === c ? null : c).catch(saveFailed) });
   };
   views.more = () =>
-    render(root, html`${raw(back)}<h2 class="q">${T.more}</h2><div class="tiles">${MORE_TILES.map((k) => raw(tile(k)))}</div>`, common);
+    render(root, html`${raw(topbar(T.more))}<div class="tiles">${MORE_TILES.map((k) => raw(tile(k)))}</div>`, common);
 
   // sending a link starts a fresh run: her old status is cleared (item 8)
   const markSent = () => {
@@ -146,12 +145,11 @@ export async function runOwner(root, store, { base = location.origin + location.
     const s = S();
     const link = buildQuizLink(s.base || base, store.roomId);
     const text = `${T.sendText(s.her, s.me)}\n${link}`;
-    render(root, html`${raw(back)}
-      <h2 class="q">${T.sendTitle(s.her)}</h2>
-      <a class="btn btn-primary" href="${waUrl(text, s.herPhone)}" target="_blank" rel="noopener" data-testid="wa-send">${T.whatsapp}</a>
+    render(root, html`${raw(topbar(T.sendTitle(s.her)))}
       <button class="btn" data-on="copy">${T.copy}</button>
       <code class="link" dir="ltr">${link}</code>
-      <p class="sub" data-testid="live" role="status">${liveLine(store.doc("live", "quiz"), s.her)}</p>`, {
+      <p class="sub" data-testid="live" role="status">${liveLine(store.doc("live", "quiz"), s.her)}</p>
+      <a class="btn btn-primary act" href="${waUrl(text, s.herPhone)}" target="_blank" rel="noopener" data-testid="wa-send">${T.whatsapp}</a>`, {
       ...common,
       copy: async () => (markSent(), toast((await copy(link)) ? T.copied : link)),
     });
@@ -199,13 +197,13 @@ export async function runOwner(root, store, { base = location.origin + location.
       };
     Object.assign(views, stubs);
   };
-  lazy(["brain", "food", "foodForm"], () => import("./brain.js"), (m) => m.brainViews({ root, store, stack, views, back, common }));
-  lazy(["history"], () => import("./history.js"), (m) => m.historyViews({ root, store, views, back, common }));
-  lazy(["sweep"], () => import("./send-sweep.js"), (m) => m.sweepViews({ root, store, views, back, common, base }));
-  lazy(["wrapped"], () => import("./send-wrapped.js"), (m) => m.wrappedViews({ root, store, views, back, common, base }));
-  lazy(["places", "tryForm", "placeForm", "picker"], () => import("./places.js"), (m) => m.placesViews({ root, store, stack, views, back, common, ctx }));
-  lazy(["recipe", "shopping"], () => import("./shopping.js"), (m) => m.shoppingViews({ root, store, stack, views, back, common, ctx }));
-  lazy(["settings"], () => import("./settings.js"), (m) => m.settingsViews({ root, store, views, back, common, base, mode }));
+  lazy(["brain", "food", "foodForm"], () => import("./brain.js"), (m) => m.brainViews({ root, store, stack, views, common }));
+  lazy(["history"], () => import("./history.js"), (m) => m.historyViews({ root, store, views, common }));
+  lazy(["sweep"], () => import("./send-sweep.js"), (m) => m.sweepViews({ root, store, views, common, base }));
+  lazy(["wrapped"], () => import("./send-wrapped.js"), (m) => m.wrappedViews({ root, store, views, common, base }));
+  lazy(["places", "tryForm", "placeForm", "picker"], () => import("./places.js"), (m) => m.placesViews({ root, store, stack, views, common, ctx }));
+  lazy(["recipe", "shopping"], () => import("./shopping.js"), (m) => m.shoppingViews({ root, store, stack, views, common, ctx }));
+  lazy(["settings"], () => import("./settings.js"), (m) => m.settingsViews({ root, store, views, common, base, mode }));
   stack.reset("home");
   return { stack, views };
 }

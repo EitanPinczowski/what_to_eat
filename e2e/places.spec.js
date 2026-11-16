@@ -32,7 +32,7 @@ test("places: add a place, then pick it for a result and log the visit", async (
   await expect(page.locator("li.row")).toContainText("מגישים פיצה");
   await page.locator('[data-on="roll"]').click();
   await expect(page.getByTestId("chosen")).toContainText("פיצה של רפי");
-  await page.getByTestId("chosen").locator('[data-on="go"]').click();
+  await page.getByTestId("chosen-go").click();
   // "Going" now shows the directions card (Waze / Google Maps) before returning home.
   await expect(page.getByTestId("nav")).toContainText("פיצה של רפי");
   await expect(page.getByTestId("nav-waze")).toHaveAttribute("href", /waze\.com/);

@@ -89,3 +89,10 @@ test("BackLayer: closer may keep its entry, clear() entries are skipped on the w
   w.gesture(); // stale entry: skipped, history.back() runs again
   assert.equal(w.at, 0);
 });
+
+test("topbar: back arrow points right (RTL), labelled, with the title as h2.q", async () => {
+  const { topbar } = await import("../js/ui/dom.js");
+  const t = topbar("<x>");
+  assert.match(t, /<button class="back-ic" data-on="back" aria-label="[^"]+">→<\/button>/);
+  assert.match(t, /<h2 class="q">&lt;x&gt;<\/h2>/);
+});

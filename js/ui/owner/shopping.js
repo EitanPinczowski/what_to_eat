@@ -1,7 +1,7 @@
 // Owner: recipe detail + the shared shopping list (a `shopping` collection in the room, so both phones see it).
 import { STR } from "../../data/strings.js";
 import { findRecipe } from "../../data/recipes.js";
-import { render, html, raw, toast, saveFailed } from "../dom.js";
+import { render, html, raw, toast, saveFailed, topbar } from "../dom.js";
 
 const S = STR.shop;
 const K = STR.picker;
@@ -15,7 +15,7 @@ export function recipeBlock(r, foodName) {
     ${r.links.map((l) => raw(html`<a class="btn" href="${l.url}" target="_blank" rel="noopener">🔎 ${l.title}</a>`))}</section>`;
 }
 
-export function shoppingViews({ root, store, stack, views, back, common, ctx }) {
+export function shoppingViews({ root, store, stack, views, common, ctx }) {
   store.subscribe((what) => {
     if (what === "shopping" && ["shopping", "recipe"].includes(stack.top)) views[stack.top]();
   });
@@ -25,13 +25,12 @@ export function shoppingViews({ root, store, stack, views, back, common, ctx }) 
     if (!r) return common.back();
     const have = new Set(store.shopping().filter((i) => !i.done).map((i) => i.text));
     const all = r.ing.every((t) => have.has(t));
-    render(root, html`${raw(back)}
-      <h2 class="q">${r.title}</h2>
+    render(root, html`${raw(topbar(r.title))}
       <p class="sub">${K.recipeMin(r.min)}</p>
       <section class="card"><b>${S.ingTitle}</b><ul class="plain">${r.ing.map((t) => raw(html`<li>${t}</li>`))}</ul></section>
       <section class="card"><b>${S.stepsTitle}</b><ol>${r.steps.map((t) => raw(html`<li>${t}</li>`))}</ol></section>
-      <button class="btn btn-primary" data-on="addAll" data-testid="add-shopping" ${all ? "disabled" : ""}>${S.add}</button>
-      <button class="btn btn-ghost" data-on="go" data-arg="shopping">${S.openList}</button>`, {
+      <button class="btn btn-ghost" data-on="go" data-arg="shopping">${S.openList}</button>
+      <button class="btn btn-primary act" data-on="addAll" data-testid="add-shopping" ${all ? "disabled" : ""}>${S.add}</button>`, {
       ...common,
       addAll: () => {
         store.addShopping(r.ing, r.title).then((n) => toast(S.added(n))).catch(saveFailed);
@@ -42,8 +41,7 @@ export function shoppingViews({ root, store, stack, views, back, common, ctx }) 
   views.shopping = () => {
     const items = store.shopping();
     const left = items.filter((i) => !i.done).length;
-    render(root, html`${raw(back)}
-      <h2 class="q">${S.title}</h2>
+    render(root, html`${raw(topbar(S.title))}
       ${items.length ? raw(html`<p class="sub" data-testid="shop-left">${S.left(left)}</p>`) : raw(html`<p class="sub">${S.empty}</p>`)}
       <ul class="shoplist">${items.map((i) => raw(html`<li><label class="row"><input type="checkbox" data-input="tick" data-arg="${i.id}" ${i.done ? "checked" : ""}>
         <span style="${i.done ? "text-decoration:line-through;opacity:.6" : ""}">${i.text}</span>${i.recipe ? raw(html` <span class="sub">${S.fromRecipe(i.recipe)}</span>`) : ""}</label></li>`))}</ul>

@@ -2,7 +2,7 @@
 import { STR } from "../../data/strings.js";
 import { statsFrom } from "../../engine/learn.js";
 import { QUESTIONS } from "../../data/questions.js";
-import { render, html, raw } from "../dom.js";
+import { render, html, raw, topbar } from "../dom.js";
 
 const T = STR.owner;
 const fmtDate = (iso) => {
@@ -13,7 +13,7 @@ const fmtDate = (iso) => {
   }
 };
 
-export function historyViews({ root, store, views, back, common }) {
+export function historyViews({ root, store, views, common }) {
   const statsCard = (list) => {
     const st = statsFrom(list);
     if (!st) return "";
@@ -25,8 +25,7 @@ export function historyViews({ root, store, views, back, common }) {
 
   views.history = () => {
     const list = store.list("history");
-    render(root, html`${raw(back)}
-      <h2 class="q">${T.historyTitle}</h2>
+    render(root, html`${raw(topbar(T.historyTitle))}
       ${raw(statsCard(list))}
       ${list.length ? "" : raw(html`<p class="sub">${T.noHistory}</p>`)}
       ${list.map((h) => raw(html`<article class="card hist">
