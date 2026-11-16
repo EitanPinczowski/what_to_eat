@@ -124,3 +124,21 @@ test("offline then online: the write is queued while offline and arrives after r
   await until(() => eitan.doc("live", "quiz")?.mode === "take");
   assert.deepEqual([states[0], states.at(-1)], ["pending", "saved"]);
 });
+
+test("fast open: a doc edit before the first snapshot does not flicker back to the old value", async () => {
+  const room = newRoom();
+  const a = await device("fa", room);
+  await a.update((db) => (db.settings.her = "N"));
+  await a.put("history", "h1", { f: "old", m: "sit", at: "2026-11-16T10:00:00.000Z", top: [] });
+  const saved = JSON.stringify({ roomId: room, room: a.get(), cols: a.cols });
+  const storage = { getItem: () => saved, setItem() {} };
+  const b = await new FirebaseStore(room, CONFIG, { sdk: sdkFor("fb"), storage, fast: true }).ready();
+  stores.push(b);
+  const seen = [];
+  b.subscribe(() => seen.push(b.doc("history", "h1")?.f));
+  await b.put("history", "h1", { f: "new", m: "sit", at: "2026-11-16T10:00:00.000Z", top: [] });
+  await b._live;
+  assert.equal(b.doc("history", "h1").f, "new");
+  assert.ok(!seen.includes("old") || seen.indexOf("old") < seen.indexOf("new"), "no flicker back to old");
+  await until(() => a.doc("history", "h1")?.f === "new");
+});

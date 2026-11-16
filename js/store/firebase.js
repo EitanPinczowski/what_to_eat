@@ -26,6 +26,7 @@ export class FirebaseStore extends Store {
     this.snapKey = `wte.snap:${roomId}`;
     this._live = null;
     this._early = {};
+    this._pd = {}; // doc edits made before the first snapshot: col -> id -> doc (null = deleted)
     this._roomExists = false;
   }
 
@@ -37,12 +38,12 @@ export class FirebaseStore extends Store {
   async _open() {
     const snap = this.fast ? this._readSnap() : null;
     if (!snap) {
-      this._early = null;
+      this._early = this._pd = null;
       return this._openLive();
     }
     this._live = this._openLive().then(({ room, cols }) => {
-      this._remote(room ? { ...room, ...this._early } : this.room, cols);
-      this._early = null;
+      this._remote(room ? { ...room, ...this._early } : this.room, mergePending(cols, this._pd));
+      this._early = this._pd = null;
     });
     this._live.catch((e) => console.error("live connection failed", e));
     return snap;
@@ -120,6 +121,7 @@ export class FirebaseStore extends Store {
   }
 
   async _writeDoc(col, id, doc) {
+    if (this._pd) (this._pd[col] ??= {})[id] = doc;
     await this._live;
     const ref = this.sdk.doc(this.roomRef, col, id);
     if (doc) await this.sdk.setDoc(ref, doc);
@@ -135,4 +137,20 @@ export class FirebaseStore extends Store {
     for (const u of this.unsubs) u();
     this.unsubs = [];
   }
+}
+
+/** First snapshot + local edits made meanwhile: per doc the newer updatedAt wins; a pending local write beats an older or undated server copy. */
+export function mergePending(cols, pd) {
+  const out = {};
+  for (const [c, docs] of Object.entries(cols ?? {})) {
+    out[c] = { ...docs };
+    for (const [id, d] of Object.entries(pd?.[c] ?? {})) {
+      const srv = docs[id];
+      if (srv && d?.updatedAt !== undefined && srv.updatedAt !== undefined && srv.updatedAt > d.updatedAt) continue;
+      if (srv && d === null && srv.updatedAt !== undefined) continue;
+      if (d === null) delete out[c][id];
+      else out[c][id] = d;
+    }
+  }
+  return out;
 }
