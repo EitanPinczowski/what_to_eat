@@ -11,12 +11,13 @@ import { parsePlaceLink } from "../../places/links.js";
 import { recipesFor } from "../../data/recipes.js";
 import { recipeBlock } from "./shopping.js";
 import { VOTE_MAX, VOTE_MIN, VOTE_NONE } from "../../store/store.js";
-import { render, html, raw, toast, saveFailed, topbar } from "../dom.js";
+import { render, html, raw, toast, saveFailed, topbar, keepOpen } from "../dom.js";
 
 const L = STR.places;
 const K = STR.picker;
 const PLACE_MODES = ["sit", "take", "delivery"];
 const cuisineLabel = (c) => STR.cuisine.options[c].join(" ");
+const chip = (on, arg, label, pressed) => raw(html`<button class="chip" data-on="${on}" data-arg="${arg}" aria-pressed="${pressed}">${label}</button>`);
 const norm = (s) => String(s ?? "").replace(/[\s״׳"'\-]/g, "").toLowerCase();
 
 export function reasonText(r, food) {
@@ -30,6 +31,7 @@ export function reasonText(r, food) {
 export const closesText = (r) => (r.closesIn ? K.closesSoon(r.closesIn) : "");
 
 export function placesViews({ root, store, stack, views, common, ctx }) {
+  keepOpen(root, ctx);
   const foods = () => buildFoods(FOODS, store.get().custom);
   const cities = () => [...new Set([store.get().settings.city, ...store.list("places").map((p) => p.city)].filter(Boolean))];
 
@@ -93,7 +95,6 @@ export function placesViews({ root, store, stack, views, common, ctx }) {
     let q = "";
     const all = foods();
     const matches = () => (q ? all.filter((f) => norm(f.name).includes(norm(q)) && !p.foods.includes(f.id)).slice(0, 8) : []);
-    const chip = (on, arg, label, pressed) => raw(html`<button class="chip" data-on="${on}" data-arg="${arg}" aria-pressed="${pressed}">${label}</button>`);
     const servedHtml = () => p.foods.map((id) => all.find((f) => f.id === id)).filter(Boolean).map((f) => chip("unserve", f.id, `${f.emoji} ${f.name} ✕`, true));
     const refresh = () => {
       root.querySelector(".served").innerHTML = servedHtml().map((x) => x.s).join("");
@@ -109,6 +110,7 @@ export function placesViews({ root, store, stack, views, common, ctx }) {
           <input type="search" data-input="foodq" placeholder="${L.foodSearch}" aria-label="${L.foodSearch}"><div class="chips matches"></div></div>
         <div class="field">${L.price}<div class="chips">${[1, 2, 3].map((n) => chip("price", n, "₪".repeat(n), p.price === n))}</div></div>
         <div class="field">${L.rating}<div class="chips">${[1, 2, 3, 4, 5].map((n) => chip("rating", n, "❤️".repeat(n), Math.round(p.rating) === n))}</div></div>
+        <details data-k="more" class="stack" ${ctx.more ? "open" : ""}><summary>${L.more}</summary>
         <label class="field">${L.link}<input data-input="link" value="${p.link}" maxlength="300" dir="ltr" inputmode="url"></label>
         <label class="field">${L.note}<input data-input="note" value="${p.note}" maxlength="200"></label>
         <label class="check"><input type="checkbox" data-input="shabbat" ${p.shabbat ? "checked" : ""}> ${L.shabbat}</label>
@@ -117,7 +119,7 @@ export function placesViews({ root, store, stack, views, common, ctx }) {
           return raw(html`<div class="hours-row"><b>${dn}</b>
             <input type="time" data-input="hour" data-day="${d}" data-k="o" value="${r?.o ?? ""}" aria-label="${L.opensAt} ${dn}">
             <input type="time" data-input="hour" data-day="${d}" data-k="c" value="${r?.c ?? ""}" aria-label="${L.closesAt} ${dn}"></div>`);
-        })}</div>
+        })}</div></details>
         ${p.id ? raw(html`<button class="btn btn-ghost" data-on="del">${L.del}</button>`) : ""}
         <button class="btn btn-primary act" data-on="save">${L.save}</button>`, {
         ...common,
@@ -209,7 +211,6 @@ export function placesViews({ root, store, stack, views, common, ctx }) {
     const food = all.find((f) => f.id === st.food) ?? null;
     const label = food?.name ?? st.free;
     const { list: scored, noneOfKind } = pickPlaces(store.list("places"), all, { food, mode: st.mode, city: st.city, budget: st.budget, novel: !!st.novel });
-    const chip = (on, arg, text, pressed) => raw(html`<button class="chip" data-on="${on}" data-arg="${arg}" aria-pressed="${pressed}">${text}</button>`);
     const q = [label, st.city].filter(Boolean).join(" ");
     // exactly one main button: the chosen place's "go", else the quick-add form's save, else the roll
     const prim = st.chosen ? "go" : ctx.quickAdd ? "quick" : scored.length && st.mode !== "home" ? "roll" : "";
@@ -250,7 +251,7 @@ export function placesViews({ root, store, stack, views, common, ctx }) {
         else if (sel.length < VOTE_MAX) sel.push(id);
         views.picker();
       },
-      // Firestore writes resolve only on server ack: start them, never await (the local copy is updated synchronously).
+      // Firestore writes resolve only on server ack: start them, never await.
       voteSend: () => {
         store.sendVote(st.sel ?? []).catch(saveFailed);
         ((st.sel = []), (seenPick = null));

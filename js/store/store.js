@@ -40,7 +40,7 @@ export function migrate(room) {
 
 /** Subcollections whose docs the rules do not let a client delete. Empty since item 11 (the logs can be trimmed). */
 export const NO_DELETE = [];
-// "Rotate key" still overwrites these two with a tombstone instead of deleting: it works with old and new rules alike.
+// "Rotate key" still overwrites these two with a tombstone instead of deleting, so it works with old and new rules.
 const TOMBSTONE = ["feedback", "errors"];
 
 /** Log collections the owner may trim, and how many docs are kept on start. */

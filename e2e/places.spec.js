@@ -17,6 +17,7 @@ test("places: add a place, then pick it for a result and log the visit", async (
   await expect(page.locator('[data-on="cuisine"][data-arg="italian"]')).toHaveAttribute("aria-pressed", "true");
   await page.locator('[data-on="cuisine"][data-arg="american"]').click();
   await page.locator('[data-on="rating"][data-arg="5"]').click();
+  await page.locator("details[data-k=more] summary").click(); // less-used fields sit behind "עוד פרטים"
   await page.locator('[data-input="shabbat"]').check();
   await page.locator('[data-input="shabbat"]').uncheck(); // Shabbat filtering is unit-tested; keep this day-independent
   await page.getByRole("button", { name: "שמירה" }).click();

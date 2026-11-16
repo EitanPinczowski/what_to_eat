@@ -19,7 +19,7 @@ export async function registerSW(onUpdate, nav = globalThis.navigator, win = glo
     w?.addEventListener("statechange", () => w.state === "installed" && offer(w));
   });
   // Check again when the app comes back to the front (PWAs stay open for days).
-  win.document?.addEventListener("visibilitychange", () => win.document.visibilityState === "visible" && reg.update().catch(() => {})); // harmless: optional / best effort, nothing to tell the user
+  win.document?.addEventListener("visibilitychange", () => win.document.visibilityState === "visible" && reg.update().catch(() => {})); // harmless: best effort
   return reg;
 }
 

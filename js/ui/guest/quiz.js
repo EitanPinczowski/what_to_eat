@@ -1,5 +1,5 @@
 // Guest quiz screens (spec-flow-firebase.md §2.1). Also used for the owner's "she's next to me" mode.
-// One question per screen, tap = answer. Escapes: 🤫 type it · ↪︎ undo (RTL: back points right). No skip on her screens (R5).
+// One question per screen, tap = answer. Escapes: 🤫 type it · ↪︎ undo. No skip on her screens (R5).
 // Every step is kept as a small action so the quiz can resume on another browser (live doc).
 import { FOODS } from "../../data/foods.js";
 import { QUESTIONS, questionText } from "../../data/questions.js";
@@ -68,8 +68,8 @@ export function startGuestQuiz(root, opts) {
   const me = room.settings?.me ?? "";
   let gridVeto = new Set();
   let step = null;
-  // Back gesture = the in-app back: the step that was taken last is undone (engine state included), the escape/feedback
-  // screen is closed, a finish-side screen steps back to the one before it, and the first question goes back to the intro.
+  // Phone back = in-app back: undo the last step (engine too), close the escape/feedback screen, step back from finish,
+  // and from the first question return to the intro.
   // History: one entry per step (+1 base entry so back on the first screen stays), all owned by this scope.
   const layer = BackLayer.shared(opts.win).scope();
   const introShown = intro && !actions.length;

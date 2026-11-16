@@ -4,6 +4,13 @@ import { findRecipe } from "../../data/recipes.js";
 import { render, html, raw, toast, saveFailed, topbar } from "../dom.js";
 
 const S = STR.shop;
+
+/** Shopping items grouped by recipe: [[recipe, items]], the ones with no recipe last (recipe ""). */
+export function groupShopping(items) {
+  const g = new Map();
+  for (const i of items) g.set(i.recipe || "", [...(g.get(i.recipe || "") ?? []), i]);
+  return [...g].sort(([a], [b]) => !a - !b);
+}
 const K = STR.picker;
 
 /** Recipe options for the picker's cook mode: built-in recipe buttons, or search links. `r` = recipesFor(). */
@@ -41,10 +48,12 @@ export function shoppingViews({ root, store, stack, views, common, ctx }) {
   views.shopping = () => {
     const items = store.shopping();
     const left = items.filter((i) => !i.done).length;
+    const groups = groupShopping(items);
     render(root, html`${raw(topbar(S.title))}
       ${items.length ? raw(html`<p class="sub" data-testid="shop-left">${S.left(left)}</p>`) : raw(html`<p class="sub">${S.empty}</p>`)}
-      <ul class="shoplist">${items.map((i) => raw(html`<li><label class="row"><input type="checkbox" data-input="tick" data-arg="${i.id}" ${i.done ? "checked" : ""}>
-        <span style="${i.done ? "text-decoration:line-through;opacity:.6" : ""}">${i.text}</span>${i.recipe ? raw(html` <span class="sub">${S.fromRecipe(i.recipe)}</span>`) : ""}</label></li>`))}</ul>
+      ${groups.map(([r, is]) => raw(html`<section data-testid="shop-group"><h3 class="sub">${r || (groups.length > 1 ? S.other : "")}</h3>
+        <ul class="foods shoplist">${is.map((i) => raw(html`<li><label class="row"><input type="checkbox" data-input="tick" data-arg="${i.id}" ${i.done ? "checked" : ""}>
+          <span style="${i.done ? "text-decoration:line-through;opacity:.6" : ""}">${i.text}</span></label></li>`))}</ul></section>`))}
       ${items.some((i) => i.done) ? raw(html`<button class="btn btn-ghost" data-on="clear" data-testid="shop-clear">${S.clear}</button>`) : ""}`, {
       ...common,
       tick: (_v, _e, el) => store.tickShopping(el.dataset.arg, el.checked).catch(saveFailed),

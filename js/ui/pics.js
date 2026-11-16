@@ -1,4 +1,4 @@
-// Food photos: img/foods/<id>-160|400.webp listed in js/data/photos.js (tools/apply-picks.mjs). Unlisted or failing: emoji (onerror).
+// Food photos: img/foods/<id>-160|400.webp listed in js/data/photos.js. Unlisted or failing: emoji (onerror).
 import { html, raw } from "./dom.js";
 import { STR } from "../data/strings.js";
 

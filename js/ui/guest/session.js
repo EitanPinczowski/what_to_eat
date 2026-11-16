@@ -44,7 +44,7 @@ export function installErrorLog(store, screen, win = globalThis.window) {
   let left = 10;
   const log = (msg, stack) => {
     if (left-- <= 0) return;
-    store.logError({ msg: cut(msg, 300), stack: cut(stack, 1500), screen: cut(screen(), 40), ua: ua() }).catch(() => {}); // harmless: optional / best effort, nothing to tell the user
+    store.logError({ msg: cut(msg, 300), stack: cut(stack, 1500), screen: cut(screen(), 40), ua: ua() }).catch(() => {}); // harmless: best effort
   };
   win?.addEventListener("error", (e) => log(e.message, e.error?.stack));
   win?.addEventListener("unhandledrejection", (e) => log(e.reason?.message ?? e.reason, e.reason?.stack));
@@ -119,8 +119,8 @@ export async function runGuest(root, store, { base = location.origin + location.
   };
   const saveLive = (data) => store.put("live", "quiz", { ...data, ...carry(), at: new Date().toISOString() }).catch(saveFailed);
 
-  // After a notification send: write the delivery receipt (quiz only) and the subscriptions the relay called gone (410)
-  // into live/quiz. She never edits the room doc; Eitan's app prunes `dead` on its next start (js/push.js repairOnStart).
+  // After a notification send: write the receipt (quiz only) and the subscriptions the relay called gone (410)
+  // into live/quiz; Eitan's app prunes `dead` on its next start (push.js repairOnStart).
   const notifyRecord = async (kind, opts) => {
     const r = await notifyReport(s, kind, undefined, opts);
     if (!r) return;
@@ -155,9 +155,9 @@ export async function runGuest(root, store, { base = location.origin + location.
     screen = actions?.length ? "quiz" : "intro";
     const opened = live?.opened && actions ? live.opened : new Date().toISOString();
     saveLive({ opened, n: actions?.length ?? 0, actions: actions ?? [], trail: [], finished: false });
-    // Never wait for the network before the first screen: use the saved reading and refresh it in the background for next time.
+    // Never wait for the network before the first screen: use the saved reading, refresh it in the background.
     const weather = actions?.length ? null : cachedWeather(room.settings?.city);
-    if (!actions?.length && !weather) fetchWeather(room.settings?.city).catch(() => {}); // harmless: optional / best effort, nothing to tell the user
+    if (!actions?.length && !weather) fetchWeather(room.settings?.city).catch(() => {}); // harmless: best effort
     startGuestQuiz(root, {
       baseEntry: true,
       weather,

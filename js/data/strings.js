@@ -1,6 +1,5 @@
 // All UI strings. Feminine 2nd person, questions not commands, the app speaks as Eitan.
 export const STR = {
-  appTitle: "מה בא לך?",
   cats: { snack: "חטיף", sweet: "מתוק", meal: "ארוחה", street: "אוכל רחוב", breakfast: "ארוחת בוקר", home: "בישול ביתי", fresh: "טרי" },
   escape: "🤫 אני כבר יודעת מה בא לי",
   back: "רגע, אחורה",
@@ -95,7 +94,6 @@ export const STR = {
     neither: "אף אחד מהם 🙅‍♀️",
     picked: (name) => `בחרת: ${name} 🎯`,
     pickedNone: "אמרת לאיתן שאף אחד מהם לא מתאים",
-    change: "לשנות את הבחירה",
     ntfy: (her) => `${her} ענתה על המקומות 📍 — פתח את האפליקציה`, // public topic: no place names
   },
   ntfy: (her) => `${her} סיימה 🎉 — פתח את האפליקציה`,
@@ -107,8 +105,6 @@ export const STR = {
   // Owner screens (Eitan).
   owner: {
     home: "בית",
-    lastMeal: "הארוחה האחרונה",
-    noMeals: "עוד אין ארוחות. אולי לשלוח לה שאלון?",
     tiles: {
       send: { e: "💌", t: "לשלוח שאלון" },
       local: { e: "🫶", t: "היא לידי" },
@@ -175,7 +171,6 @@ export const STR = {
     dismissLabel: (t) => `להסיר את „${t}”`,
     search: "חיפוש מאכל…",
     all: "הכל",
-    unknown: "❔",
     add: "➕ מאכל חדש",
     note: "הערה (למשל: רק עם סלמון)",
     save: "שמירה",
@@ -218,6 +213,7 @@ export const STR = {
     done: (her) => `${her} סיימה היכרות! 🎉`,
   },
   places: {
+    more: "עוד פרטים",
     tryAdd: "🔗 רוצה לנסות",
     tryTitle: "מקום שרוצה לנסות",
     tryLink: "קישור מגוגל מפות או מאינסטגרם",
@@ -303,13 +299,13 @@ export const STR = {
     added: (n) => (n ? `נוספו ${n} פריטים לרשימה 🛒` : "הכול כבר ברשימה"),
     clear: "🧹 לנקות את מה שסומן",
     cleared: (n) => `נוקו ${n} פריטים`,
-    fromRecipe: (r) => `מתוך: ${r}`,
+    other: "שאר הפריטים",
     left: (n) => `${n} נשארו לקנות`,
     openList: "לרשימת הקניות",
-    back: "→ חזרה למתכונים",
   },
   settings: {
     title: "הגדרות",
+    adv: "מתקדם",
     credits: { link: "קרדיטים לתמונות", title: "קרדיטים לתמונות", intro: "התמונות של האוכל מגיעות מ־Wikimedia Commons, ברישיונות חופשיים.", none: "עוד אין תמונות באפליקציה, רק אימוג׳ים.", by: "צילום" },
     her: "השם שלה",
     me: "השם שלך",
@@ -446,7 +442,6 @@ export const STR = {
     dots: (i, n) => `כרטיס ${i} מתוך ${n}`,
     shareText: (month) => `הסיכום שלי של ${month} 🍽️`,
     shareFail: "לא הצלחתי ליצור תמונה. אפשר לצלם מסך?",
-    imgTitle: (month) => month,
     imgBrand: "מה בא לך?",
   },
 };

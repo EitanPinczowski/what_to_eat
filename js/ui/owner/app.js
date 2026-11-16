@@ -103,7 +103,7 @@ export async function runOwner(root, store, { base = location.origin + location.
     toast(T.thanks);
     views.home();
   };
-  // One status card that follows the quiz: send -> she's answering -> her result (replies, choose a place) -> how was it.
+  // One status card follows the quiz: send -> she's answering -> her result -> how was it.
   const tile = (k) => {
     const hot = k === "wrapped" && isFirstOfMonth();
     return html`<button class="btn tile${hot ? " hot" : ""}" data-on="go" data-arg="${k}"><span class="em">${T.tiles[k].e}</span>${T.tiles[k].t}${hot ? raw(html`<small>${STR.wrapped.firstBadge}</small>`) : ""}</button>`;

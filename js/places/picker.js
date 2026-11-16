@@ -1,6 +1,6 @@
 // Place picker (PLAN.md §5.5, §7.4; spec-loops-places-design.md §2.7).
 // score = 10 if it serves the food | 2 × shared cuisine tags · + 0.8 × rating · −3 if visited this week
-//         · −2 per price step above her budget. Closed-on-Shabbat places hide Fri evening → Sat evening. Places closed right now (opening hours) are hidden.
+//         · −2 per price step above her budget. Hidden: closed-on-Shabbat (Fri evening → Sat evening) and closed right now.
 import { CUISINE } from "../data/constants.js";
 import { placeCuisines } from "./cuisine.js";
 

@@ -1,5 +1,5 @@
 import { test, expect } from "@playwright/test";
-import { openMore } from "./helpers.js";
+import { openMore, openAdvanced } from "./helpers.js";
 
 const seedResult = (id) => {
   const p = { v: 1, t: "quiz", id, f: "falafel", fn: "פלאפל", fe: "🧆", m: "take", trail: [] };
@@ -16,6 +16,7 @@ test("settings: names and phones, paste a result link, backup reminder + export,
   await page.getByRole("button", { name: "שמירה" }).click();
   await expect(page.locator('input[name="herPhone"]')).toHaveValue("972500000000");
 
+  await openAdvanced(page);
   const p2 = { v: 1, t: "quiz", id: "s2", f: "sushi", fn: "סושי", fe: "🍣", trail: [] };
   await page.locator('input[name="link"]').fill(`https://x.io/#r=${Buffer.from(JSON.stringify(p2)).toString("base64url")}`);
   await page.getByRole("button", { name: "ייבוא" }).click();
@@ -62,6 +63,7 @@ test("rotate key: the old link shows 'this link was replaced', not empty data", 
   await expect(page.locator(".tiles")).toBeVisible();
   const oldRoom = await page.evaluate(() => localStorage.getItem("mabalach_room"));
   await openMore(page, "settings");
+  await openAdvanced(page);
   await page.locator('[data-on="rotate"]').click();
   await expect(page.locator(".tiles")).toBeVisible();
   await page.goto(`/?store=local#q=${oldRoom}`);
@@ -104,6 +106,7 @@ test("room recovery: pasted link rejoins a room (confirm, old id kept); a lost r
   let asked = 0;
   page.on("dialog", (d) => (asked++, d.accept()));
   await openMore(page, "settings");
+  await openAdvanced(page);
   await page.getByTestId("rejoin").locator("input").fill(`https://example.github.io/what_to_eat/#q=${other}`);
   await page.getByTestId("rejoin").locator('button[type="submit"]').click();
   await expect(page.locator(".tile")).toHaveCount(3);
@@ -127,6 +130,7 @@ test("problems card: lists errors, clear deletes them (item 11)", async ({ page 
   await page.reload();
   page.on("dialog", (d) => d.accept());
   await openMore(page, "settings");
+  await openAdvanced(page);
   await expect(page.getByTestId("problems")).toContainText("תקלות (3)");
   await expect(page.getByTestId("problems")).toContainText("boom 1");
   await page.getByTestId("clear-errors").click();

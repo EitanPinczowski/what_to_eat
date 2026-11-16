@@ -2,7 +2,7 @@
 import { jaccard } from "./similarity.js";
 
 export const T = 1.3;
-export const NOISE_EPS = 0.15; // item 14: chance an answer is random instead of matching her food (the answer model; tuned in tests/sim.js, docs/REVIEW.md)
+export const NOISE_EPS = 0.15; // item 14: chance an answer is random (tuned in tests/sim.js)
 export const ANSWER_TAU = 1; // answers a food scores higher on are likelier (softmax of the fx deltas / tau); 0 = only the single best answer
 const CONFIDENT_P = 0.65; // item 15: the top food this likely ends the quiz (was 0.5: it stopped before telling near-twins apart)
 const TWIN = 0.6; // jaccard from which two foods count as near-twins
@@ -19,7 +19,7 @@ const MAX_WRONG = 4;
 const EXPRESS_AT = 4; // 🦖 starving (item 17): hunger, cuisine, the 2 best questions by information gain, then 3 options
 const SHORTLIST_SIZE = 3;
 const MAX_DUELS = 1;
-export const PICK_BELOW = 0.9; // item 13: at guess time, a top food under this probability ends on 3 options instead of one guess (tuned in tests/sim.js, docs/REVIEW.md)
+export const PICK_BELOW = 0.9; // item 13: a top food under this ends on 3 options, not one guess (tuned in tests/sim.js)
 
 function hashStr(s) {
   let h = 2166136261;
@@ -300,7 +300,7 @@ export class FoodQuiz {
     if (this.s.big && n >= EXPRESS_AT)
       return { type: "pick", express: true, items: ranked.slice(0, SHORTLIST_SIZE).map((x) => x.f) };
 
-    // Every step is scored by expected information gain; the grid and duel only win when they beat the best question.
+    // Each step is scored by expected information gain; grid and duel win only when they beat the best question.
     const best = this.bestQuestion(ranked);
     const bestV = best?.v ?? 0;
     const canExtra = n >= GRID_MIN_N && ranked.length >= 3;
@@ -331,7 +331,7 @@ export class FoodQuiz {
     }
     const a = q.answers[answerIndex];
     if (q.id === "hunger" && answerIndex === 3) this.s.big = true;
-    // Soft update: every food is scaled by how likely this answer is for it, so one wrong answer never removes the right food.
+    // Soft update: foods are scaled by how likely this answer is for them, so one wrong answer removes nothing.
     const L = this.lik(q);
     const w = q.w ?? 1;
     for (const f of this.foods) this.s.score[f.id] += T * w * Math.log(L.get(f.id)[answerIndex]);

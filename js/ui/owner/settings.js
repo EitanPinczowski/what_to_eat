@@ -6,7 +6,7 @@ import { buildJoinLink, parseHash } from "../../share/links.js";
 import { normPhone } from "../../share/whatsapp.js";
 import { ROOM_KEY, openStore } from "../../store/open.js";
 import { rejoinFromLink } from "../../store/room-backup.js";
-import { render, html, raw, toast, copy, saveFailed, topbar } from "../dom.js";
+import { render, html, raw, toast, copy, saveFailed, topbar, keepOpen } from "../dom.js";
 import { addSub, removeSub, hasSub, pushSupport, subscribeThisDevice, currentSub, unsubscribeThisDevice, notifyAll, knownEndpoint, rememberEndpoint, epHash, pruneDead } from "../../push.js";
 import { installKind, installHelp } from "../../pwa.js";
 import { withTimeout } from "../guest/session.js";
@@ -69,6 +69,8 @@ export function problemsCard(store, now = Date.now()) {
 }
 
 export function settingsViews({ root, store, views, common, base, mode }) {
+  const st = {};
+  keepOpen(root, st);
   views.settings = () => {
     const s = store.get().settings;
     const join = buildJoinLink(s.base || base, store.roomId);
@@ -80,13 +82,18 @@ export function settingsViews({ root, store, views, common, base, mode }) {
         ${field("city", G.city, 'maxlength="40"')}${field("base", G.base, 'dir="ltr" inputmode="url" autocapitalize="off" autocorrect="off" spellcheck="false" maxlength="200"')}
         <button class="btn btn-primary act" type="submit">${G.save}</button>
       </form>
-      <section class="card stack"><b>${G.ntfy}</b><span class="sub">${G.ntfyHelp}</span>
-        <code class="link" dir="ltr">https://ntfy.sh/${s.ntfy}</code></section>
       <section class="card stack" data-testid="push"><b>${G.push.title}</b><span class="sub">${G.push.help}</span>
         <span class="sub" data-testid="push-state" role="status"></span>
         <div class="stack" data-testid="push-actions"></div>
         <label class="check"><input type="checkbox" data-testid="notify-open" data-input="notifyOpen" ${s.notifyOpen ? "checked" : ""}> ${G.push.openedLabel}</label>
         <span class="sub">${G.push.openedHelp}</span></section>
+      <a class="btn btn-ghost" href="credits.html" data-testid="credits-link">${G.credits.link}</a>
+      <section class="card stack install"><b>${STR.install.title}</b><span class="sub">${installHelp(installKind())}</span>
+        ${globalThis.__installPrompt ? raw(html`<button class="btn" data-on="install">${STR.install.button}</button>`) : ""}
+        ${installKind() !== "ios" ? raw(html`<span class="sub">${STR.install.ios}</span>`) : ""}</section>
+      <details data-k="adv" class="stack" data-testid="advanced" ${st.adv ? "open" : ""}><summary>${G.adv}</summary>
+      <section class="card stack"><b>${G.ntfy}</b><span class="sub">${G.ntfyHelp}</span>
+        <code class="link" dir="ltr">https://ntfy.sh/${s.ntfy}</code></section>
       <section class="card stack"><b>${G.join}</b><span class="sub">${G.joinHelp}</span>
         <code class="link" dir="ltr">${join}</code><button class="btn" data-on="copyJoin">${STR.owner.copy}</button></section>
       <form class="card stack" data-submit="paste"><b>${G.paste}</b>
@@ -96,17 +103,13 @@ export function settingsViews({ root, store, views, common, base, mode }) {
       <section class="card stack"><b>${G.backup}</b>
         <button class="btn" data-on="export">${G.export}</button>
         <label class="btn">${G.restore}<input type="file" accept="application/json,.json" data-input="restore" hidden></label></section>
-      <a class="btn btn-ghost" href="credits.html" data-testid="credits-link">${G.credits.link}</a>
-      <section class="card stack install"><b>${STR.install.title}</b><span class="sub">${installHelp(installKind())}</span>
-        ${globalThis.__installPrompt ? raw(html`<button class="btn" data-on="install">${STR.install.button}</button>`) : ""}
-        ${installKind() !== "ios" ? raw(html`<span class="sub">${STR.install.ios}</span>`) : ""}</section>
       ${raw(problemsCard(store))}
       <button class="btn btn-ghost" data-on="rotate">${G.rotate}</button>
-      <button class="btn btn-ghost" data-on="reset">${G.reset}</button>`, {
+      <button class="btn btn-ghost" data-on="reset">${G.reset}</button></details>`, {
       ...common,
       pushOn: async () => {
         try {
-          // fresh: a stored subscription may be dead, so ask the push service for a new one and replace the old entries
+          // fresh: a stored subscription may be dead, so get a new one and replace the old entries
           const old = [knownEndpoint(), (await currentSub())?.endpoint].filter(Boolean);
           const sub = await subscribeThisDevice(undefined, undefined, { fresh: true });
           await withTimeout(store.update((db) => (db.settings.push = addSub(old.reduce(removeSub, db.settings.push), sub))), WRITE_TIMEOUT);
@@ -144,7 +147,7 @@ export function settingsViews({ root, store, views, common, base, mode }) {
         const v = (k, n) => String(fd.get(k) ?? "").trim().slice(0, n);
         const baseUrl = normBase(fd.get("base"));
         if (baseUrl === null) return toast(G.badBase);
-        // Offline-first: a write only queued (no server ack in 6 s) still counts as saved; a refusal shows an error.
+        // Offline-first: a write queued with no ack in 6 s counts as saved; a refusal shows an error.
         const queued = Symbol();
         const res = await Promise.race([
           store

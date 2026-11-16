@@ -90,7 +90,7 @@ export class FirebaseStore extends Store {
       s.getDoc(this.roomRef),
       ...COLLECTIONS.map((c) =>
         s.getDocs(s.collection(this.roomRef, c)).catch((e) => {
-          // A collection the published rules do not allow yet (e.g. shopping before the rules are re-published) must not break the app.
+          // A collection the published rules do not allow yet (e.g. shopping) must not break the app.
           if (c !== "shopping") throw e;
           return null;
         }),

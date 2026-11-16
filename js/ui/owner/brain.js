@@ -6,7 +6,7 @@ import { RATING_EMOJI } from "../../data/constants.js";
 import { buildFoods } from "../../engine/foods.js";
 import { newId } from "../../share/codec.js";
 import { render, html, raw, toast, saveFailed, topbar } from "../dom.js";
-import { pic, catLabel, foodLabel } from "../pics.js";
+import { pic, catLabel, foodLabel, category } from "../pics.js";
 
 const B = STR.brain;
 const F = STR.foodForm;
@@ -27,6 +27,9 @@ export function filterFoods(foods, ratings, { q = "", r = "all" } = {}) {
     (f) => (r === "all" || (ratings[f.id]?.r ?? 0) === Number(r)) && (!t || norm(f.name).includes(t) || f.tags.some((x) => norm(TAGS[x]).includes(t))),
   );
 }
+
+/** Foods grouped by category, in the order of STR.cats: [[category, foods]] (empty groups left out). */
+export const groupFoods = (foods) => Object.keys(STR.cats).map((c) => [c, foods.filter((f) => category(f) === c)]).filter(([, g]) => g.length);
 
 export function makeCustomFood({ name, emoji, kind, tags }) {
   const n = String(name ?? "").trim().slice(0, 40);
@@ -54,11 +57,11 @@ export function brainViews({ root, store, stack, views, common }) {
   const list = () => {
     const ratings = store.get().ratings;
     const items = filterFoods(foods(), ratings, state);
-    return items.length ? items.map((f) => row(f, ratings)).join("") : html`<li class="sub">${B.empty}</li>`;
+    return items.length ? groupFoods(items).map(([c, g]) => html`<h3 class="sub">${STR.cats[c]}</h3><ul class="foods">${raw(g.map((f) => row(f, ratings)).join(""))}</ul>`).join("") : html`<p class="sub">${B.empty}</p>`;
   };
   const refreshList = () => {
-    const ul = root.querySelector(".foods");
-    if (ul) ul.innerHTML = list();
+    const g = root.querySelector(".glist");
+    if (g) g.innerHTML = list();
   };
 
   views.brain = () => {
@@ -71,7 +74,7 @@ export function brainViews({ root, store, stack, views, common }) {
         ${db.inbox.map((t, i) => raw(html`<div class="line"><b>${t}</b><button class="chip" data-on="addInbox" data-arg="${i}">${B.addTags}</button><button class="chip" data-on="dropInbox" data-arg="${i}" aria-label="${B.dismissLabel(t)}">${B.dismiss}</button></div>`))}</section>`) : ""}
       <input type="search" placeholder="${B.search}" value="${state.q}" data-input="search" aria-label="${B.search}">
       <button class="btn" data-on="newFood">${B.add}</button>
-      <ul class="foods">${raw(list())}</ul>`, {
+      <div class="glist">${raw(list())}</div>`, {
       ...common,
       search: (v) => ((state.q = v), refreshList()),
       filter: (r) => ((state.r = state.r === r ? "all" : r), views.brain()),

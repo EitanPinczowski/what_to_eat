@@ -1,4 +1,4 @@
-// Food seed: [id, name, emoji, "kind tags…", season months or null, cuisine ids (CUISINES in cuisines.js)]. Ids are stable — never rename.
+// Food seed: [id, name, emoji, "kind tags…", season months|null, cuisine ids]. Ids are stable: never rename.
 export const FOODS = [
   // kiosk snacks
   ["bamba", "במבה", "🥜", "snack salty kiosk israeli junk couch creamy", null, ["snack"]],

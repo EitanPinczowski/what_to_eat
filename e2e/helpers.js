@@ -9,3 +9,9 @@ export async function openMore(page, key) {
   }
   await tile.click();
 }
+
+// Technical settings sit in the collapsed "מתקדם" section: open it (once; it stays open across redraws).
+export async function openAdvanced(page) {
+  const d = page.getByTestId("advanced");
+  if (!(await d.evaluate((e) => e.open))) await d.locator("summary").click();
+}

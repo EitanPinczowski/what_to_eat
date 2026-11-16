@@ -1,4 +1,4 @@
-// Short room links (#w= food wrapped summary link) (overview.md "Links") + the #r= fallback result link (PLAN.md §8).
+// Short room links (#w= wrapped link, see overview.md "Links") + the #r= fallback result link (PLAN.md §8).
 import { encode, decode } from "./codec.js";
 
 const ROOM = /^[a-z0-9]{6,40}$/;

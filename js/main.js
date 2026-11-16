@@ -39,7 +39,7 @@ async function boot() {
   if (!localStorage.getItem(ROOM_KEY)) await import("./store/room-backup.js").then((m) => m.restoreRoom()).catch(() => {}); // harmless: no backup means a new room, as before
   if (route.kind === "join") {
     // Another of the owner's devices: adopt the room, then go home.
-    // A different room already on this device is only replaced after a confirm (the old id is kept as a backup key).
+    // A different room already on this device is replaced only after a confirm (old id kept as a backup key).
     const res = adoptRoom(route.room, { ask: () => confirm(STR.joinAsk) });
     clearHash();
     if (res !== "same" && res !== "declined") toast(STR.joined);
@@ -52,7 +52,7 @@ async function boot() {
   const roomId = ownerRoomId();
   import("./store/room-backup.js").then((m) => m.backupRoom()).catch(() => {}); // harmless: the backup is a second chance only
   const owner = import("./ui/owner/app.js");
-  owner.catch(() => {}); // harmless: optional / best effort, nothing to tell the user
+  owner.catch(() => {}); // harmless: best effort
   const [store] = await Promise.all([openStore(roomId, { mode: route.mode, fast: route.kind !== "r" }), pics]);
   if (guardMoved(store)) return;
   if (route.kind === "r") {
@@ -89,7 +89,7 @@ registerSW((apply) => {
     if (k) bar.remove();
   });
   document.body.append(bar);
-}).catch(() => {}); // harmless: optional / best effort, nothing to tell the user
+}).catch(() => {}); // harmless: best effort
 
 // Android/desktop Chrome: keep the install prompt for the button in settings.
 addEventListener("beforeinstallprompt", (e) => {

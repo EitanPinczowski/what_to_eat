@@ -1,4 +1,4 @@
-// "Want to try" links: parse the URL text only (no network). Google Maps share link or Instagram profile/post/reel.
+// "Want to try" links: parse the URL text only (no network): Google Maps share link or Instagram profile/post/reel.
 const MAPS_HOST = /^(www\.|maps\.)?google\.[a-z.]+$|^(maps\.app\.)?goo\.gl$/i;
 const IG_HOST = /^(www\.)?instagram\.com$/i;
 const IG_RESERVED = new Set(["p", "reel", "reels", "tv", "stories", "explore", "share", "accounts", "direct"]);

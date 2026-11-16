@@ -16,6 +16,9 @@ export const raw = (s) => ({ __raw: true, s: String(s) });
 
 /** Compact top bar of an inner screen: back arrow (points right in RTL) + the title. */
 export const topbar = (title) => html`<header class="topbar"><button class="back-ic" data-on="back" aria-label="${STR.backAria}">→</button><h2 class="q">${title}</h2></header>`;
+/** Remember which <details data-k="x"> are open in `st`, so a redraw keeps them open (toggle does not bubble: capture). */
+export const keepOpen = (root, st) => root.addEventListener("toggle", (e) => e.target.dataset?.k && (st[e.target.dataset.k] = e.target.open), true);
+
 const bound = new WeakMap();
 
 /**
