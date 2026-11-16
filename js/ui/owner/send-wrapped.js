@@ -3,6 +3,7 @@ import { STR } from "../../data/strings.js";
 import { buildWrappedLink } from "../../share/links.js";
 import { waUrl } from "../../share/whatsapp.js";
 import { wrappedSummary, prevMonth, isFirstOfMonth } from "../../engine/wrapped.js";
+import { moodMemory } from "../../engine/mood-memory.js";
 import { render, html, raw, toast, copy, topbar } from "../dom.js";
 
 const W = STR.wrapped;
@@ -12,6 +13,7 @@ export function wrappedFor(store, now = new Date()) {
   const room = store.get();
   const places = Object.fromEntries(store.list("places").map((p) => [p.id, { name: p.name }]));
   const s = wrappedSummary(store.list("history"), prevMonth(now), places);
+  s.mm = moodMemory(store.list("history"), s.mo); // 0-2 "when you felt X you picked Y" lines (needs 3 matching quizzes)
   return { ...s, her: room.settings.her, me: room.settings.me };
 }
 

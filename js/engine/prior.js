@@ -1,6 +1,7 @@
 // Starting scores: ratings, recent meals (R2), time of day and season (R12).
 import { jaccard } from "./similarity.js";
 import { weatherBump, weatherKind } from "./weather.js";
+import { holidayOf, heatwave, seasonBump } from "../data/holidays.js";
 
 export const RATING_PRIOR = { 4: 2.5, 3: 1, 2: -0.8, 1: -8 };
 
@@ -48,6 +49,7 @@ export function priorFrom(foods, { ratings = {}, recent = [], now = new Date(), 
   const recentFoods = foods.filter((f) => recent.includes(f.id));
   const hour = now.getHours();
   const month = now.getMonth() + 1;
+  const hol = holidayOf(now), heat = heatwave(weather);
   const morning = hour >= 6 && hour < 11;
   const late = hour >= 22 || hour < 3;
   for (const f of foods) {
@@ -60,6 +62,7 @@ export function priorFrom(foods, { ratings = {}, recent = [], now = new Date(), 
     if (f.season && !f.season.includes(month)) s -= 1.5;
     if (exp[f.id] && !ratings[f.id]?.r) s += exp[f.id];
     if (weather) s += weatherBump(f.tags, weather);
+    if (hol || heat) s += seasonBump(f, hol, heat);
     s += (recent.includes(f.id) ? 0 : ctx.boost[f.id] ?? 0) - (ctx.pen[f.id] ?? 0);
     prior[f.id] = s;
   }

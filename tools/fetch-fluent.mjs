@@ -39,7 +39,7 @@ async function main() {
   const { default: sharp } = await import("sharp");
   const tree = (await get(`https://api.github.com/repos/${REPO}/git/trees/main?recursive=1`)).tree;
   const pngs = pngIndex(tree);
-  const qEmoji = [...new Set(QUESTIONS.flatMap((q) => q.answers.map((a) => strip(a.e))))];
+  const qEmoji = [...new Set([...QUESTIONS.flatMap((q) => q.answers.map((a) => strip(a.e))), strip("🧑‍🍳")])]; // + the little chef (js/ui/guest/chef.js)
   const wanted = new Set([...FOODS.map((f) => strip(f[2])), ...qEmoji]);
   const glyphs = new Map();
   await pool([...pngs.keys()], 12, async (dir) => {

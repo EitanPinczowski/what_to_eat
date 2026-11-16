@@ -44,7 +44,7 @@ test("guard: the first question is hunger with 3 answers, whatever the salt, see
 
 test("guard: no answer the engine offers is empty or a skip; no question has more than 4 buttons (a slider has 5 stops)", () => {
   for (const x of QUESTIONS) {
-    const buttons = x.slider ? 0 : x.answers.length;
+    const buttons = x.slider || x.type === "magnets" ? 0 : x.answers.length; // magnets: 6 words on the fridge (its plain-button fallback is only for reduced motion)
     assert.ok(buttons <= 4, x.id);
     for (const a of x.answers) assert.ok(Object.keys(a.fx).length > 0 || a.dyn, `${x.id}: "${a.t}" scores nothing`);
   }

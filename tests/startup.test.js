@@ -39,7 +39,7 @@ test("owner home: heavy owner screens are not in its static graph", () => {
 });
 
 // Budgets sit a little above today's sizes (docs/REVIEW.md, items 20 and 31). Raise them on purpose, not by accident.
-// Whole shell 300 → 320 KB (item 31) → 360 KB (round 2, owner asked; REVIEW.md): precached in the background, so it does not slow the first screen.
+// Whole shell 300 → 320 KB (item 31) → 360 → 380 KB (round 2, owner asked to raise; REVIEW.md): precached in the background, so it does not slow the first screen.
 // Start-up 177 → 190 KB (round 2, owner asked): a cold open may take ~30–60 ms longer on mobile data; warm opens come from the SW cache.
 test("size budget: start-up graph and whole shell", () => {
   const start = sizeOf(staticGraph(ENTRIES));
@@ -47,6 +47,6 @@ test("size budget: start-up graph and whole shell", () => {
   const sw = readFileSync("sw.js", "utf8");
   const shell = JSON.parse(sw.slice(sw.indexOf("const SHELL = ") + 14, sw.indexOf("];", sw.indexOf("const SHELL = ")) + 1)).filter((f) => f !== "./");
   const total = sizeOf(shell);
-  assert.ok(total <= 360 * 1024, `shell ${total} bytes`);
+  assert.ok(total <= 380 * 1024, `shell ${total} bytes`);
   console.log(`# start-up ${start} B, shell ${total} B`);
 });

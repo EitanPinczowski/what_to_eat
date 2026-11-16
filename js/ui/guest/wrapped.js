@@ -1,6 +1,7 @@
 // Guest "food wrapped" (#w=): 4-6 swipeable cards from the summary inside the link, ending in a share image
 // drawn on a canvas (navigator.share with the file, download as fallback). No store, no network except the illustrations.
 import { STR } from "../../data/strings.js";
+import { PLAY } from "../../data/strings-play.js";
 import { findQuestion } from "../../data/questions.js";
 import { pic, hasPic, artSrc } from "../pics.js";
 import { render, html, raw, confetti } from "../dom.js";
@@ -15,6 +16,7 @@ export function wrappedCards(s, her = "", q = null) {
   const cards = [{ k: "intro", title: W.introTitle(her, month), sub: W.introSub(s.n) }];
   if (s.top?.length) cards.push({ k: "top", title: W.topTitle, top: s.top });
   if (s.hit !== null && s.hit !== undefined) cards.push({ k: "hit", title: W.hitTitle, big: `${s.hit}%`, sub: W.hitSub(s.hit) });
+  if (s.mm?.length) cards.push({ k: "mood", title: PLAY.moodTitle, big: "💭", text: s.mm.map(([sl, n, c]) => PLAY.moodLine(sl, n, c)).join(" · "), sub: W.qSub });
   if (q) cards.push({ k: "q", title: W.qTitle, big: "🤔", text: q.text, sub: W.qSub });
   if (s.pl) cards.push({ k: "place", title: W.placeTitle, big: "📍", text: s.pl, sub: W.placeSub });
   cards.push({ k: "share", title: W.shareTitle });
@@ -31,6 +33,7 @@ function cardHtml(c) {
     top: () => html`<h2 class="q wr-c">${c.title}</h2><ol class="wr-list">${c.top.map((t, i) => raw(topRow(t, i)))}</ol>`,
     hit: () => html`<h2 class="q wr-c">${c.title}</h2><div class="big wr-num">${c.big}</div><p class="sub">${c.sub}</p>`,
     q: () => html`<h2 class="q wr-c">${c.title}</h2><div class="big" aria-hidden="true">${c.big}</div><p class="wr-text">${c.text}</p><p class="sub">${c.sub}</p>`,
+    mood: () => html`<h2 class="q wr-c">${c.title}</h2><div class="big" aria-hidden="true">${c.big}</div><p class="wr-text">${c.text}</p><p class="sub">${c.sub}</p>`,
     place: () => html`<h2 class="q wr-c">${c.title}</h2><div class="big" aria-hidden="true">${c.big}</div><p class="wr-text">${c.text}</p><p class="sub">${c.sub}</p>`,
     few: () => html`<div class="big" aria-hidden="true">🌱</div><h2 class="q wr-c">${c.title}</h2><p class="sub">${c.sub}</p>`,
     share: () => html`<div class="big" aria-hidden="true">📤</div><h2 class="q wr-c">${c.title}</h2>

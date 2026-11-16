@@ -195,3 +195,21 @@ summary{min-height:var(--tap);display:flex;align-items:center;font-weight:700;cu
 .wx{text-align:center;margin:0}
 @media (prefers-reduced-motion:no-preference){.flip{animation:flip .7s var(--ease) both;transform-origin:center}}
 @keyframes flip{0%{transform:perspective(700px) rotateY(90deg);opacity:0}60%{opacity:1}100%{transform:perspective(700px) rotateY(0)}}
+/* W5b */
+.magnets,.faceoff{display:flex;flex-direction:column;gap:10px;text-align:center}
+.fridge{background:linear-gradient(#e9eef2,#cfd8df);border:var(--border);border-radius:var(--radius);padding:8px;min-height:84px}
+.door,.tray{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;min-height:56px}
+.magnet{width:auto;transform:rotate(-2deg)}.magnet:nth-child(even){transform:rotate(2deg)}
+.magnet.stuck{background:var(--accent2);color:var(--on-accent2)}
+.chef{display:inline-flex;margin-inline-start:auto;width:44px;height:44px;transform-origin:50% 90%;position:relative}
+.chef .qpic{width:44px;height:44px}
+.chef[data-state=drool]::after{content:"💧";position:absolute;inset-inline-end:2px;top:26px;font-size:var(--t1)}
+@media (prefers-reduced-motion:no-preference){
+.chef[data-state=idle]{animation:chef-idle 3.2s ease-in-out infinite}
+.chef[data-state=nod]{animation:chef-nod .5s ease both}
+.chef[data-state=drool]{animation:chef-drool 1.6s ease-in-out infinite}
+.chef[data-state=cheer]{animation:chef-cheer .9s var(--ease) both}}
+@keyframes chef-idle{50%{transform:translateY(-2px) rotate(2deg)}}
+@keyframes chef-nod{30%{transform:translateY(5px) rotate(-6deg)}}
+@keyframes chef-drool{50%{transform:rotate(-8deg) scale(1.06)}}
+@keyframes chef-cheer{0%{transform:scale(.4) rotate(-20deg);opacity:0}50%{transform:scale(1.3) rotate(10deg)}}

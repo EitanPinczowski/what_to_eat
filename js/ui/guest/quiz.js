@@ -11,6 +11,7 @@ import { learnFrom, seenFrom } from "../../engine/learn.js";
 import { pic, qPic, catLabel, foodLabel } from "../pics.js";
 import { BackLayer } from "../../router.js";
 import { weatherKind } from "../../engine/weather.js";
+import { holidayOf, heatwave } from "../../data/holidays.js";
 import { allowedFoods, favBoosts } from "../../engine/exclude.js";
 import { render, html, raw } from "../dom.js";
 
@@ -87,7 +88,8 @@ export const backBar = (enabled = true) => html`<div class="qbar"><button class=
 export function startGuestQuiz(root, opts) {
   const { room, history = [], onProgress, onFinish, onFeedback, intro = true } = opts;
   const z = opts.quiz ?? makeQuiz(room, history, { weather: opts.weather });
-  const tease = STR.weatherTease[weatherKind(opts.weather)] ?? "";
+  const holiday = STR.holiday[holidayOf(opts.now ?? new Date())] ?? "";
+  const tease = heatwave(opts.weather) ? STR.holiday.heat : STR.weatherTease[weatherKind(opts.weather)] ?? "";
   const wx = STR.wxLine(opts.weather);
   const actions = [];
   for (const a of opts.actions ?? []) {
@@ -155,7 +157,7 @@ export function startGuestQuiz(root, opts) {
 
   const cravingAnswers = () => [
     ...Object.values(z.known).map((k) => ({ q: k.q, i: k.i, inferred: true })),
-    ...actions.filter((x) => x.k === "a" && x.i >= 0).map((x) => ({ q: x.q, i: x.i })),
+    ...actions.filter((x) => x.k === "a" && (Array.isArray(x.i) || x.i >= 0)).map((x) => ({ q: x.q, i: x.i })),
   ];
   const meter = () => {
     const p1 = z.ranked()[0]?.p ?? 0;
@@ -187,10 +189,11 @@ export function startGuestQuiz(root, opts) {
     qback: () => pending || goBack(),
     ans: (i, _e, el) => {
       if (pending) return;
-      const a = { k: "a", q: step.q.id, i: Number(i) };
+      const a = { k: "a", q: step.q.id, i: String(i).includes(",") ? String(i).split(",").map(Number) : Number(i) };
       if (still()) return act(a);
       pending = true;
       el?.classList?.add("picked");
+      root.querySelector?.(".chef")?.setAttribute("data-state", "nod");
       globalThis.navigator?.vibrate?.(10);
       react();
       setTimeout(() => ((pending = false), act(a)), 150);
@@ -297,6 +300,7 @@ export function startGuestQuiz(root, opts) {
     }
     render(root, backBar(canBack() || !!opts.onExit) + meter() + body, handlers);
     if (step.type === "pick" && step.unsure) fillPick(step);
+    if (!still()) import("./chef.js").then((m) => m.place(root, step.type === "guess" || step.type === "pick" ? "drool" : "idle"), () => {});
     // playful answer types: a small lazy module swaps in over the plain buttons; those stay for reduced motion or if it fails to load
     if (step.type === "q" && typeOf(step.q) !== "buttons" && root.querySelector && !globalThis.matchMedia?.("(prefers-reduced-motion: reduce)").matches && !globalThis.WTE_NO_MOTION) {
       const on = step, host = root.querySelector(".answers");
@@ -326,8 +330,8 @@ export function startGuestQuiz(root, opts) {
     const r = z.result;
     const food = r.f ? z.food(r.f) : null;
     const answered = actions.filter((a) => a.k === "a");
-    const stats = { hit: actions.at(-1)?.k === "x", steps: z.n, guesses: actions.filter((a) => a.k === "x").length, skips: answered.filter((a) => a.i < 0).map((a) => a.q) };
-    const ans = answered.filter((a) => a.i >= 0).map((a) => [a.q, a.i]);
+    const stats = { hit: actions.at(-1)?.k === "x", steps: z.n, guesses: actions.filter((a) => a.k === "x").length, skips: answered.filter((a) => !Array.isArray(a.i) && a.i < 0).map((a) => a.q) };
+    const ans = answered.filter((a) => Array.isArray(a.i) || a.i >= 0).flatMap((a) => (Array.isArray(a.i) ? a.i : [a.i]).map((i) => [a.q, i]));
     const rej = rejectedIds(actions, r.f);
     const out = { craving: cravingSummary(cravingAnswers()).line, result: r, food, rej, mood: moodFor(food), trail: [...z.trail], top: z.ranked().slice(0, 5).map((x) => x.f.id), ans, stats };
     out.back = goBack;
@@ -343,6 +347,7 @@ export function startGuestQuiz(root, opts) {
     onIntro = true;
     render(root, html`<h2 class="title">${STR.intro.hi(her)}</h2>
       <p class="sub">${STR.intro.text(me)}</p>
+      ${holiday ? raw(html`<p class="sub holiday" data-testid="holiday">${holiday}</p>`) : ""}
       <p class="sub">${STR.moment[momentOf(opts.now ?? new Date())]?.intro ?? ""}</p>
       ${tease ? raw(html`<p class="sub">${tease}</p>`) : ""}
       ${wx ? raw(html`<p class="sub wx" data-testid="wx">${wx}</p>`) : ""}

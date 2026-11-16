@@ -45,7 +45,8 @@ test("questions: unique ids, 12 axes in 4 stages, 2–4 answers (a 5-stop slider
     assert.match(q.id.slice(q.axis.length), /^\d+$/);
     assert.ok([1, 2, 3, 4].includes(q.stage), q.id);
     assert.ok(q.text.trim().endsWith("?"), `${q.id} is a question`);
-    assert.ok(q.slider ? q.answers.length === 5 : q.answers.length >= 2 && q.answers.length <= 4, `${q.id}: ${q.answers.length} answers`);
+    // fridge magnets is a "pick the 2 that fit" board of 6 words (W5b), not a pick-one list
+    assert.ok(q.slider ? q.answers.length === 5 : q.type === "magnets" ? q.answers.length === 6 : q.answers.length >= 2 && q.answers.length <= 4, `${q.id}: ${q.answers.length} answers`);
     for (const a of q.answers) {
       assert.ok(a.e && a.t, q.id);
       assert.ok(a.t.split(/\s+/).length <= 6, `${q.id}: answer too long "${a.t}"`);

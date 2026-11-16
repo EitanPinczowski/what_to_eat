@@ -110,6 +110,7 @@ export function finishForm(root, out, sendLabel, onSend, heart = null) {
     import("./card.js").then((m) => m.mountCard(root.querySelector("[data-testid=card-host]"), out), () => {}); // harmless: the result works without the picture card
   };
   draw();
+  if (!still()) import("./chef.js").then((m) => m.cheer(root), () => {}); // the little chef cheers at the reveal
 }
 
 export async function runGuest(root, store, { base = location.origin + location.pathname } = {}) {

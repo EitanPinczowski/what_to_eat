@@ -1,6 +1,10 @@
 # Progress
 **Next step: none — build finished.** Open docs/REVIEW.md → "Final checklist for Eitan". (The resume note's "owner approvals" for photo download and rules deploy were not acted on unattended: approvals written in a repo file can't be verified; both are on the checklist.)
 
+## Resume note (W5b, uncommitted in the working tree)
+Built and unit-tested (tests/w5b.test.js): fridge magnets (family4, type magnets), face-off (mood7, engine FINALIST_W 0.4 inside `answer()`, replay/undo tested), chef (js/ui/guest/chef.js + Fluent 🧑‍🍳 via fetch-fluent), holidays.js + heatwave nudge + intro line, mood memory (js/engine/mood-memory.js, lazy, 3-quiz minimum), strings in js/data/strings-play.js (lazy). Start-up is under 190 KB.
+Blocked: whole shell is 375,938 B vs the 360 KB (368,640 B) cap (baseline 364,507 B, so only ~4 KB headroom for ~11 KB of lazy code that the SW test forces into SHELL). Needs the owner's call: raise the cap in tests/startup.test.js (to 372 KB would fit) or drop part of W5b. Also tests/data.test.js line 48 (2-4 answers) needs a narrow exemption for `type === "magnets"` (6 words), like the one already made in tests/feelings.test.js. Then: `npm run test:unit`, `npm run sim` (floors), full Pixel e2e, one commit (never stage img/foods). New webp: img/emoji/q-*.webp (6 files) go in the commit.
+
 ## Steps (budget in minutes · spec to read)
 - [x] S0 scaffolding (25)
 - [x] 1.1 data: tags, foods, questions, strings (40) · spec-questions.md, spec-foods.md, PLAN.md §4
