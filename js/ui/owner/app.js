@@ -52,8 +52,16 @@ export async function runOwner(root, store, { base = location.origin + location.
 
   // Toast when a new result lands live.
   let known = new Set(store.list("history").map((h) => h.id));
+  let collecting = false;
+  const collect = () => {
+    if (collecting) return;
+    collecting = true;
+    store.collectInbox().catch(() => {}).finally(() => (collecting = false));
+  };
+  collect();
   store.subscribe((what) => {
     if (what === "history") {
+      collect();
       for (const h of store.list("history"))
         if (!known.has(h.id)) {
           if (h.src !== "local") (toast(T.newResult(S().her, h.fn)), confetti());

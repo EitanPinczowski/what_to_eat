@@ -20,7 +20,7 @@ const DAY = 864e5;
 export function makeQuiz(room, historyList, { now = new Date(), rnd, weather = null } = {}) {
   const foods = buildFoods(FOODS, room.custom ?? []);
   const recent = historyList.filter((h) => h.f && now - new Date(h.at) <= 3 * DAY).map((h) => h.f);
-  const prior = priorFrom(foods, { ratings: room.ratings ?? {}, recent, now, exp: room.exp ?? {}, weather });
+  const prior = priorFrom(foods, { ratings: room.ratings ?? {}, recent, now, exp: room.exp ?? {}, weather, history: historyList });
   return new FoodQuiz(foods, QUESTIONS, prior, { rnd, learned: learnFrom(historyList, foods) });
 }
 
@@ -32,6 +32,16 @@ export function applyAction(z, a) {
   else if (a.k === "x") z.guessResult(z.food(a.f), a.r);
   else if (a.k === "n") z.rejectPick((a.f ?? []).map((id) => z.food(id)).filter(Boolean));
   else if (a.k === "c") z.choose(a.f ? z.food(a.f) : a.t);
+}
+
+/** Foods she turned down this session ("no" to a guess, "none of these" on a pick), minus the one she finally took. */
+export function rejectedIds(actions, chosen = null) {
+  const ids = [];
+  for (const a of actions) {
+    if (a.k === "x" && a.r === "no") ids.push(a.f);
+    else if (a.k === "n") ids.push(...(a.f ?? []));
+  }
+  return [...new Set(ids)].filter((id) => id && id !== chosen).slice(0, 10);
 }
 
 /** The back bar at the top of every quiz screen (RTL: the arrow points right). */
@@ -217,7 +227,8 @@ export function startGuestQuiz(root, opts) {
     const answered = actions.filter((a) => a.k === "a");
     const stats = { hit: actions.at(-1)?.k === "x", steps: z.n, guesses: actions.filter((a) => a.k === "x").length, skips: answered.filter((a) => a.i < 0).map((a) => a.q) };
     const ans = answered.filter((a) => a.i >= 0).map((a) => [a.q, a.i]);
-    const out = { result: r, food, mood: moodFor(food), trail: [...z.trail], top: z.ranked().slice(0, 5).map((x) => x.f.id), ans, stats };
+    const rej = rejectedIds(actions, r.f);
+    const out = { result: r, food, rej, mood: moodFor(food), trail: [...z.trail], top: z.ranked().slice(0, 5).map((x) => x.f.id), ans, stats };
     // The result screen is a step like any other: back un-chooses it (engine undo), so the history entries stay.
     out.back = goBack;
     out.step = (fn) => (uiSteps.push(fn), layer.push(onBack));

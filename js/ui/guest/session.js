@@ -68,6 +68,7 @@ export function resultEntry(out, form, at = new Date().toISOString()) {
     note: cut(form.note, 300),
     trail: trail.slice(-40).map((s) => cut(s, 120)),
     top: (top ?? []).slice(0, 5),
+    ...(out.rej?.length ? { rej: out.rej.slice(0, 10).map((id) => cut(id, 40)) } : {}), // item 18: turned-down foods lower the prior a little
     ...(out.ans ? { ans: out.ans.slice(0, 30).map(([q, i]) => `${q}:${i}`) } : {}), // Firestore: no nested arrays
     ...(out.stats ? { stats: out.stats } : {}),
   };

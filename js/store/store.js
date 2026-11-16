@@ -306,6 +306,18 @@ export class Store {
     return { fresh: true };
   }
 
+  /** Item 18: her typed "something else" (history entries with no food id) reaches the inbox once; the entry is marked `ib`. */
+  async collectInbox() {
+    const todo = this.list("history").filter((h) => !h.f && h.fn && !h.ib && h.src !== "link");
+    if (!todo.length) return 0;
+    await this.update((db) => {
+      for (const h of todo) if (!db.inbox.includes(h.fn)) db.inbox.push(h.fn);
+      db.inbox = db.inbox.slice(-300);
+    });
+    for (const h of todo) await this.put("history", h.id, { ...h, ib: 1 });
+    return todo.length;
+  }
+
   /** Append to the error log, keeping the newest 50. */
   async logError(e) {
     const id = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
