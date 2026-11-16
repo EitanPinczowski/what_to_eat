@@ -40,14 +40,17 @@ export function pickReaction(used, rnd = Math.random) {
   return s;
 }
 
-/** No motion: unit tests (no document), Playwright (webdriver), globalThis.WTE_NO_MOTION, or prefers-reduced-motion. */
 export const still = () => !globalThis.document || !!globalThis.WTE_NO_MOTION || !!globalThis.navigator?.webdriver || !!globalThis.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
 
 let pruned;
 import("../../engine/prune.js").then((m) => (pruned = m.prunedVariants), () => {});
 
-/** Foods, prior and engine for a room. */
+const TYPE_MODS = {};
+const loadType = (t) => (TYPE_MODS[t] ??= import(`./answers/${t}.js`).then((m) => (TYPE_MODS[t] = m), () => { delete TYPE_MODS[t]; return null; }));
+const ANSWER_TYPES = ["slider", "thermo", "art", "color", "magnets", "faceoff"];
+
 export function makeQuiz(room, historyList, { now = new Date(), rnd, weather = null } = {}) {
+  if (globalThis.document) ANSWER_TYPES.forEach(loadType);
   const foods = allowedFoods(buildFoods(FOODS, room.custom ?? []), room.never); // "never for me": hard-excluded before the engine sees them
   const fav = (room.fav ?? []).filter((id) => foods.some((f) => f.id === id));
   const recent = historyList.filter((h) => h.f && now - new Date(h.at) <= 3 * DAY).map((h) => h.f);
@@ -304,10 +307,10 @@ export function startGuestQuiz(root, opts) {
     render(root, backBar(canBack() || !!opts.onExit) + meter() + body, handlers);
     if (step.type === "pick" && step.unsure) fillPick(step);
     if (!still()) import("./chef.js").then((m) => m.place(root, step.type === "guess" || step.type === "pick" ? "drool" : "idle"), () => {});
-    // playful answer types: a small lazy module swaps in over the plain buttons; those stay for reduced motion or if it fails to load
     if (step.type === "q" && typeOf(step.q) !== "buttons" && root.querySelector && !globalThis.matchMedia?.("(prefers-reduced-motion: reduce)").matches && !globalThis.WTE_NO_MOTION) {
-      const on = step, host = root.querySelector(".answers");
-      import(`./answers/${typeOf(on.q)}.js`).then((m) => step === on && host?.isConnected && m.mount(host, on.q, on.order), () => {});
+      const on = step, host = root.querySelector(".answers"), t = typeOf(on.q);
+      if (TYPE_MODS[t]?.mount) TYPE_MODS[t].mount(host, on.q, on.order);
+      else loadType(t).then((m) => m && step === on && host?.isConnected && m.mount(host, on.q, on.order));
     }
     // two-choice screens also take a left or right swipe (lazy module; taps work without it)
     const two = !root.querySelectorAll ? [] : step.type === "q" ? [...root.querySelectorAll("[data-on=ans]")] : step.type === "duel" || step.type === "gut" ? [...root.querySelectorAll(".duel .food")] : [];
