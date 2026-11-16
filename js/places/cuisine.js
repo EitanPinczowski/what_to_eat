@@ -1,5 +1,5 @@
 // Place cuisine categories (F3). A place has cuisines: [ids from CUISINES]; older places only have a foods list.
-import { CUISINES } from "../data/cuisines.js";
+import { CUISINES, expandCuisines } from "../data/cuisines.js";
 
 const order = (set) => CUISINES.filter((c) => set.has(c));
 
@@ -13,6 +13,6 @@ export function cuisinesOfFoods(foodIds, foods) {
 
 /** The place's cuisines: its own when saved, else derived from its food list (the old shape). */
 export function placeCuisines(place, foods) {
-  if (Array.isArray(place?.cuisines)) return place.cuisines.filter((c) => CUISINES.includes(c));
+  if (Array.isArray(place?.cuisines)) return expandCuisines(place.cuisines); // old "asian" reads as its four countries
   return cuisinesOfFoods(place?.foods, foods);
 }

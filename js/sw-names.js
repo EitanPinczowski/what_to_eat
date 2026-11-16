@@ -66,6 +66,7 @@ globalThis.WTE_FOOD_NAMES = {
   "stir_fry": ["נודלס מוקפצים","🥡"],
   "sweet_sour": ["עוף חמוץ מתוק","🥢"],
   "butter_chicken": ["באטר צ׳יקן","🍛"],
+  "samosa": ["סמוסה","🥟"],
   "tacos": ["טאקוס","🌮"],
   "burrito": ["בוריטו","🌯"],
   "poke": ["פוקה","🍱"],

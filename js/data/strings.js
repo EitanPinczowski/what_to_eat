@@ -65,7 +65,7 @@ export const STR = {
   duel: { text: "אם חייבים לבחור עכשיו:", both: "שניהם 😍", neither: "אף אחד 🙅‍♀️" },
   cuisine: {
     text: "איזה סוג אוכל בא לך?",
-    options: { italian: ["🍝", "איטלקי"], mexican: ["🌮", "מקסיקני"], american: ["🍔", "אמריקאי"], israeli: ["🧆", "ישראלי"], asian: ["🥢", "אסייתי"], cafe: ["☕", "בית קפה"], sweet: ["🍰", "משהו מתוק"], snack: ["🥨", "נשנוש"] },
+    options: { israeli: ["🧆", "ישראלי"], middle: ["🥙", "מזרחי"], italian: ["🍝", "איטלקי"], mexican: ["🌮", "מקסיקני"], american: ["🍔", "אמריקאי"], japanese: ["🍣", "יפני"], thai: ["🍜", "תאילנדי"], chinese: ["🥡", "סיני"], indian: ["🍛", "הודי"], cafe: ["☕", "בית קפה"], sweet: ["🍰", "משהו מתוק"], snack: ["🥨", "נשנוש"] },
   },
   grid: { text: "מה מכל אלה ממש לא?", done: "זהו, אלה" },
   guess: {
@@ -286,7 +286,7 @@ export const STR = {
     title: "לאן הולכים?",
     food: "איזה סוג אוכל",
     wanted: (her, food) => `${her} רצתה: ${food}`,
-    search: { italian: "מסעדה איטלקית", mexican: "מסעדה מקסיקנית", american: "המבורגר", israeli: "מסעדה ישראלית", asian: "מסעדה אסייתית", cafe: "בית קפה", sweet: "קינוחים", snack: "קיוסק" },
+    search: { israeli: "מסעדה ישראלית", middle: "מסעדה מזרחית", italian: "מסעדה איטלקית", mexican: "מסעדה מקסיקנית", american: "המבורגר", japanese: "מסעדה יפנית", thai: "מסעדה תאילנדית", chinese: "מסעדה סינית", indian: "מסעדה הודית", cafe: "בית קפה", sweet: "קינוחים", snack: "קיוסק" },
     tabitSearch: "🔎 לחפש בטאביט",
     ontopoSearch: "🔎 לחפש באונטופו",
     book: { tabit: "📅 להזמין שולחן בטאביט", ontopo: "📅 להזמין שולחן באונטופו" },

@@ -52,8 +52,8 @@ test("places: add a place, then pick it for a result and log the visit", async (
 test("picker: maps fallback asks where we went and quick-adds the place", async ({ page, context }) => {
   await page.goto("/?store=local");
   await page.locator('[data-on="go"][data-arg="picker"]').click();
-  await page.locator('[data-testid="picker-cuisine"] [data-arg="asian"]').click();
-  await expect(page.locator(".fallbacks a").first()).toContainText("אסייתית"); // searches by the category, not a dish
+  await page.locator('[data-testid="picker-cuisine"] [data-arg="japanese"]').click();
+  await expect(page.locator(".fallbacks a").first()).toContainText("יפנית"); // searches by the category, not a dish
   const popup = context.waitForEvent("page");
   await page.locator(".fallbacks a").first().click();
   await (await popup).close();
@@ -75,7 +75,7 @@ test("picker from home links to a fresh quiz result (item 9)", async ({ page, co
   }, room);
   await page.reload();
   await page.locator('[data-on="go"][data-arg="picker"]').click();
-  await expect(page.locator('[data-testid="picker-cuisine"] [data-arg="asian"]')).toHaveAttribute("aria-pressed", "true");
+  await expect(page.locator('[data-testid="picker-cuisine"] [data-arg="japanese"]')).toHaveAttribute("aria-pressed", "true");
   const popup = context.waitForEvent("page");
   await page.locator(".fallbacks a").first().click();
   await (await popup).close();

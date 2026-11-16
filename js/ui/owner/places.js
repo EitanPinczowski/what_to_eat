@@ -3,7 +3,7 @@ import { FOODS } from "../../data/foods.js";
 import { STR } from "../../data/strings.js";
 import { TAGS } from "../../data/tags.js";
 import { buildFoods } from "../../engine/foods.js";
-import { CUISINES } from "../../data/cuisines.js";
+import { CUISINES, expandCuisines } from "../../data/cuisines.js";
 import { cuisinesOfFoods } from "../../places/cuisine.js";
 import { newId } from "../../share/codec.js";
 import { pickPlaces, weightedPick, navLinks, mapsUrl, kioskUrl, woltUrl, tenbisUrl, cuisineSearch } from "../../places/picker.js";
@@ -37,7 +37,7 @@ export function placesViews({ root, store, stack, views, common, ctx }) {
 
   views.places = () => {
     const fc = (ctx.placeCuisine ??= null);
-    const list = store.list("places").filter((p) => !fc || (p.cuisines ?? []).includes(fc));
+    const list = store.list("places").filter((p) => !fc || expandCuisines(p.cuisines).includes(fc));
     const byCity = {};
     for (const p of list) (byCity[p.city || "—"] ??= []).push(p);
     render(root, html`${raw(topbar(L.title))}
@@ -89,7 +89,7 @@ export function placesViews({ root, store, stack, views, common, ctx }) {
 
   views.placeForm = () => {
     const p = ctx.place;
-    p.cuisines ??= [];
+    p.cuisines = expandCuisines(p.cuisines); // an old "asian" opens as its four countries
     let q = "";
     const all = foods();
     const matches = () => (q ? all.filter((f) => norm(f.name).includes(norm(q)) && !p.foods.includes(f.id)).slice(0, 8) : []);
@@ -150,7 +150,7 @@ export function placesViews({ root, store, stack, views, common, ctx }) {
           if (!p.name.trim()) return toast(L.needName);
           const { id = newId(12), ...data } = p;
           const hours = (data.hours ?? []).filter((h) => h.o && h.c).sort((a, b) => a.d - b.d);
-          store.put("places", id, { ...data, cuisines: CUISINES.filter((c) => (data.cuisines ?? []).includes(c)), hours, name: data.name.trim().slice(0, 60), link: /^https?:\/\//.test(data.link) ? data.link : "" }).catch(saveFailed);
+          store.put("places", id, { ...data, cuisines: CUISINES.filter((c) => (data.cuisines ?? []).includes(c)).slice(0, 8), hours, name: data.name.trim().slice(0, 60), link: /^https?:\/\//.test(data.link) ? data.link : "" }).catch(saveFailed);
           toast(STR.owner.saved);
           stack.back();
         },

@@ -82,11 +82,12 @@ for (const [name, make] of [
     await a.put("places", "old", { name: "ישן", foods: ["pizza", "sushi"] });
     await a.put("places", "own", { name: "שלה", foods: ["pizza"], cuisines: ["cafe"] });
     await a.put("places", "none", { name: "בלי" });
-    assert.deepEqual(a.doc("places", "old").cuisines, ["italian", "asian"]);
+    // R1c-1: sushi is now "japanese" (Asian was split into its countries).
+    assert.deepEqual(a.doc("places", "old").cuisines, ["italian", "japanese"]);
     assert.deepEqual(a.doc("places", "old").foods, ["pizza", "sushi"]);
     assert.deepEqual(a.doc("places", "own").cuisines, ["cafe"]);
     assert.deepEqual(a.doc("places", "none").cuisines, []);
-    assert.deepEqual(a.list("places").find((x) => x.id === "old").cuisines, ["italian", "asian"]);
+    assert.deepEqual(a.list("places").find((x) => x.id === "old").cuisines, ["italian", "japanese"]);
   });
 
   test(`${name}: error log keeps 50`, async () => {

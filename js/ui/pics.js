@@ -1,6 +1,7 @@
 // Food art: Fluent Emoji (3D, MIT) as img/emoji/<id>.webp, listed in js/data/emoji-art.json. Unlisted or failing: the native emoji (onerror).
 import { html, raw } from "./dom.js";
 import { STR } from "../data/strings.js";
+import { mainCuisine } from "../data/cuisines.js";
 
 let have = new Set();
 
@@ -28,7 +29,11 @@ export function category(food) {
   return "meal";
 }
 
-export const catLabel = (food) => STR.cats[category(food)];
+// Label under a food: its food type (R1c-1), else the tag kind.
+export const catLabel = (food) => {
+  const c = mainCuisine(food);
+  return c ? STR.cuisine.options[c][1] : STR.cats[category(food)];
+};
 
 /** Illustration/emoji + name + category label, for buttons and lists. */
 export function foodLabel(food, size = "sm") {
