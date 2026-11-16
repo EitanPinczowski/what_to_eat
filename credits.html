@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>קרדיטים לתמונות</title>
+  <title>קרדיטים לאיורים</title>
   <link rel="stylesheet" href="css/tokens.css">
   <link rel="stylesheet" href="css/style.css">
 </head>
@@ -12,21 +12,38 @@
     <a class="btn btn-ghost" href="./">→</a>
     <h2 class="q" id="t"></h2>
     <p class="sub" id="intro"></p>
-    <ul class="foods" id="list" data-testid="credits"></ul>
+    <p class="sub"><span id="copy"></span> · <a id="src" href="https://github.com/microsoft/fluentui-emoji" target="_blank" rel="noopener" dir="ltr"></a></p>
+    <h3 id="lt"></h3>
+    <pre class="sub" dir="ltr" style="white-space: pre-wrap; text-align: left" data-testid="credits">MIT License
+
+Copyright (c) Microsoft Corporation.
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.</pre>
   </main>
   <script type="module">
     import { STR } from "./js/data/strings.js";
-    import { FOODS } from "./js/data/foods.js";
-    import { html, raw } from "./js/ui/dom.js";
     const C = STR.settings.credits;
-    let credits = {};
-    try { credits = await (await fetch("js/data/photo-credits.json")).json(); } catch {}
     document.getElementById("t").textContent = C.title;
     document.getElementById("intro").textContent = C.intro;
-    const rows = FOODS.filter(([id]) => credits[id]);
-    document.getElementById("list").innerHTML = rows.length
-      ? rows.map(([id, name]) => html`<li class="sub"><b>${name}</b> · ${C.by}: ${credits[id].author} · ${credits[id].license} · <a href="${credits[id].page}" target="_blank" rel="noopener" dir="ltr">Commons</a></li>`).join("")
-      : `<li class="sub">${C.none}</li>`;
+    document.getElementById("copy").textContent = C.copyright;
+    document.getElementById("src").textContent = C.source;
+    document.getElementById("lt").textContent = C.licenseTitle;
   </script>
 </body>
 </html>

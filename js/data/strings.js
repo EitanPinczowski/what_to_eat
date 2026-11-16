@@ -307,7 +307,7 @@ export const STR = {
   settings: {
     title: "הגדרות",
     adv: "מתקדם",
-    credits: { link: "קרדיטים לתמונות", title: "קרדיטים לתמונות", intro: "התמונות של האוכל מגיעות מ־Wikimedia Commons, ברישיונות חופשיים.", none: "עוד אין תמונות באפליקציה, רק אימוג׳ים.", by: "צילום" },
+    credits: { link: "קרדיטים לאיורים", title: "קרדיטים לאיורים", intro: "האיורים של האוכל הם Fluent Emoji של Microsoft (סגנון תלת־ממדי), ברישיון MIT.", copyright: "© Microsoft Corporation", source: "מאגר Fluent Emoji ב־GitHub", licenseTitle: "רישיון MIT" },
     her: "השם שלה",
     me: "השם שלך",
     herPhone: "הטלפון שלה (לוואטסאפ)",

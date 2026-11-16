@@ -91,5 +91,5 @@ test("sw.js: only the app root and index.html map to the cached app shell", () =
   const src = sw.split("\n").find((l) => l.includes("const appPage"));
   const re = new Function("return " + src.slice(src.indexOf("&& ") + 3, src.indexOf(".test(")))();
   for (const ok of ["/", "/what_to_eat/", "/what_to_eat/index.html", "/index.html"]) assert.ok(re.test(ok), ok);
-  for (const no of ["/photos.html", "/what_to_eat/photos.html", "/x/xindex.html"]) assert.ok(!re.test(no), no);
+  for (const no of ["/credits.html", "/what_to_eat/credits.html", "/x/xindex.html"]) assert.ok(!re.test(no), no);
 });

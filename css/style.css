@@ -102,12 +102,11 @@ input[type="checkbox"], input[type="radio"]{width:24px;height:24px;min-height:24
 
 .btn.food{flex-direction:column;gap:4px}
 .btn.food .fname{font-weight:var(--heavy)}
-.big .pic, .pic[data-size="sm"], .duel .pic[data-size="big"]{object-fit:cover;border:var(--border);display:block}
-.big .pic{width:160px;height:160px;border-radius:var(--radius);margin:0 auto}
-.pic[data-size="sm"]{width:64px;height:64px;border-radius:var(--radius-sm)}
-.duel .pic[data-size="big"]{width:100%;height:auto;aspect-ratio:1;border-radius:var(--radius-sm)}
+.pic{display:block;object-fit:contain;border:0;background:none}
+.big .pic{width:112px;height:112px;margin:0 auto}
+.pic[data-size="sm"]{width:40px;height:40px}
+.duel .pic[data-size="big"]{width:96px;height:96px;margin:0 auto}
 .duel .btn.food .em{font-size:calc(var(--t6) * 1.5)}
-.row .linkish .pic[data-size="sm"]{width:40px;height:40px}
 
 .update-bar{position:fixed;inset-inline:12px;bottom:calc(12px + env(safe-area-inset-bottom));z-index:50;display:flex;flex-wrap:wrap;align-items:center;gap:8px;padding:12px;background:var(--card);color:var(--fg);border:var(--border);border-radius:var(--radius);box-shadow:var(--shadow)}
 .update-bar span{flex:1 1 100%;font-weight:var(--heavy)}
@@ -126,7 +125,7 @@ summary{min-height:var(--tap);display:flex;align-items:center;font-weight:700;cu
 .wr-list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:10px}
 .wr-top{display:grid;grid-template-columns:32px 64px 1fr auto;align-items:center;gap:10px;background:var(--accent2);color:var(--on-accent2);border:var(--border);border-radius:var(--radius-sm);padding:8px 12px;text-align:start}
 .wr-pic{font-size:calc(var(--t6) * 1.2);line-height:1;display:flex;justify-content:center}
-.wr-pic .pic{width:64px;height:64px;object-fit:cover;border-radius:var(--radius-sm);border:var(--border)}
+.wr-pic .pic{width:48px;height:48px;margin:0 auto}
 .wr-rank{font-weight:var(--heavy);font-size:var(--t5);color:var(--accent)}
 .wr-nav{display:flex;align-items:center;justify-content:space-between;gap:8px}
 .wr-dots{display:flex;gap:6px}

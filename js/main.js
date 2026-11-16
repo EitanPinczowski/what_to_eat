@@ -25,7 +25,7 @@ async function boot() {
   const route = currentRoute();
   render(root, html`<p class="sub">${STR.loading}</p>`);
   if (route.kind === "bad") return fail(STR.errors.badLink);
-  // The screen's code loads while the store connects; the photo list is only needed by the screens themselves.
+  // The screen's code loads while the store connects; the illustration list is only needed by the screens themselves.
   if (route.kind === "w") {
     const [mod] = await Promise.all([import("./ui/guest/wrapped.js"), pics]);
     return mod.runWrapped(root, route.payload);

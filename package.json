@@ -4,6 +4,7 @@
   "type": "module",
   "scripts": {
     "serve": "node tools/serve.mjs",
+    "fetch-emoji": "node tools/fetch-fluent.mjs",
     "test:unit": "node --test --test-reporter=dot \"tests/**/*.test.js\"",
     "sim": "node tests/sim.js",
     "e2e": "playwright test --reporter=line",

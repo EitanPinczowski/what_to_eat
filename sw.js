@@ -79,7 +79,7 @@ self.addEventListener("install", (e) => {
 self.addEventListener("activate", (e) => {
   e.waitUntil(
     caches.keys()
-      .then((keys) => Promise.all(keys.filter((k) => k.startsWith("wte-") && k !== CACHE).map((k) => caches.delete(k))))
+      .then((keys) => Promise.all(keys.filter((k) => (k.startsWith("wte-") && k !== CACHE) || k === "photos-v1").map((k) => caches.delete(k))))
       .then(() => self.clients.claim()),
   );
 });
@@ -89,10 +89,10 @@ self.addEventListener("message", (e) => {
   if (e.data === "skipWaiting") self.skipWaiting();
 });
 
-const PHOTO_CACHE = "photos-v1";
-const PHOTO_MAX = 200;
-async function photo(req) {
-  const cache = await caches.open(PHOTO_CACHE);
+const ART_CACHE = "emoji-v1"; // the old photo cache "photos-v1" is deleted on activate
+const ART_MAX = 200;
+async function art(req) {
+  const cache = await caches.open(ART_CACHE);
   const hit = await cache.match(req);
   if (hit) return hit;
   const res = await fetch(req).catch(() => null);
@@ -100,7 +100,7 @@ async function photo(req) {
   if (res.ok) {
     await cache.put(req, res.clone());
     const keys = await cache.keys();
-    for (const k of keys.slice(0, Math.max(0, keys.length - PHOTO_MAX))) await cache.delete(k); // oldest first
+    for (const k of keys.slice(0, Math.max(0, keys.length - ART_MAX))) await cache.delete(k); // oldest first
   }
   return res;
 }
@@ -110,9 +110,9 @@ self.addEventListener("fetch", (e) => {
   if (req.method !== "GET") return;
   const url = new URL(req.url);
   if (url.origin !== self.location.origin) return;
-  // Only the app root / index.html is the app shell (hash and ?store= routes all load it); photos.html etc. are their own pages.
-  // Food photos: their own bounded cache-first cache (not in the shell precache; "photos-" is never swept by the "wte-" cleanup).
-  if (/\/img\/foods\/[\w-]+\.webp$/.test(url.pathname)) return e.respondWith(photo(req));
+  // Only the app root / index.html is the app shell (hash and ?store= routes all load it); credits.html etc. are their own pages.
+  // Food illustrations: their own bounded cache-first cache (not in the shell precache; "emoji-" is never swept by the "wte-" cleanup).
+  if (/\/img\/emoji\/[\w-]+\.webp$/.test(url.pathname)) return e.respondWith(art(req));
   const appPage = req.mode === "navigate" && /(^|\/)(index\.html)?$/.test(url.pathname);
   const key = appPage ? "index.html" : req;
   e.respondWith(

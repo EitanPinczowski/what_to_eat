@@ -1,8 +1,8 @@
 // Guest "food wrapped" (#w=): 4-6 swipeable cards from the summary inside the link, ending in a share image
-// drawn on a canvas (navigator.share with the file, download as fallback). No store, no network except the photos.
+// drawn on a canvas (navigator.share with the file, download as fallback). No store, no network except the illustrations.
 import { STR } from "../../data/strings.js";
 import { QUESTIONS } from "../../data/questions.js";
-import { pic, hasPic, photoSrc } from "../pics.js";
+import { pic, hasPic, artSrc } from "../pics.js";
 import { render, html, raw, confetti } from "../dom.js";
 
 const W = STR.wrapped;
@@ -76,14 +76,9 @@ export async function drawShareImage(canvas, s, her = "") {
     g.roundRect(80, y - 80, w - 160, 170, 40);
     g.fill();
     g.stroke();
-    const im = hasPic(t[0]) ? await loadImg(photoSrc(t[0], 400)) : null;
+    const im = hasPic(t[0]) ? await loadImg(artSrc(t[0])) : null;
     if (im) {
-      g.save();
-      g.beginPath();
-      g.roundRect(w - 230, y - 65, 140, 140, 28);
-      g.clip();
       g.drawImage(im, w - 230, y - 65, 140, 140);
-      g.restore();
     } else {
       g.font = `100px ${font}`;
       g.fillStyle = INK;
