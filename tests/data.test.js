@@ -12,7 +12,7 @@ test("every grouped tag has a Hebrew label and vice versa", () => {
 });
 
 test("foods: ~90, unique ids, kind first, known tags, valid seasons", () => {
-  assert.ok(FOODS.length >= 85 && FOODS.length <= 110, `count ${FOODS.length}`);
+  assert.ok(FOODS.length >= 85 && FOODS.length <= 120, `count ${FOODS.length}`);
   const ids = new Set();
   for (const [id, name, emoji, tags, season] of FOODS) {
     assert.match(id, /^[a-z_]+$/);

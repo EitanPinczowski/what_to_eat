@@ -159,12 +159,12 @@ for (const lv of LEVELS) {
   for (const f of foods) h.push({ f: f.id, ans: play(f, rng(5 + k++ * 104729), {}, noiseAt).ans });
   const lrn = learnFrom(h, foods);
   let m = 0, fi = 0, t3 = 0, gs = 0, st = 0, xr = 0, xh = 0;
-  const per = new Map(foods.map((f) => [f.id, { first: 0, top3: 0, wins: {} }]));
+  const per = new Map(foods.map((f) => [f.id, { first: 0, top3: 0, steps: 0, wins: {} }]));
   for (const f of foods)
     for (let t = 0; t < TRIALS; t++) {
       const r = play(f, rng(31 + m++ * 7919), lrn, noiseAt);
       const p = per.get(f.id);
-      p.first += r.first; p.top3 += r.top3;
+      p.first += r.first; p.top3 += r.top3; p.steps += r.steps;
       if (!r.first && r.win) p.wins[r.win] = (p.wins[r.win] || 0) + 1;
       fi += r.first; t3 += r.top3; gs += r.guesses; st += r.steps;
       if (r.express) (xr++, (xh += r.found));
@@ -177,6 +177,13 @@ console.log(`noise | first guess (target ${pct(PRODUCT.first)}) | top 3 (target 
 for (const lv of LEVELS) {
   const t = table[lv];
   console.log(`${lv.toFixed(2)}  | ${pct(t.first).padStart(4)} | ${pct(t.top3).padStart(4)} | ${t.guesses.toFixed(1)} | ${t.steps.toFixed(1)} | ${pct(t.express)}`);
+}
+// Road-stop foods (item 16): what she grabs at a petrol station; report line, steps target <= 9.
+const ROAD = ["coffee_pastry", "protein_bar", "yogurt_cup", "iced_coffee", "toast", "sandwich", "burekas", "croissant", "smoothie", "granola"];
+for (const lv of LEVELS) {
+  const rs = ROAD.map((id) => perFood[lv]?.get(id)).filter(Boolean);
+  const rst = rs.reduce((x, p) => x + p.steps, 0) / (rs.length * TRIALS), rfi = rs.reduce((x, p) => x + p.first, 0) / (rs.length * TRIALS);
+  console.log(`sim: road foods at noise ${lv.toFixed(2)}: avg steps ${rst.toFixed(1)} (target <=9) first guess ${pct(rfi)}`);
 }
 // Report-only per-food view (--foods): never first guess, rarely in the top 3, and who wins instead.
 if (process.argv.includes("--foods")) {

@@ -19,6 +19,11 @@ export const FOODS = [
   ["choco_bar", "שוקולד פרה", "🐄", "snack sweet choco creamy kiosk israeli couch", null, ["snack"]],
   ["shoko_bag", "שוקו בשקית", "🧃", "snack sweet choco cold kiosk israeli quick light", null, ["snack"]],
   ["instant_noodles", "נודלס אינסטנט", "🍜", "snack noodles hot salty quick couch junk kiosk", null, ["asian"]],
+  // road stop (item 16): what she grabs at a petrol station
+  ["coffee_pastry", "קפה ומאפה", "☕", "snack sweet doughy hot creamy kiosk", null, ["cafe"]],
+  ["protein_bar", "חטיף אנרגיה", "💪", "snack sweet crunchy healthy hands quick kiosk veg", null, ["snack"]],
+  ["yogurt_cup", "יוגורט", "🫙", "snack sweet cold creamy fruit healthy kiosk", null, ["snack"]],
+  ["iced_coffee", "אייס קפה", "🧋", "snack sweet cold creamy quick kiosk", null, ["cafe"]],
   // sweets & desserts
   ["ice_cream", "גלידה", "🍨", "dessert sweet cold creamy resto street hands couch", null, ["sweet"]],
   ["malabi", "מלבי", "🍮", "dessert sweet cold creamy middle israeli street", null, ["sweet"]],

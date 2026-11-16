@@ -25,7 +25,7 @@ export const QUERY = {
   chicken_rice: "chicken and rice", mac_cheese: "macaroni and cheese", chicken_soup: "chicken soup",
   ptitim: "ptitim", lentil_soup: "lentil soup", majadra: "mujaddara", meatballs: "meatballs tomato sauce",
   baked_potato: "baked potato", hamin: "cholent", il_salad: "Israeli salad", watermelon_feta: "watermelon feta",
-  quinoa_salad: "quinoa salad", smoothie: "fruit smoothie", edamame: "edamame", spring_rolls: "fresh spring rolls",
+  quinoa_salad: "quinoa salad", smoothie: "fruit smoothie", coffee_pastry: "coffee and pastry", protein_bar: "protein bar", yogurt_cup: "yogurt cup", iced_coffee: "iced coffee", edamame: "edamame", spring_rolls: "fresh spring rolls",
   fish_chips: "fish and chips", risotto: "risotto",
 };
 
