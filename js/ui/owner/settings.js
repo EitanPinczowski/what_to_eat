@@ -5,6 +5,7 @@ import { newId } from "../../share/codec.js";
 import { buildJoinLink, parseHash } from "../../share/links.js";
 import { normPhone } from "../../share/whatsapp.js";
 import { ROOM_KEY, openStore } from "../../store/open.js";
+import { rejoinFromLink } from "../../store/room-backup.js";
 import { render, html, raw, toast, copy, saveFailed } from "../dom.js";
 import { addSub, removeSub, hasSub, pushSupport, subscribeThisDevice, currentSub, unsubscribeThisDevice, notifyAll, knownEndpoint, rememberEndpoint, epHash, pruneDead } from "../../push.js";
 import { installKind, installHelp } from "../../pwa.js";
@@ -75,6 +76,8 @@ export function settingsViews({ root, store, views, back, common, base, mode }) 
         <code class="link" dir="ltr">${join}</code><button class="btn" data-on="copyJoin">${STR.owner.copy}</button></section>
       <form class="card stack" data-submit="paste"><b>${G.paste}</b>
         <input name="link" dir="ltr" placeholder="${G.pastePh}"><button class="btn" type="submit">${G.import}</button></form>
+      <form class="card stack" data-submit="rejoin" data-testid="rejoin"><b>${G.rejoin}</b><span class="sub">${G.rejoinHelp}</span>
+        <input name="roomlink" dir="ltr" placeholder="${G.rejoinPh}" autocapitalize="off" autocorrect="off" spellcheck="false"><button class="btn" type="submit">${G.rejoinBtn}</button></form>
       <section class="card stack"><b>${G.backup}</b>
         <button class="btn" data-on="export">${G.export}</button>
         <label class="btn">${G.restore}<input type="file" accept="application/json,.json" data-input="restore" hidden></label></section>
@@ -155,6 +158,14 @@ export function settingsViews({ root, store, views, back, common, base, mode }) 
         if (!confirm(STR.importAsk(chk.clean))) return;
         const { fresh } = await withTimeout(store.importResult(r.payload), WRITE_TIMEOUT).catch(() => ({ fresh: true })); // no ack in time: it is applied locally and syncs later
         toast(fresh ? STR.imported : STR.importedOld);
+      },
+      rejoin: async (fd) => {
+        const res = await rejoinFromLink(String(fd.get("roomlink") ?? ""), { ask: () => confirm(STR.joinAsk) });
+        if (res === "bad") return toast(G.rejoinBad);
+        if (res === "same") return toast(G.rejoinSame);
+        if (res === "declined") return;
+        toast(STR.joined);
+        location.reload();
       },
       export: () => {
         const blob = new Blob([store.exportJSON()], { type: "application/json" });

@@ -79,3 +79,35 @@ test("#r= link: declined import changes nothing; a crafted payload is refused wi
   await expect(page.locator(".toast").last()).toContainText("לא נראה כמו תוצאה תקינה");
   expect(asked).toBe(1);
 });
+
+test("room recovery: pasted link rejoins a room (confirm, old id kept); a lost room id comes back from the backup (item 10)", async ({ page }) => {
+  await page.goto("/?store=local");
+  await expect(page.locator(".tile")).toHaveCount(10);
+  const room = await page.evaluate(() => localStorage.getItem("mabalach_room"));
+  const readBackup = () => page.evaluate(() => new Promise((res) => {
+    const rq = indexedDB.open("mabalach_backup", 1);
+    rq.onupgradeneeded = () => rq.result.createObjectStore("kv");
+    rq.onsuccess = () => { const g = rq.result.transaction("kv").objectStore("kv").get("mabalach_room"); g.onsuccess = () => res(g.result ?? null); g.onerror = () => res(null); };
+    rq.onerror = () => res(null);
+  }));
+  await expect.poll(readBackup).toBe(room);
+
+  // storage eviction: localStorage loses the id, the backup restores it instead of minting a new room
+  await page.evaluate(() => localStorage.removeItem("mabalach_room"));
+  await page.reload();
+  await expect(page.locator(".tile")).toHaveCount(10);
+  expect(await page.evaluate(() => localStorage.getItem("mabalach_room"))).toBe(room);
+
+  // pasting a link from another room asks first, then switches and keeps the old id
+  const other = "zyxwvutsrqponmlkjihgfedc";
+  let asked = 0;
+  page.on("dialog", (d) => (asked++, d.accept()));
+  await page.locator('[data-on="go"][data-arg="settings"]').click();
+  await page.getByTestId("rejoin").locator("input").fill(`https://example.github.io/what_to_eat/#q=${other}`);
+  await page.getByTestId("rejoin").locator('button[type="submit"]').click();
+  await expect(page.locator(".tile")).toHaveCount(10);
+  expect(asked).toBe(1);
+  expect(await page.evaluate(() => localStorage.getItem("mabalach_room"))).toBe(other);
+  expect(await page.evaluate(() => localStorage.getItem("mabalach_prev_room"))).toBe(room);
+  await expect.poll(readBackup).toBe(other);
+});

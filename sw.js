@@ -40,6 +40,7 @@ const SHELL = [
   "js/store/firebase.js",
   "js/store/local.js",
   "js/store/open.js",
+  "js/store/room-backup.js",
   "js/store/store.js",
   "js/ui/dom.js",
   "js/ui/guest/quiz.js",

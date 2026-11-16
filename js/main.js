@@ -1,6 +1,6 @@
 // Boot: parse the hash → route.
 import { currentRoute, clearHash } from "./router.js";
-import { openStore, ownerRoomId, adoptRoom } from "./store/open.js";
+import { openStore, ownerRoomId, adoptRoom, ROOM_KEY } from "./store/open.js";
 import { render, html, raw, toast } from "./ui/dom.js";
 import { STR } from "./data/strings.js";
 import { loadPics } from "./ui/pics.js";
@@ -35,6 +35,8 @@ async function boot() {
     if (guardMoved(store)) return;
     return mod.runGuest(root, store);
   }
+  // A device that lost its saved room id gets it back from the second copy before any room is created or adopted.
+  if (!localStorage.getItem(ROOM_KEY)) await import("./store/room-backup.js").then((m) => m.restoreRoom()).catch(() => {}); // harmless: no backup means a new room, as before
   if (route.kind === "join") {
     // Another of the owner's devices: adopt the room, then go home.
     // A different room already on this device is only replaced after a confirm (the old id is kept as a backup key).
@@ -47,9 +49,11 @@ async function boot() {
     if (guardMoved(store)) return;
     return mod.runSweep(root, store);
   }
+  const roomId = ownerRoomId();
+  import("./store/room-backup.js").then((m) => m.backupRoom()).catch(() => {}); // harmless: the backup is a second chance only
   const owner = import("./ui/owner/app.js");
   owner.catch(() => {}); // harmless: optional / best effort, nothing to tell the user
-  const [store] = await Promise.all([openStore(ownerRoomId(), { mode: route.mode, fast: route.kind !== "r" }), pics]);
+  const [store] = await Promise.all([openStore(roomId, { mode: route.mode, fast: route.kind !== "r" }), pics]);
   if (guardMoved(store)) return;
   if (route.kind === "r") {
     // #r= fallback result from WhatsApp → import into the owner's room, then clear the hash.
