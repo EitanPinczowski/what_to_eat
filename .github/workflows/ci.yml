@@ -39,6 +39,13 @@ jobs:
         run: npm run test:emu
       - run: npx playwright install --with-deps chromium webkit
       - run: npm run test:unit && npm run sim && npx playwright test --reporter=line --fail-on-flaky-tests
+      - name: Keep the Linux screenshot baselines this run wrote (commit them to e2e/screens.spec.js-snapshots/)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: screenshot-baselines-linux
+          path: e2e/screens.spec.js-snapshots/*-linux.png
+          if-no-files-found: ignore
       - name: Phone alert on failure
         if: failure()
         env:
