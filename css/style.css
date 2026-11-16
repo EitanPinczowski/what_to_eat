@@ -156,3 +156,5 @@ summary{min-height:var(--tap);display:flex;align-items:center;font-weight:700;cu
 .react{position:fixed;inset-inline:0;bottom:84px;margin:auto;width:max-content;max-width:90vw;padding:8px 16px;border:var(--border);border-radius:var(--radius);background:var(--card);color:var(--fg);box-shadow:var(--shadow);font-size:var(--t3);pointer-events:none;z-index:50;animation:reactin .9s ease-out forwards}
 @keyframes reactin{0%{opacity:0;transform:translateY(10px)}15%,75%{opacity:1;transform:none}100%{opacity:0}}
 @media (prefers-reduced-motion:reduce){.react{animation:none}.slide{animation:none}}
+.btn.like{display:flex;align-items:center;justify-content:center;gap:8px;background:var(--accent2);color:var(--on-accent2)}
+.btn.heart{align-self:center}

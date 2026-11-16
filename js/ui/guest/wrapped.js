@@ -22,7 +22,8 @@ export function wrappedCards(s, her = "", q = null) {
 }
 
 const foodOf = (t) => ({ id: t[0], emoji: t[2] });
-const topRow = (t, i) => html`<li class="wr-top"><span class="wr-rank">${i + 1}</span><span class="wr-pic">${raw(pic(foodOf(t), "sm"))}</span><b>${t[1]}</b><small>${W.topCount(t[3])}</small></li>`;
+const favIds = () => { try { return JSON.parse(globalThis.localStorage?.getItem("wte-fav") ?? "[]"); } catch { return []; } }; // mirror written when she hearts a result
+const topRow = (t, i) => html`<li class="wr-top"><span class="wr-rank">${i + 1}</span><span class="wr-pic">${raw(pic(foodOf(t), "sm"))}</span><b>${t[1]}${favIds().includes(t[0]) ? " ❤️" : ""}</b><small>${W.topCount(t[3])}</small></li>`;
 
 function cardHtml(c) {
   const body = {

@@ -425,6 +425,31 @@ export const STR = {
     retry: "🔄 לנסות שוב",
     moved: "הקישור הזה הוחלף בקישור חדש 🔄 אפשר לבקש מאיתן לשלוח אותו שוב.",
   },
+
+  // W4a: her profile, hearts, "like last time". Feminine 2nd person, questions not commands.
+  profile: {
+    link: "הפרופיל שלי",
+    title: "מה לא בא לך אף פעם?",
+    sub: "מה שתסמני פה לא יופיע לך בניחושים בכלל.",
+    never: "לא בשבילי",
+    none: "עדיין כלום ברשימה",
+    ing: { pepper: "גמבה" },
+    add: "להוסיף לרשימה?",
+    pickPlaceholder: "בחרי מאכל או רכיב",
+    addBtn: "להוסיף?",
+    remove: (n) => `להסיר את ${n}?`,
+    favs: "המועדפים שלי ❤️",
+    favNone: "עוד לא סימנת לב. אפשר בתוצאה, אחרי הניחוש 🙂",
+    back: "חזרה",
+    ingredients: "רכיבים",
+    foods: "מאכלים",
+  },
+  heart: { on: "❤️ במועדפים", off: "🤍 למועדפים?", aria: (n) => `לסמן את ${n} כמועדף?` },
+  like: {
+    card: (day, name) => `כמו ביום ${day} שעבר? ${name}`,
+    sub: "לחיצה אחת ואני מראה את זה",
+    days: ["ראשון", "שני", "שלישי", "רביעי", "חמישי", "שישי", "שבת"],
+  },
   wrapped: {
     tile: { e: "🎁", t: "לשלוח סיכום חודשי" },
     ownerTitle: (her) => `הסיכום החודשי של ${her}`,

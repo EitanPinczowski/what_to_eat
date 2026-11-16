@@ -30,6 +30,12 @@ service cloud.firestore {
       return !(f in d) || (d[f] is list && d[f].size() <= n);
     }
 
+    // A list of at most n short strings (each at most 40 chars: the joined text is capped at n * 40 plus the commas).
+    function strList(f, n) {
+      let d = request.resource.data;
+      return !(f in d) || (d[f] is list && d[f].size() <= n && d[f].join(',').size() <= n * 41);
+    }
+
     function num(f) {
       let d = request.resource.data;
       return !(f in d) || d[f] is number;
@@ -87,6 +93,7 @@ service cloud.firestore {
     function roomDocOk() {
       return smallDoc()
         && num('v') && obj('settings') && obj('ratings') && obj('learned') && obj('exp')
+        && strList('never', 30) && strList('fav', 30)
         && lst('custom', 300) && lst('inbox', 300) && lst('imported', 200) && flag('moved') && str('at', 40);
     }
 

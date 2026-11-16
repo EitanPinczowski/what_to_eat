@@ -3,6 +3,7 @@
 import { CUISINE } from "../data/constants.js";
 import { placeCuisines } from "./cuisine.js";
 import { STR } from "../data/strings.js";
+import { allowedFoods, isExcluded } from "../engine/exclude.js";
 
 const WEEK = 7 * 864e5;
 export const CLOSING_SOON_MIN = 45;
@@ -37,8 +38,10 @@ export function isShabbat(now = new Date()) {
   return (d === 5 && h >= 16) || (d === 6 && h < 19);
 }
 
-export function scorePlaces(places, foods, { food = null, mode = null, city = null, now = new Date(), budget = null, novel = false, byCuisine = false, cuisine = null, all = false } = {}) {
-  const byId = foods instanceof Map ? foods : new Map(foods.map((f) => [f.id, f]));
+export function scorePlaces(places, foods, { food = null, mode = null, city = null, now = new Date(), budget = null, novel = false, byCuisine = false, cuisine = null, all = false, never = [] } = {}) {
+  const list = foods instanceof Map ? [...foods.values()] : foods;
+  const byId = new Map(allowedFoods(list, never).map((f) => [f.id, f])); // excluded foods count for no place
+  if (food && (never ?? []).length && isExcluded(list.find((f) => f.id === food.id) ?? food, never)) return []; // nothing to suggest for a food she never wants
   const want = new Set((food?.tags ?? []).filter((t) => CUISINE.includes(t)));
   const shabbat = isShabbat(now);
   const wantC = cuisine ? [cuisine] : byCuisine ? (food?.cuisine ?? []) : [];

@@ -27,6 +27,11 @@ test("rules: every collection the store uses is listed, and NO_DELETE matches th
   assert.deepEqual(COLLECTIONS.filter((c) => !del.includes(c)).sort(), [...NO_DELETE].sort());
 });
 
+test("rules: her never and fav lists are bounded lists of short strings (W4a)", () => {
+  assert.ok(rules.includes("function strList(f, n)") && rules.includes("d[f] is list && d[f].size() <= n && d[f].join(',').size() <= n * 41"));
+  assert.ok(rules.includes("strList('never', 30) && strList('fav', 30)"));
+});
+
 test("rules: place cuisines are a bounded list (F3)", () => {
   assert.match(rules, /function placeOk\(\)[\s\S]*?lst\('cuisines', 8\)/);
 });

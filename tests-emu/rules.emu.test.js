@@ -47,6 +47,16 @@ test("room doc: get yes, list no, delete no, typed create/update", async () => {
   await assertFails(setDoc(doc(d, "rooms", "ABCDEFGHIJ0123456789ABCD"), { v: 1 })); // id not a-z0-9
 });
 
+test("room doc: never and fav are bounded lists of short strings (W4a)", async () => {
+  const d = db();
+  const ref = doc(d, "rooms", ROOM);
+  await assertSucceeds(updateDoc(ref, { never: ["pepper", "pizza"], fav: ["falafel"] }));
+  await assertSucceeds(updateDoc(ref, { never: Array(30).fill("x".repeat(40)) }));
+  await assertFails(updateDoc(ref, { never: Array(31).fill("x") })); // too many
+  await assertFails(updateDoc(ref, { fav: ["x".repeat(41), "x".repeat(41), ...Array(28).fill("x".repeat(40))] })); // long entry pushes past the cap
+  await assertFails(updateDoc(ref, { never: "pepper" })); // not a list
+});
+
 test("room doc: legacy extra keys are kept (no whitelist)", async () => {
   await assertSucceeds(updateDoc(doc(db(), "rooms", ROOM), { legacyThing: { a: 1 } }));
 });

@@ -75,13 +75,19 @@ export function resultEntry(out, form, at = new Date().toISOString()) {
 }
 
 /** Result + how / budget / note form. onSend(form) runs once when the button is tapped. */
-export function finishForm(root, out, sendLabel, onSend) {
+export function finishForm(root, out, sendLabel, onSend, heart = null) {
   const form = { m: null, price: null, note: "" };
+  let hearted = !!heart?.on;
   const handlers = {
     qback: () => out.back?.(),
     mode: (m) => ((form.m = form.m === m ? null : m), draw()),
     price: (p) => ((form.price = form.price === Number(p) ? null : Number(p)), draw()),
     note: (v) => (form.note = v),
+    heart: async () => {
+      const on = await heart.toggle(out.food.id);
+      hearted = on;
+      draw();
+    },
     send: async (_a, _e, btn) => {
       btn.disabled = true;
       btn.textContent = STR.result.sending;
@@ -93,7 +99,7 @@ export function finishForm(root, out, sendLabel, onSend) {
     render(root, html`${out.back ? raw(backBar()) : ""}
       <section class="card stack result" data-testid="result">${out.craving ? raw(html`<p class="sub craving-line">${out.craving}</p>`) : ""}<div class="mood">${out.mood}</div>
         <div class="big reveal" aria-hidden="true">${raw(pic(out.food))}</div>
-        <h2 class="title">${out.food?.name ?? out.result.free}</h2>${out.food ? raw(html`<p class="cat">${catLabel(out.food)}</p>`) : ""}</section>
+        <h2 class="title">${out.food?.name ?? out.result.free}</h2>${out.food ? raw(html`<p class="cat">${catLabel(out.food)}</p>`) : ""}${heart && out.food ? raw(html`<button class="btn btn-ghost heart" data-on="heart" data-testid="heart" aria-pressed="${hearted}">${hearted ? STR.heart.on : STR.heart.off}</button>`) : ""}</section>
       <p class="sub">${STR.result.how}</p>
       <div class="grid choose">${STR.result.modes.map((x) => raw(html`<button class="btn" data-on="mode" data-arg="${x.m}" aria-pressed="${form.m === x.m}"><span class="em">${x.e}</span>${x.t}</button>`))}</div>
       <p class="sub">${STR.result.budget}</p>
@@ -158,7 +164,8 @@ export async function runGuest(root, store, { base = location.origin + location.
     startGuestQuiz(root, {
       baseEntry: true,
       weather,
-      room,
+      room: store.get(),
+      store,
       history: store.list("history"),
       actions,
       onFeedback: feedback,
@@ -191,7 +198,7 @@ export async function runGuest(root, store, { base = location.origin + location.
           out.step?.(() => finishScreen(out, opened));
           fallback(fallbackPayload(id, entry), out);
         }
-    });
+    }, { on: (store.get().fav ?? []).includes(out.food?.id), toggle: (id) => import("./profile.js").then((m) => m.toggleFav(store, id)) });
   };
 
   const sent = () => {

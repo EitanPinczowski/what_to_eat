@@ -83,14 +83,16 @@ export function knownFrom({ weather = null, history = [], now = new Date() } = {
 }
 
 /** The dynamic effect of the novel answers: {familiar, fresh}: food id → score. Familiar: what she picked often (90 days). Fresh: not eaten for 30 days. Empty without history. */
-export function novelEffects(history, foods, now = new Date()) {
+export function novelEffects(history, foods, now = new Date(), fav = []) {
   const ps = pickAges(history, now);
-  if (!ps.length) return {};
+  const hearts = fav.filter((id) => typeof id === "string");
+  if (!ps.length && !hearts.length) return {};
   const familiar = {}, fresh = {}, last = {};
   for (const p of ps) {
     if (p.age <= 90) familiar[p.f] = Math.min(3, (familiar[p.f] ?? 0) + 1.5);
     last[p.f] = Math.min(last[p.f] ?? 999, Math.max(0, p.age));
   }
+  for (const id of hearts) familiar[id] = Math.min(3, (familiar[id] ?? 0) + 1.5); // "מוכר ואהוב" leans to her hearts
   for (const f of foods) fresh[f.id] = last[f.id] === undefined || last[f.id] >= 30 ? 2 : -2 * (1 - last[f.id] / 30);
   return { familiar, fresh };
 }

@@ -26,6 +26,8 @@ export function emptyRoom() {
     learned: {},
     exp: {},
     imported: [],
+    never: ["pepper"], // W4a: ingredients/foods she never wants (hard exclusion); starts with bell pepper
+    fav: [], // W4a: hearted food ids
   };
 }
 

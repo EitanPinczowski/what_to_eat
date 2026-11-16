@@ -205,7 +205,7 @@ export function placesViews({ root, store, stack, views, common, ctx }) {
     if (st.cuisine === undefined) st.cuisine = food?.cuisine?.[0] ?? null;
     const label = food?.name ?? st.free;
     const term = (st.cuisine && cuisineSearch(st.cuisine)) || label;
-    const { list: scored, noneOfKind } = pickPlaces(store.list("places"), all, { food, cuisine: st.cuisine, mode: st.mode, city: st.city, budget: st.budget, novel: !!st.novel });
+    const { list: scored, noneOfKind } = pickPlaces(store.list("places"), all, { food, cuisine: st.cuisine, mode: st.mode, city: st.city, budget: st.budget, novel: !!st.novel, never: store.get().never });
     const q = [term, st.city].filter(Boolean).join(" ");
     const book = st.chosen && st.chosenId ? bookingOf(store.doc("places", st.chosenId)?.link) : null;
     const bookLink = book ? store.doc("places", st.chosenId).link : "";

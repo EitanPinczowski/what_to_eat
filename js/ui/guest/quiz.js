@@ -11,6 +11,7 @@ import { learnFrom, seenFrom } from "../../engine/learn.js";
 import { pic, qPic, catLabel, foodLabel } from "../pics.js";
 import { BackLayer } from "../../router.js";
 import { weatherKind } from "../../engine/weather.js";
+import { allowedFoods, favBoosts } from "../../engine/exclude.js";
 import { render, html, raw } from "../dom.js";
 
 const DAY = 864e5;
@@ -38,10 +39,12 @@ const still = () => !globalThis.document || !!globalThis.WTE_NO_MOTION || !!glob
 
 /** Foods, prior and engine for a room. */
 export function makeQuiz(room, historyList, { now = new Date(), rnd, weather = null } = {}) {
-  const foods = buildFoods(FOODS, room.custom ?? []);
+  const foods = allowedFoods(buildFoods(FOODS, room.custom ?? []), room.never); // "never for me": hard-excluded before the engine sees them
+  const fav = (room.fav ?? []).filter((id) => foods.some((f) => f.id === id));
   const recent = historyList.filter((h) => h.f && now - new Date(h.at) <= 3 * DAY).map((h) => h.f);
   const prior = priorFrom(foods, { ratings: room.ratings ?? {}, recent, now, exp: room.exp ?? {}, weather, history: historyList });
-  return new FoodQuiz(foods, QUESTIONS, prior, { rnd, learned: learnFrom(historyList, foods), seen: seenFrom(historyList), known: knownFrom({ weather, history: historyList, now }), novel: novelEffects(historyList, foods, now) });
+  for (const [id, b] of Object.entries(favBoosts(fav))) prior[id] = (prior[id] ?? 0) + b;
+  return new FoodQuiz(foods, QUESTIONS, prior, { rnd, learned: learnFrom(historyList, foods), seen: seenFrom(historyList), known: knownFrom({ weather, history: historyList, now }), novel: novelEffects(historyList, foods, now, fav) });
 }
 
 /** Apply one recorded action to the engine. */
@@ -168,6 +171,10 @@ export function startGuestQuiz(root, opts) {
 
   const handlers = {
     go: () => ((onIntro = false), layer.push(onBack), show()),
+    // "Like last time?": straight to that food's result (an entry shortcut, not a quiz answer); the normal start stays primary.
+    like: (id) => ((onIntro = false), layer.push(onBack), act({ k: "c", f: id })),
+    // Her profile: lazy module; its back button returns to the welcome screen.
+    profile: () => import("./profile.js").then((m) => m.openProfile(root, opts.store, { onBack: showIntro })),
     qback: () => pending || goBack(),
     ans: (i, _e, el) => {
       if (pending) return;
@@ -321,7 +328,17 @@ export function startGuestQuiz(root, opts) {
       <p class="sub">${STR.intro.text(me)}</p>
       <p class="sub">${STR.moment[momentOf(opts.now ?? new Date())]?.intro ?? ""}</p>
       ${tease ? raw(html`<p class="sub">${tease}</p>`) : ""}
-      <button class="btn btn-primary" data-on="go" autofocus>${STR.intro.go}</button>`, handlers);
+      <button class="btn btn-primary" data-on="go" autofocus>${STR.intro.go}</button>
+      <div data-testid="like-host"></div>
+      ${opts.store ? raw(html`<button class="btn btn-ghost" data-on="profile" data-testid="profile-link">${STR.profile.link}</button>`) : ""}`, handlers);
+    if (history.length) import("../../engine/lasttime.js").then((m) => {
+      const now = opts.now ?? new Date();
+      const foods = allowedFoods(buildFoods(FOODS, room.custom ?? []), room.never);
+      const hit = m.likeLastTime(history, now, { never: room.never, foods });
+      const host = onIntro && root.querySelector("[data-testid=like-host]");
+      const food = hit && foods.find((f) => f.id === hit.f);
+      if (host && food) host.innerHTML = html`<button class="btn like" data-on="like" data-arg="${food.id}" data-testid="like-card">${STR.like.card(STR.like.days[hit.day], food.name)} ${raw(pic(food, "sm"))}</button>`;
+    }, () => {}); // harmless: the welcome screen works without the shortcut
   }
   if (introShown) showIntro();
   else show();
