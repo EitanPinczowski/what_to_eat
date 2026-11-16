@@ -192,7 +192,7 @@ test("mood title follows the food's tags", () => {
   assert.equal(moodFor(null), "בדיוק מה שבא לך 😋");
 });
 
-test("🦖 express quiz: ends on a pick-one-of-3 shortlist by step 5", () => {
+test("🦖 express quiz: hunger, cuisine, two best questions, then a pick of 3 distinct foods (item 17)", () => {
   const z = quiz();
   z.answer(q("hunger"), 3);
   let s;
@@ -207,7 +207,9 @@ test("🦖 express quiz: ends on a pick-one-of-3 shortlist by step 5", () => {
   assert.equal(s.type, "pick");
   assert.equal(s.express, true);
   assert.equal(s.items.length, 3);
-  assert.ok(z.n <= 5);
+  assert.equal(new Set(s.items.map((f) => f.id)).size, 3);
+  assert.equal(z.n, 4);
+  assert.deepEqual(z.s.asked.slice(0, 2), ["hunger", "cuisine"]);
 });
 
 test("item 13: unsure at guess time → 3 distinct options; sure → one guess; none → they are out and the quiz goes on", () => {

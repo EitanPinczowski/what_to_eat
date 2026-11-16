@@ -11,9 +11,9 @@ import { learnFrom } from "../js/engine/learn.js";
 const TRIALS = Number(process.argv[2]) || 5;
 const VERBOSE = process.argv.includes("--verbose");
 const NOISE = 0.15;
-const TARGETS = { found: 0.945, steps: 10, express: 0.25 };
+const TARGETS = { found: 0.945, steps: 10, express: 0.60 };
 // Honest accuracy (docs/REVIEW.md): regression floors = measured value rounded down to 5 points; PRODUCT = report-only goals.
-const FLOORS = { first: 0.60, top3: 0.93, never: 6 }; // never = foods that are never the first guess at noise 0 (item 15) // at noise 0.15, tired, learned history
+const FLOORS = { first: 0.65, top3: 0.95, never: 6 }; // never = foods that are never the first guess at noise 0 (item 15) // at noise 0.15, tired, learned history
 const PRODUCT = { first: 0.45, top3: 0.85, steps: 9 };
 const LEVELS = [0, 0.15, 0.3];
 const TIRED_AFTER = 8, TIRED_ADD = 0.1; // found was 0.95; no-skip rule (1.6) costs ~1 trial in 475 — see docs/REVIEW.md
@@ -158,31 +158,38 @@ for (const lv of LEVELS) {
   let k = 0;
   for (const f of foods) h.push({ f: f.id, ans: play(f, rng(5 + k++ * 104729), {}, noiseAt).ans });
   const lrn = learnFrom(h, foods);
-  let m = 0, fi = 0, t3 = 0, gs = 0, st = 0, xr = 0, xh = 0;
-  const per = new Map(foods.map((f) => [f.id, { first: 0, top3: 0, steps: 0, wins: {} }]));
+  let m = 0, mm = 0, fi = 0, t3 = 0, gs = 0, st = 0, xr = 0, xh = 0, xs = 0;
+  const per = new Map(foods.map((f) => [f.id, { first: 0, top3: 0, steps: 0, wins: {}, runs: 0 }]));
   for (const f of foods)
     for (let t = 0; t < TRIALS; t++) {
       const r = play(f, rng(31 + m++ * 7919), lrn, noiseAt);
       const p = per.get(f.id);
-      p.first += r.first; p.top3 += r.top3; p.steps += r.steps;
+      p.steps += r.steps;
+      st += r.steps;
+      if (r.express) {
+        // 🦖 express runs end on 3 options after 4 steps by design: gated on their own (item 17), kept out of the first/top-3 floors.
+        xr++, (xh += r.found), (xs += r.steps);
+        continue;
+      }
+      p.runs++; mm++;
+      p.first += r.first; p.top3 += r.top3;
       if (!r.first && r.win) p.wins[r.win] = (p.wins[r.win] || 0) + 1;
-      fi += r.first; t3 += r.top3; gs += r.guesses; st += r.steps;
-      if (r.express) (xr++, (xh += r.found));
+      fi += r.first; t3 += r.top3; gs += r.guesses;
     }
   perFood[lv] = per;
-  table[lv] = { first: fi / m, top3: t3 / m, guesses: gs / m, steps: st / m, express: xr ? xh / xr : 1 };
+  table[lv] = { first: fi / mm, top3: t3 / mm, guesses: gs / mm, steps: st / m, express: xr ? xh / xr : 1, xsteps: xr ? xs / xr : 0 };
 }
 console.log(`sim: honest accuracy (tired after step ${TIRED_AFTER}: +${TIRED_ADD} noise; learned history; ${foods.length} foods x ${TRIALS})`);
-console.log(`noise | first guess (target ${pct(PRODUCT.first)}) | top 3 (target ${pct(PRODUCT.top3)}) | guesses | steps (target <=${PRODUCT.steps}) | express shortlist`);
+console.log(`noise | first guess (target ${pct(PRODUCT.first)}) | top 3 (target ${pct(PRODUCT.top3)}) | guesses | steps (target <=${PRODUCT.steps}) | express shortlist (steps)`);
 for (const lv of LEVELS) {
   const t = table[lv];
-  console.log(`${lv.toFixed(2)}  | ${pct(t.first).padStart(4)} | ${pct(t.top3).padStart(4)} | ${t.guesses.toFixed(1)} | ${t.steps.toFixed(1)} | ${pct(t.express)}`);
+  console.log(`${lv.toFixed(2)}  | ${pct(t.first).padStart(4)} | ${pct(t.top3).padStart(4)} | ${t.guesses.toFixed(1)} | ${t.steps.toFixed(1)} | ${pct(t.express)} (${t.xsteps.toFixed(1)})`);
 }
 // Road-stop foods (item 16): what she grabs at a petrol station; report line, steps target <= 9.
 const ROAD = ["coffee_pastry", "protein_bar", "yogurt_cup", "iced_coffee", "toast", "sandwich", "burekas", "croissant", "smoothie", "granola"];
 for (const lv of LEVELS) {
   const rs = ROAD.map((id) => perFood[lv]?.get(id)).filter(Boolean);
-  const rst = rs.reduce((x, p) => x + p.steps, 0) / (rs.length * TRIALS), rfi = rs.reduce((x, p) => x + p.first, 0) / (rs.length * TRIALS);
+  const rst = rs.reduce((x, p) => x + p.steps, 0) / (rs.length * TRIALS), rfi = rs.reduce((x, p) => x + p.first, 0) / (rs.reduce((x, p) => x + p.runs, 0) || 1);
   console.log(`sim: road foods at noise ${lv.toFixed(2)}: avg steps ${rst.toFixed(1)} (target <=9) first guess ${pct(rfi)}`);
 }
 // Report-only per-food view (--foods): never first guess, rarely in the top 3, and who wins instead.
@@ -190,14 +197,14 @@ if (process.argv.includes("--foods")) {
   for (const lv of [0, 0.15].filter((l) => perFood[l])) {
     console.log(`per-food at noise ${lv}: never first / top3 under half / confused with`);
     for (const [id, p] of perFood[lv]) {
-      if (p.first > 0 && p.top3 / TRIALS >= 0.5) continue;
+      if (p.first > 0 && p.top3 / (p.runs || 1) >= 0.5) continue;
       const w = Object.entries(p.wins).sort((a, b) => b[1] - a[1]).slice(0, 3).map(([k, v]) => `${k}x${v}`).join(" ");
-      console.log(`  ${id}: first ${p.first}/${TRIALS} top3 ${p.top3}/${TRIALS} <- ${w}`);
+      console.log(`  ${id}: first ${p.first}/${p.runs} top3 ${p.top3}/${p.runs} <- ${w}`);
     }
   }
 }
 // Every food must be the first guess at least sometimes with a perfect guest (noise 0).
-const never = [...(perFood[0] ?? [])].filter(([, p]) => p.first === 0).map(([id]) => id);
+const never = [...(perFood[0] ?? [])].filter(([, p]) => p.runs >= TRIALS - 1 && p.first === 0).map(([id]) => id);
 if (never.length) console.log(`sim: never the first guess at noise 0 (${never.length}): ${never.join(", ")}`);
 const H = table[0.15];
 if (H.first < PRODUCT.first || H.top3 < PRODUCT.top3 || H.steps > PRODUCT.steps) console.log(`sim: report-only product targets not met at noise 0.15`);
