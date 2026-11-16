@@ -70,16 +70,60 @@ export function sendReport(subs, codes, now = new Date().toISOString()) {
 /** New dead-hash list for the live doc: old plus new, no repeats, at most 8. */
 export const mergeDead = (old, add) => [...new Set([...(Array.isArray(old) ? old : []), ...add])].slice(-8);
 
+let bound = null;
+/** Tell this module which Store (room) the page runs in, so relay calls can be signed. */
+export const bindRoom = (store) => {
+  bound = store ?? null;
+};
+
+const hex = (buf) => [...new Uint8Array(buf)].map((b) => b.toString(16).padStart(2, "0")).join("");
+const enc = (t) => new TextEncoder().encode(t);
+/** sha-256 of a string, lowercase hex (the relay only ever sees this, never the room id). */
+export const sha256Hex = async (text) => hex(await crypto.subtle.digest("SHA-256", enc(text)));
+/** HMAC-SHA256(key, text), lowercase hex. */
+export async function hmacHex(key, text) {
+  const k = await crypto.subtle.importKey("raw", enc(key), { name: "HMAC", hash: "SHA-256" }, false, ["sign"]);
+  return hex(await crypto.subtle.sign("HMAC", k, enc(text)));
+}
+export const PUSH_KEY_RE = /^[0-9a-f]{64}$/;
+/** A fresh random 256-bit relay key (hex). */
+export const newPushKey = () => hex(crypto.getRandomValues(new Uint8Array(32)));
+
+/** Headers that prove this room sent the body: room hash + HMAC of the exact body text. */
+export async function signHeaders(roomId, pushKey, bodyText) {
+  return { "x-wte-room": await sha256Hex(roomId), "x-wte-sig": await hmacHex(pushKey, bodyText) };
+}
+
+/** The room's pushKey; creates and stores one (through the Store) when missing. null when it cannot be had. */
+async function ensureKey(store, timeout) {
+  try {
+    const cur = store.get()?.pushKey;
+    if (PUSH_KEY_RE.test(cur ?? "")) return cur;
+    const key = newPushKey();
+    await Promise.race([store.update((db) => (db.pushKey = PUSH_KEY_RE.test(db.pushKey ?? "") ? db.pushKey : key)), new Promise((_, r) => setTimeout(r, timeout, new Error("timeout")))]);
+    const now = store.get()?.pushKey;
+    return PUSH_KEY_RE.test(now ?? "") ? now : null;
+  } catch {
+    return null;
+  }
+}
+
 /** POST every stored subscription to the relay. Resolves to [{sub, code}] and never rejects. */
 async function sendEach(settings, kind, f, { timeout = 4000, url = RELAY_URL, food } = {}) {
   const k = kindFor(kind);
   const subs = (settings?.push ?? []).filter(valid);
   if (!k || !subs.length || typeof f !== "function") return [];
+  const key = bound?.roomId ? await ensureKey(bound, timeout) : null;
   return Promise.all(subs.map(async (sub) => {
     const ctl = typeof AbortController === "function" ? new AbortController() : null;
     const t = setTimeout(() => ctl?.abort(), timeout);
     try {
-      const r = await f(url, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(relayBody(sub, k, food)), signal: ctl?.signal });
+      const text = JSON.stringify(relayBody(sub, k, food));
+      const sig = key ? await signHeaders(bound.roomId, key, text) : {};
+      const post = (extra) => f(url, { method: "POST", headers: { "Content-Type": "application/json", ...sig, ...extra }, body: text, signal: ctl?.signal });
+      let r = await post({});
+      // First use of this room at the relay: it has no key yet, so offer ours once (HTTPS only; every later call is just signed).
+      if (key && r?.status === 401 && (await r.json?.().catch(() => null))?.error === "unregistered") r = await post({ "x-wte-key": key });
       return { sub, code: r?.status ?? 0 };
     } catch {
       return { sub, code: 0 };

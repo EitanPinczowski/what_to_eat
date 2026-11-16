@@ -119,7 +119,7 @@ export async function runGuest(root, store, { base = location.origin + location.
   let screen = "intro";
   installErrorLog(store, () => screen);
   mountSaveStatus(store, STR.save);
-  push().then((m) => m.notifyOpened(s, { sent: false })).catch(() => {}); // harmless: opt-in ping, once per page open
+  push().then((m) => (m.bindRoom(store), m.notifyOpened(s, { sent: false }))).catch(() => {}); // harmless: opt-in ping, once per page open
 
   const live = store.doc("live", "quiz");
   const carry = () => {

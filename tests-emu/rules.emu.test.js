@@ -42,6 +42,9 @@ test("room doc: get yes, list no, delete no, typed create/update", async () => {
   await assertSucceeds(updateDoc(doc(d, "rooms", ROOM), { inbox: ["x"] }));
   await assertFails(updateDoc(doc(d, "rooms", ROOM), { v: "one" })); // not a number
   await assertFails(updateDoc(doc(d, "rooms", ROOM), { settings: "x" })); // not a map
+  await assertSucceeds(updateDoc(doc(d, "rooms", ROOM), { pushKey: "a".repeat(64) }));
+  await assertFails(updateDoc(doc(d, "rooms", ROOM), { pushKey: "a".repeat(65) })); // too long
+  await assertFails(updateDoc(doc(d, "rooms", ROOM), { pushKey: 5 })); // not a string
   await assertFails(updateDoc(doc(d, "rooms", ROOM), { custom: Array(301).fill("x") })); // list too long
   await assertFails(setDoc(doc(d, "rooms", "short"), { v: 1 })); // id too short
   await assertFails(setDoc(doc(d, "rooms", "ABCDEFGHIJ0123456789ABCD"), { v: 1 })); // id not a-z0-9

@@ -11,7 +11,7 @@ import { pic, catLabel, foodLabel } from "../pics.js";
 import { render, html, raw, confetti, saveFailed } from "../dom.js";
 import { BackLayer } from "../../router.js";
 import { withTimeout, ping, installErrorLog } from "./session.js";
-import { notifyAll } from "../../push.js";
+import { notifyAll, bindRoom } from "../../push.js";
 
 const W = STR.sweep;
 const SWIPE = 70; // px
@@ -164,6 +164,7 @@ export async function runSweep(root, store, { base = location.origin + location.
             8000,
           );
           ping(s.ntfy, W.ntfy(s.her));
+          bindRoom(store);
           notifyAll(s, "sweep");
           confetti();
           render(root, html`<div class="big reveal" aria-hidden="true">💌</div><h2 class="title" role="status">${STR.result.sent(s.me)}</h2>`);

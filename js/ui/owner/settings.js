@@ -7,7 +7,7 @@ import { normPhone } from "../../share/whatsapp.js";
 import { ROOM_KEY, openStore } from "../../store/open.js";
 import { rejoinFromLink } from "../../store/room-backup.js";
 import { render, html, raw, toast, copy, saveFailed, topbar, keepOpen } from "../dom.js";
-import { addSub, removeSub, hasSub, pushSupport, subscribeThisDevice, currentSub, unsubscribeThisDevice, notifyAll, knownEndpoint, rememberEndpoint, epHash, pruneDead } from "../../push.js";
+import { addSub, removeSub, hasSub, pushSupport, subscribeThisDevice, currentSub, unsubscribeThisDevice, notifyAll, bindRoom, knownEndpoint, rememberEndpoint, epHash, pruneDead } from "../../push.js";
 import { installKind, installHelp } from "../../pwa.js";
 import { withTimeout } from "../guest/session.js";
 import { BACKUP_EVERY, backupDue } from "./backup-due.js";
@@ -115,6 +115,7 @@ export function settingsViews({ root, store, views, common, base, mode }) {
         await store.update((db) => (db.settings.notifyOpen = on)).catch(() => toast(G.saveFail));
       },
       pushTest: async () => {
+        bindRoom(store);
         const res = await notifyAll({ push: [await currentSub()].filter(Boolean) }, "test");
         toast(res.some((c) => c === 201) ? G.push.testSent : G.push.testFail);
         const cur = await currentSub();

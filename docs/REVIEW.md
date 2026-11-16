@@ -270,3 +270,13 @@ Known gaps: sim average steps 11.8 (target 10, reported only); sim "found" gate 
 - Hidden while she answers: the chips render only on her result screen (card.js mountCard), never during the quiz. Her client does read live/couple (rules allow any room holder), so this is hidden in the UI, not secret.
 - The toggle's state is the saved doc: his answers stay selected on the send screen until he switches the toggle off (the send view redraws on every live change).
 - Start-up budget: to fit +~600 B in session.js and app.js, trailing // comments in js/ui/guest/quiz.js were removed. Budgets unchanged.
+
+## W8: lock the push relay
+- Relay (wte-push) refuses anything that is not a real push service (fcm.googleapis.com, *.push.apple.com, *.push.services.mozilla.com, *.notify.windows.com; 400) and anything not signed by its room (401). Change: ALLOWED_HOSTS in wte-push/api/send.js.
+- Room key: the app keeps a random 256-bit hex `pushKey` on the room doc (top level, created through the Store on first send; guest or owner, whoever sends first). firestore.rules: `str('pushKey', 64)` in roomDocOk (rules changed, NOT deployed; rules tests and emu tests added).
+- Signing: headers `x-wte-room` = sha-256 hex of the room id (the raw id never leaves the phone) and `x-wte-sig` = HMAC-SHA256(pushKey, exact body text) via WebCrypto (js/push.js `signHeaders`). `bindRoom(store)` is called by guest session, sweep and owner settings, so notifyAll/notifyReport sign without new parameters.
+- First use: the relay has no key for that room hash, answers 401 `unregistered`; the app resends once with `x-wte-key`, and the relay stores it in a private Vercel Blob (`rooms/<hash>.json`, create-only so a race has one winner) after checking the signature. Later requests are verified against the stored key only.
+- Residual risk: first-use trust. Someone who learns a room hash before its first push could register their own key for it. Accepted: the room hash is not public, and a sender still needs a real subscription endpoint plus its p256dh/auth keys to make the relay push anything to a phone.
+- The relay verifies the signature over `JSON.stringify(parsedBody)` because Vercel gives it parsed JSON; the app sends compact JSON.stringify output, which round-trips byte for byte.
+- Rate limit: 60 sends per hour per room hash, then 429; kept in Blob (`rate/<hash>.json`), read-modify-write, best effort (parallel requests can slip a few through). The older in-memory 20 per 10 min per endpoint stays. Change: ROOM_RATE.
+- CI alert (`x-ci-token` + CI_ALERT_TOKEN) is untouched and needs no room signature.

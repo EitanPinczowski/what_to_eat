@@ -13,6 +13,7 @@ test("rules: subcollection writes need a live room, a bounded room id and typed 
   assert.match(rules, /&& idOk\(\) && docId\.size\(\) <= 64 && roomLive\(\)/);
   // Room doc is typed but has no key whitelist: migrate() keeps legacy keys, and a whitelist would refuse their saves.
   assert.match(rules, /function roomDocOk\(\)[\s\S]*?num\('v'\)[\s\S]*?obj\('settings'\)/);
+  assert.match(rules, /function roomDocOk\(\)[\s\S]*?str\('pushKey', 64\)/); // relay key: bounded string
   assert.doesNotMatch(rules, /hasOnly\(/);
 });
 

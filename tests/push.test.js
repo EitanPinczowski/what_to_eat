@@ -112,3 +112,48 @@ test("sw.js loads the classic helpers, precaches them and renotifies per kind", 
   assert.ok(sw.includes('"js/sw-names.js"') && sw.includes('"js/sw-format.js"'));
   assert.match(sw, /renotify: true/);
 });
+
+// ---- W8: signed relay calls ----
+import { createHmac, createHash } from "node:crypto";
+import { bindRoom, signHeaders, newPushKey, PUSH_KEY_RE } from "../js/push.js";
+
+test("signHeaders: room hash + HMAC-SHA256 of the exact body, matching node's crypto", async () => {
+  const key = "k".repeat(64);
+  const h = await signHeaders("room123", key, '{"a":"שלום"}');
+  assert.equal(h["x-wte-room"], createHash("sha256").update("room123").digest("hex"));
+  assert.equal(h["x-wte-sig"], createHmac("sha256", key).update('{"a":"שלום"}').digest("hex"));
+  assert.ok(PUSH_KEY_RE.test(newPushKey()));
+  assert.notEqual(newPushKey(), newPushKey());
+});
+
+test("notifyAll signs when a room is bound, creating the pushKey through the Store; raw room id never sent", async () => {
+  const room = { settings: {} };
+  const store = { roomId: "roomabc", get: () => room, update: async (fn) => fn(room) };
+  bindRoom(store);
+  const calls = [];
+  const f = async (url, o) => (calls.push(o), { status: 201 });
+  await notifyAll({ push: [sub(1)] }, "vote", f);
+  assert.ok(PUSH_KEY_RE.test(room.pushKey));
+  const o = calls[0];
+  assert.equal(o.headers["x-wte-sig"], createHmac("sha256", room.pushKey).update(o.body).digest("hex"));
+  assert.equal(o.headers["x-wte-room"], createHash("sha256").update("roomabc").digest("hex"));
+  assert.ok(!JSON.stringify(o).includes("roomabc"));
+  const key = room.pushKey;
+  await notifyAll({ push: [sub(1)] }, "vote", f);
+  assert.equal(room.pushKey, key); // reused, not regenerated
+  bindRoom(null);
+  await notifyAll({ push: [sub(1)] }, "vote", f);
+  assert.equal(calls[2].headers["x-wte-sig"], undefined);
+});
+
+test("notifyAll offers the key once when the relay says unregistered", async () => {
+  const room = { settings: {}, pushKey: "ab".repeat(32) };
+  bindRoom({ roomId: "roomxyz", get: () => room, update: async () => {} });
+  const seen = [];
+  const f = async (url, o) => (seen.push(o.headers["x-wte-key"]), seen.length === 1 ? { status: 401, json: async () => ({ error: "unregistered" }) } : { status: 201 });
+  assert.deepEqual(await notifyAll({ push: [sub(1)] }, "vote", f), [201]);
+  assert.deepEqual(seen, [undefined, room.pushKey]);
+  const g = async () => ({ status: 401, json: async () => ({ error: "sig" }) });
+  assert.deepEqual(await notifyAll({ push: [sub(1)] }, "vote", g), [401]);
+  bindRoom(null);
+});
