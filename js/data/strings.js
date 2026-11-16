@@ -132,6 +132,18 @@ export const STR = {
       opened: (her) => `${her} פתחה`,
       step: (her, n) => `${her} פתחה · שאלה ${n}`,
       done: (her) => `${her} סיימה! 🎉`,
+      // With a time (item 8): rel is a phrase from `rel` below.
+      sent: (rel) => `נשלח ${rel}`,
+      openedAgo: (her, rel) => `${her} פתחה ${rel}`,
+      stepAgo: (her, n, rel) => `${her} פתחה · שאלה ${n} · ${rel}`,
+      doneAgo: (her, rel) => `${her} סיימה ${rel} 🎉`,
+    },
+    rel: {
+      now: "הרגע",
+      min: (n) => (n === 1 ? "לפני דקה" : `לפני ${n} דק׳`),
+      hour: (n) => (n === 1 ? "לפני שעה" : n === 2 ? "לפני שעתיים" : `לפני ${n} שע׳`),
+      yesterday: "אתמול",
+      days: (n) => `לפני ${n} ימים`,
     },
     // Delivery receipt of the notification she triggered (live/quiz.push).
     receipt: {

@@ -10,6 +10,7 @@ import { QUESTIONS } from "../../data/questions.js";
 import { isFirstOfMonth } from "../../engine/wrapped.js";
 import { ACK_CODES } from "../../store/store.js";
 import { backupDue } from "./backup-due.js";
+import { liveLine, freshLive } from "./live-status.js";
 
 const T = STR.owner;
 const HOW_AFTER = 2 * 3600e3;
@@ -126,10 +127,22 @@ export async function runOwner(root, store, { base = location.origin + location.
       ${raw(ackCard(store.doc("live", "quiz")))}
       ${raw(howCard())}
       ${store.list("history").length && backupDue(S()) ? raw(html`<button class="card btn remind" data-on="go" data-arg="settings" data-testid="backup">💾 ${STR.settings.remind}</button>`) : ""}
-      <p class="sub" data-testid="live">${liveStatus(store.doc("live", "quiz"), S().her)}</p>
+      <p class="sub" data-testid="live">${liveLine(store.doc("live", "quiz"), S().her)}</p>
       ${receiptLine(store.doc("live", "quiz")) ? raw(html`<p class="sub" data-testid="receipt">${receiptLine(store.doc("live", "quiz"))}</p>`) : ""}
       <div class="tiles">${tiles.map((k) => raw(html`<button class="btn tile${views[k] ? "" : " soon"}${k === "wrapped" && isFirstOfMonth() ? " hot" : ""}" data-on="go" data-arg="${k}"><span class="em">${T.tiles[k].e}</span>${T.tiles[k].t}${k === "wrapped" && isFirstOfMonth() ? raw(html`<small>${STR.wrapped.firstBadge}</small>`) : ""}</button>`))}</div>`, { ...common, how, ack: (c) => store.setAck(store.doc("live", "quiz")?.ack === c ? null : c).catch(saveFailed) });
   };
+
+  // Item 8: sending a link starts a fresh run: her old status (finished, answers, reply) is cleared and the send time stored.
+  const markSent = () => {
+    const fresh = freshLive(store.doc("live", "quiz"));
+    if (fresh) store.put("live", "quiz", fresh).catch(saveFailed);
+  };
+
+  // "opened 3 min ago" keeps counting while a screen with the line is open (text only, no redraw).
+  setInterval(() => {
+    const el = root.querySelector?.("[data-testid=live]");
+    if (el && ["home", "send"].includes(stack.top)) el.textContent = liveLine(store.doc("live", "quiz"), S().her);
+  }, 60e3);
 
   views.send = () => {
     const s = S();
@@ -137,13 +150,14 @@ export async function runOwner(root, store, { base = location.origin + location.
     const text = `${T.sendText(s.her, s.me)}\n${link}`;
     render(root, html`${raw(back)}
       <h2 class="q">${T.sendTitle(s.her)}</h2>
-      <a class="btn btn-primary" href="${waUrl(text, s.herPhone)}" target="_blank" rel="noopener">${T.whatsapp}</a>
+      <a class="btn btn-primary" href="${waUrl(text, s.herPhone)}" target="_blank" rel="noopener" data-testid="wa-send">${T.whatsapp}</a>
       <button class="btn" data-on="copy">${T.copy}</button>
       <code class="link" dir="ltr">${link}</code>
-      <p class="sub" data-testid="live" role="status">${liveStatus(store.doc("live", "quiz"), s.her)}</p>`, {
+      <p class="sub" data-testid="live" role="status">${liveLine(store.doc("live", "quiz"), s.her)}</p>`, {
       ...common,
-      copy: async () => toast((await copy(link)) ? T.copied : link),
+      copy: async () => (markSent(), toast((await copy(link)) ? T.copied : link)),
     });
+    root.querySelector?.("[data-testid=wa-send]")?.addEventListener("click", () => setTimeout(markSent, 300)); // a plain link: redrawing at once would detach it before the browser follows it
   };
 
   views.history = () => {
