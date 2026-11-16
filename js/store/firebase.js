@@ -25,7 +25,7 @@ export class FirebaseStore extends Store {
     this.storage = storage;
     this.snapKey = `wte.snap:${roomId}`;
     this._live = null;
-    this._early = {}; // room keys edited while the live connection was still opening
+    this._early = {};
     this._roomExists = false;
   }
 
@@ -41,7 +41,6 @@ export class FirebaseStore extends Store {
       return this._openLive();
     }
     this._live = this._openLive().then(({ room, cols }) => {
-      // An edit made before the live data arrived stays on top of it (no flicker back to the old value).
       this._remote(room ? { ...room, ...this._early } : this.room, cols);
       this._early = null;
     });
@@ -79,18 +78,16 @@ export class FirebaseStore extends Store {
     try {
       db = s.initializeFirestore(app, { localCache: s.persistentLocalCache({ tabManager: s.persistentMultipleTabManager() }) });
     } catch {
-      db = s.getFirestore(app); // offline cache unavailable (private mode, old Safari)
+      db = s.getFirestore(app);
     }
     await s.signInAnonymously(s.getAuth(app));
     this.db = db;
     this.roomRef = s.doc(db, "rooms", this.roomId);
 
-    // The room doc and every collection are read in parallel.
     const [snap, ...got] = await Promise.all([
       s.getDoc(this.roomRef),
       ...COLLECTIONS.map((c) =>
         s.getDocs(s.collection(this.roomRef, c)).catch((e) => {
-          // A collection the published rules do not allow yet (e.g. shopping) must not break the app.
           if (c !== "shopping") throw e;
           return null;
         }),
@@ -122,7 +119,7 @@ export class FirebaseStore extends Store {
 
   /** keys = the changed top-level fields: sent as field updates, so a stale local copy cannot overwrite other fields. */
   async _writeRoom(room, keys) {
-    if (keys && this._early) for (const k of keys) this._early[k] = room[k]; // runs before the first await
+    if (keys && this._early) for (const k of keys) this._early[k] = room[k];
     await this._live;
     if (!keys || !this._roomExists) {
       await this.sdk.setDoc(this.roomRef, room, keys ? { merge: true } : undefined);

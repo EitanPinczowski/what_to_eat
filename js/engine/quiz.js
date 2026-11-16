@@ -2,27 +2,27 @@
 import { jaccard } from "./similarity.js";
 
 export const T = 1.3;
-export const NOISE_EPS = 0.15; // item 14: chance an answer is random (tuned in tests/sim.js)
-export const ANSWER_TAU = 1; // answers a food scores higher on are likelier (softmax of the fx deltas / tau); 0 = only the single best answer
-const CONFIDENT_P = 0.65; // item 15: the top food this likely ends the quiz (was 0.5: it stopped before telling near-twins apart)
-const TWIN = 0.6; // jaccard from which two foods count as near-twins
-const MIN_GAIN = 0.03; // nats: below this no step is worth asking, so the quiz guesses
-const REPEAT_COST = 0.02; // nats off a question per already-asked question that probes the same tags
-const NEAR_BEST = 0.9; // questions within this share of the best gain are picked at random (variety)
-const GRID_MIN_N = 3; // the grid and duel may come once the three opening questions are done
-const GRID_SHARE = 0.6; // the 9 taps overlap, so their summed gain is discounted
-const VETO_RATE = 0.7; // chance she taps a food that is nothing like hers
-const RELATED = 0.15; // jaccard from which two foods count as alike
+export const NOISE_EPS = 0.15;
+export const ANSWER_TAU = 1;
+const CONFIDENT_P = 0.65;
+const TWIN = 0.6;
+const MIN_GAIN = 0.03;
+const REPEAT_COST = 0.02;
+const NEAR_BEST = 0.9;
+const GRID_MIN_N = 3;
+const GRID_SHARE = 0.6;
+const VETO_RATE = 0.7;
+const RELATED = 0.15;
 const GRID_SIZE = 9;
 const PICK_SIZE = 8;
 const MAX_WRONG = 4;
-const MAX_Q = 7; // never more questions than this: then the guess (the 3 options)
-const EXPRESS_Q = 3; // 🦖 starving: hunger, one mood question, one sensation question, then 3 options
-const QUOTA = 2; // questions per stage (body, mood, craving, feel): the quiz goes broad to fine and never back
-const KNOWN_W = 0.5; // an answer known without asking (weather, history) counts half of a tapped one
-const PAIR_W = 0.6; // two answers to one question: each counts 0.6
-const NEED_MASS = 0.3; // a question with `need` is asked when this much of the posterior has one of its tags
-const FEEL = ["bite", "warmth", "after"]; // the express path's "sensation" question
+const MAX_Q = 7;
+const EXPRESS_Q = 3;
+const QUOTA = 2;
+const KNOWN_W = 0.5;
+const PAIR_W = 0.6;
+const NEED_MASS = 0.3;
+const FEEL = ["bite", "warmth", "after"];
 const SHORTLIST_SIZE = 3;
 const MAX_DUELS = 1;
 /** Interpolate two effect maps: t = 0 is a, t = 1 is b. */
@@ -36,7 +36,7 @@ export function lerpFx(a, b, t) {
 }
 /** The bucket (0..n-1) of a slider position t in [0,1]; a slider counts as n buckets for information gain, undo and resume. */
 export const bucketOf = (q, t) => Math.round(Math.min(1, Math.max(0, t)) * (q.answers.length - 1));
-export const PICK_BELOW = 0.9; // item 13: a top food under this ends on 3 options, not one guess (tuned in tests/sim.js)
+export const PICK_BELOW = 0.9;
 
 function hashStr(s) {
   let h = 2166136261;
@@ -61,19 +61,19 @@ export class FoodQuiz {
    * @param {{rnd?: () => number, shuffle?: boolean}} opts
    */
   constructor(foods, questions, prior = {}, opts = {}) {
-    this.foods = foods.map((f) => ({ ...f, set: new Set([...f.tags, ...(f.cuisine ?? []).map((c) => `c:${c}`)]) })); // cuisines are probed as "c:<id>" tags (js/data/cuisines.js)
+    this.foods = foods.map((f) => ({ ...f, set: new Set([...f.tags, ...(f.cuisine ?? []).map((c) => `c:${c}`)]) }));
     this.byId = new Map(this.foods.map((f) => [f.id, f]));
     this.questions = questions;
     this.rnd = opts.rnd ?? Math.random;
     this.learned = opts.learned ?? {};
     this.doShuffle = opts.shuffle ?? true;
     this.pickBelow = opts.pickBelow ?? PICK_BELOW;
-    this.pickDistinct = opts.pickDistinct ?? false; // true: shortlist() (not near-twins); false: plain top 3, measured 1-2 points better top-3
+    this.pickDistinct = opts.pickDistinct ?? false;
     this.qById = new Map(questions.map((q) => [q.id, q]));
-    this.seen = opts.seen ?? []; // question ids of her last quizzes, most recent first: a variant she saw lately waits
-    this.salt = opts.salt ?? ""; // tests: a different choice of variants from the same answers
-    this.novel = opts.novel ?? {}; // {familiar, fresh}: food id → effect from her history (js/engine/prior.js)
-    this.known = {}; // axis → {q, i, k}: answered without asking (weather, history)
+    this.seen = opts.seen ?? [];
+    this.salt = opts.salt ?? "";
+    this.novel = opts.novel ?? {};
+    this.known = {};
     this.s = {
       score: Object.fromEntries(this.foods.map((f) => [f.id, prior[f.id] ?? 0])),
       rejected: [],
@@ -83,7 +83,7 @@ export class FoodQuiz {
       gridDone: false,
       wrong: 0,
       lastGuessAt: -99,
-      big: false, // 🦖 hunger (R11)
+      big: false,
       result: null,
     };
     this.trail = [];
@@ -93,7 +93,7 @@ export class FoodQuiz {
     this.minGain = MIN_GAIN;
     this.likCache = new Map();
     this.dimCache = new Map();
-    this.memo = new Map(); // state → the step shown there: undo lands on the very same screen (same question order, same duel)
+    this.memo = new Map();
     for (const [axis, k] of Object.entries(opts.known ?? {})) {
       const q = questions.find((x) => x.axis === axis && x.answers.some((a) => a.k === k));
       if (!q) continue;
@@ -103,7 +103,6 @@ export class FoodQuiz {
     }
   }
 
-  // ---------- state ----------
   snap() {
     this.stack.push({ s: structuredClone(this.s), trail: [...this.trail] });
   }
@@ -127,7 +126,6 @@ export class FoodQuiz {
     return rest;
   }
 
-  // ---------- probabilities ----------
   live() {
     const rej = new Set(this.s.rejected);
     return this.foods.filter((f) => !rej.has(f.id));
@@ -154,12 +152,10 @@ export class FoodQuiz {
     }
     if (a.dyn) for (const [k, v] of Object.entries(a.dyn)) d += v * w * (this.novel[k]?.[f.id] ?? 0);
     const learned = this.learned[`${q.id}:${q.answers.indexOf(a)}`];
-    // Learned bonuses only add associations the answer does not already score (no double counting).
     if (learned) for (const [tag, v] of Object.entries(learned)) if (set.has(tag) && !(tag in a.fx)) d += v * w;
     return d;
   }
 
-  // ---------- information gain (item 14) ----------
   /** P(answer | food) for every food × answer of q: (1-ε)·[answer matches the food's tags] + ε·uniform. Cached per question and hunger mode. */
   lik(q) {
     const key = `${q.id}|${this.s.big ? 1 : 0}`;
@@ -254,7 +250,6 @@ export class FoodQuiz {
       .sort((a, b) => b.v - a.v);
     if (!scored.length) return null;
     const near = scored.filter((x) => x.v >= NEAR_BEST * scored[0].v);
-    // Chosen from the state, not rnd(): reopening the link replays her answers and must land on the same question.
     const pick = near[hashStr(JSON.stringify(this.s)) % near.length];
     return { q: pick.q, v: scored[0].v };
   }
@@ -263,7 +258,7 @@ export class FoodQuiz {
   bestQuestion(ranked) {
     const asked = this.s.asked;
     if (asked.length >= MAX_Q) return null;
-    if (!asked.length) return { q: this.variant("hunger"), v: 1 }; // she is always asked about hunger first
+    if (!asked.length) return { q: this.variant("hunger"), v: 1 };
     const done = new Set(asked.map((id) => this.qById.get(id)?.axis));
     const axes = [...new Set(this.questions.map((q) => q.axis))].filter((a) => !done.has(a) && !this.known[a]);
     if (this.s.big) {
@@ -322,7 +317,7 @@ export class FoodQuiz {
     const p2 = b?.p ?? 0;
     const n = this.s.n;
     if (p1 >= CONFIDENT_P || n >= 16) return true;
-    const twin = ranked.slice(1, 3).some((x) => jaccard(this.byId.get(a.f.id).set, this.byId.get(x.f.id).set) >= TWIN); // near-twins at the top: keep asking until one of them is clearly ahead
+    const twin = ranked.slice(1, 3).some((x) => jaccard(this.byId.get(a.f.id).set, this.byId.get(x.f.id).set) >= TWIN);
     if (twin && n < 12) return false;
     if (this.s.big) return (n >= 4 && p1 >= 0.2 && p1 >= 1.5 * p2) || n >= 10;
     return n >= 6 && p1 >= 0.25 && p1 >= 1.8 * p2;
@@ -353,7 +348,6 @@ export class FoodQuiz {
     return { type: "q", q, order };
   }
 
-  // ---------- schedule (§6.4) ----------
   next() {
     const key = JSON.stringify(this.s);
     let st = this.memo.get(key);
@@ -370,10 +364,9 @@ export class FoodQuiz {
     const nq = this.s.asked.length;
     if (this.s.big && nq >= EXPRESS_Q)
       return { type: "pick", express: true, items: ranked.slice(0, SHORTLIST_SIZE).map((x) => x.f) };
-    if (n >= MAX_Q) return this.guessStep(ranked); // grid and duel count too: 7 steps, then the guess
+    if (n >= MAX_Q) return this.guessStep(ranked);
     if (!nq) return this.qStep(this.bestQuestion(ranked).q);
 
-    // Each step is scored by expected information gain; grid and duel win only when they beat the best question.
     const best = this.bestQuestion(ranked);
     const bestV = best?.v ?? 0;
     const canExtra = n >= GRID_MIN_N && ranked.length >= 3;
@@ -392,7 +385,6 @@ export class FoodQuiz {
     return this.qStep(best.q);
   }
 
-  // ---------- answers ----------
   /** Soft update: foods are scaled by how likely answer i is for them, so one wrong answer removes nothing. m = weight (a pair counts 0.6 each). */
   soft(q, i, m = 1) {
     const L = this.lik(q);

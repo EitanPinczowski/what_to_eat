@@ -14,7 +14,10 @@ export const STR = {
   weatherTease: { rain: "גשם בחוץ… מרק?", cold: "קר בחוץ… משהו חם?", hot: "חם בחוץ… משהו קר?" },
   meter: "כמה אני בטוח",
   qn: (n) => `שאלה ${n}`,
-  craving: { line: (list) => `בא לך משהו ${list} —` },
+  craving: {
+    line: (list) => `בא לך משהו ${list} —`,
+    tag: { hot: "חם", cold: "קר", comfort: "מנחם", salty: "מלוח", sweet: "מתוק", sour: "חמצמץ", spicy: "חריף", crunchy: "קראנצ׳י", creamy: "קרמי", saucy: "עם רוטב", cheesy: "גבינתי", fried: "מטוגן", light: "קליל", healthy: "בריא", heavy: "כבד", junk: "ג׳אנק", fancy: "מפנק", home: "ביתי", quick: "מהיר" },
+  },
   loading: "רגע…",
   escapeScreen: {
     text: "אז מה בא לך?",
@@ -45,7 +48,6 @@ export const STR = {
     express: "רעבה כזאת? אין זמן. מה מ-3 האלה?",
   },
 
-  // Result mood titles (R8), chosen by the winning food's tags; first match wins.
   moods: [
     { tags: ["comfort", "heavy"], t: "פחמימה מחבקת 🫶" },
     { tags: ["junk"], t: "יום ג׳אנק מגיע לך 😈" },
@@ -80,7 +82,6 @@ export const STR = {
     again: "עוד סיבוב?",
     already: (me) => `כבר שלחת ל${me} 💌`,
   },
-  // Eitan's one-tap replies (codes match ACK_CODES in js/store/store.js). `line` is what she sees, as Eitan.
   ack: {
     title: "לעדכן אותה?",
     seen: { e: "👀", t: "ראיתי", line: "ראיתי! 👀" },
@@ -88,14 +89,13 @@ export const STR = {
     onway: { e: "🚗", t: "בדרך אלייך", line: "אני בדרך אלייך 🚗" },
     there: { e: "🍽️", t: "מחכה לך שם", line: "מחכה לך שם 🍽️" },
   },
-  // Her place vote (Eitan offers 2-3 places; she picks one or "neither").
   vote: {
     title: "איפה בא לך?",
     sub: "איתן הציע כמה מקומות",
     neither: "אף אחד מהם 🙅‍♀️",
     picked: (name) => `בחרת: ${name} 🎯`,
     pickedNone: "אמרת לאיתן שאף אחד מהם לא מתאים",
-    ntfy: (her) => `${her} ענתה על המקומות 📍 — פתח את האפליקציה`, // public topic: no place names
+    ntfy: (her) => `${her} ענתה על המקומות 📍 — פתח את האפליקציה`,
   },
   ntfy: (her) => `${her} סיימה 🎉 — פתח את האפליקציה`,
   importAsk: (c) => (c.t === "rate" ? `לקלוט ${Object.keys(c.r).length} דירוגים מהקישור? הם יחליפו דירוגים קיימים.` : `לקלוט את התוצאה „${c.fn}” מהקישור?`),
@@ -103,7 +103,6 @@ export const STR = {
   imported: "התוצאה נקלטה 🎉",
   importedOld: "את התוצאה הזאת כבר קלטנו 👍",
 
-  // Owner screens (Eitan).
   owner: {
     home: "בית",
     tiles: {
@@ -131,7 +130,6 @@ export const STR = {
       opened: (her) => `${her} פתחה`,
       step: (her, n) => `${her} פתחה · שאלה ${n}`,
       done: (her) => `${her} סיימה! 🎉`,
-      // With a time (item 8): rel is a phrase from `rel` below.
       sent: (rel) => `נשלח ${rel}`,
       openedAgo: (her, rel) => `${her} פתחה ${rel}`,
       stepAgo: (her, n, rel) => `${her} פתחה · שאלה ${n} · ${rel}`,
@@ -144,7 +142,6 @@ export const STR = {
       yesterday: "אתמול",
       days: (n) => `לפני ${n} ימים`,
     },
-    // Delivery receipt of the notification she triggered (live/quiz.push).
     receipt: {
       ok: "ההתראה אליך נשלחה ✓",
       fail: "ההתראה אליך לא נשלחה ✗ — אולי להפעיל אותה מחדש בהגדרות",
@@ -206,7 +203,6 @@ export const STR = {
     extrasPh: "אפשר כמה, עם פסיקים",
     send: (me) => `שליחה ל${me} 💌`,
     ntfy: (her) => `${her} סיימה היכרות 🃏 — פתח את האפליקציה`,
-    // owner side
     ownerTitle: (her) => `היכרות עם ${her}`,
     onlyNew: (n) => `רק מה שעוד לא דירגה (${n})`,
     all: "הכל מההתחלה",
@@ -392,7 +388,6 @@ export const STR = {
     button: "📲 להתקין עכשיו",
   },
 
-  // Save marker (owner and guest). Worded so it fits both: no gendered verbs.
   save: {
     pending: "ממתין לשליחה…",
     saved: "נשמר ✓",

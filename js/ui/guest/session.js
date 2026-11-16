@@ -1,5 +1,5 @@
 // Guest session: live doc + resume, finish/send, ntfy ping, feedback, error log, #r= WhatsApp fallback.
-import { notifyOpened, notifyReport, mergeDead, pushFood } from "../../push.js";
+const push = () => import("../../push.js"); // loaded on first use: keeps it out of the start-up graph
 import { STR } from "../../data/strings.js";
 import { newId } from "../../share/codec.js";
 import { buildResultLink } from "../../share/links.js";
@@ -68,8 +68,8 @@ export function resultEntry(out, form, at = new Date().toISOString()) {
     note: cut(form.note, 300),
     trail: trail.slice(-40).map((s) => cut(s, 120)),
     top: (top ?? []).slice(0, 5),
-    ...(out.rej?.length ? { rej: out.rej.slice(0, 10).map((id) => cut(id, 40)) } : {}), // item 18: turned-down foods lower the prior a little
-    ...(out.ans ? { ans: out.ans.slice(0, 30).map(([q, i]) => `${q}:${i}`) } : {}), // Firestore: no nested arrays
+    ...(out.rej?.length ? { rej: out.rej.slice(0, 10).map((id) => cut(id, 40)) } : {}),
+    ...(out.ans ? { ans: out.ans.slice(0, 30).map(([q, i]) => `${q}:${i}`) } : {}),
     ...(out.stats ? { stats: out.stats } : {}),
   };
 }
@@ -85,7 +85,7 @@ export function finishForm(root, out, sendLabel, onSend) {
     send: async (_a, _e, btn) => {
       btn.disabled = true;
       btn.textContent = STR.result.sending;
-      out.seal?.(); // while the send runs, back must not undo the result under it
+      out.seal?.();
       await onSend({ ...form });
     },
   };
@@ -109,24 +109,22 @@ export async function runGuest(root, store, { base = location.origin + location.
   let screen = "intro";
   installErrorLog(store, () => screen);
   mountSaveStatus(store, STR.save);
-  notifyOpened(s, { sent: false }); // once per page open (opt-in setting, off by default)
+  push().then((m) => m.notifyOpened(s, { sent: false })).catch(() => {}); // harmless: opt-in ping, once per page open
 
   const live = store.doc("live", "quiz");
-  // put() replaces the doc: keep what Eitan's side wrote (send time) and the dead-subscription list she found.
   const carry = () => {
     const cur = store.doc("live", "quiz");
     return { ...(cur?.sentAt ? { sentAt: cur.sentAt } : {}), ...(cur?.dead?.length ? { dead: cur.dead } : {}) };
   };
   const saveLive = (data) => store.put("live", "quiz", { ...data, ...carry(), at: new Date().toISOString() }).catch(saveFailed);
 
-  // After a notification send: write the receipt (quiz only) and the subscriptions the relay called gone (410)
-  // into live/quiz; Eitan's app prunes `dead` on its next start (push.js repairOnStart).
-  const notifyRecord = async (kind, opts) => {
-    const r = await notifyReport(s, kind, undefined, opts);
+  const notifyRecord = async (kind, food) => {
+    const m = await push();
+    const r = await m.notifyReport(s, kind, undefined, { food: m.pushFood(food) });
     if (!r) return;
     const cur = store.doc("live", "quiz");
     if (!cur) return;
-    const dead = mergeDead(cur.dead, r.dead);
+    const dead = m.mergeDead(cur.dead, r.dead);
     const { id: _id, ...rest } = cur;
     await store.put("live", "quiz", { ...rest, ...(kind === "quiz" ? { push: r.receipt } : {}), ...(dead.length ? { dead } : {}) });
   };
@@ -155,7 +153,6 @@ export async function runGuest(root, store, { base = location.origin + location.
     screen = actions?.length ? "quiz" : "intro";
     const opened = live?.opened && actions ? live.opened : new Date().toISOString();
     saveLive({ opened, n: actions?.length ?? 0, actions: actions ?? [], trail: [], finished: false });
-    // Never wait for the network before the first screen: use the saved reading, refresh it in the background.
     const weather = actions?.length ? null : cachedWeather(room.settings?.city);
     if (!actions?.length && !weather) fetchWeather(room.settings?.city).catch(() => {}); // harmless: best effort
     startGuestQuiz(root, {
@@ -187,11 +184,11 @@ export async function runGuest(root, store, { base = location.origin + location.
             SEND_TIMEOUT,
           );
           ping(s.ntfy, STR.ntfy(s.her));
-          notifyRecord("quiz", { food: pushFood(out.food) }).catch(saveFailed);
-          sent(); // stays sealed: back on the sent screen never undoes or resends the result
+          notifyRecord("quiz", out.food).catch(saveFailed);
+          sent();
         } catch {
           out.seal?.(false);
-          out.step?.(() => finishScreen(out, opened)); // back from the WhatsApp fallback = the finish screen again
+          out.step?.(() => finishScreen(out, opened));
           fallback(fallbackPayload(id, entry), out);
         }
     });
@@ -209,7 +206,6 @@ export async function runGuest(root, store, { base = location.origin + location.
     watchVote();
   };
 
-  // Eitan's reply lands in the same live doc; update the line in place (no re-render, no repeat confetti).
   let unAck = null;
   const showAck = (code) => {
     const el = root.querySelector?.("[data-testid=ack]");
@@ -217,7 +213,7 @@ export async function runGuest(root, store, { base = location.origin + location.
     if (!el || !line || el.textContent === line) return;
     el.textContent = line;
     el.classList.remove("ack-in");
-    void el.offsetWidth; // restart the pop animation (CSS disables it under prefers-reduced-motion)
+    void el.offsetWidth;
     el.classList.add("ack-in");
   };
   const watchAck = () => {
@@ -226,7 +222,6 @@ export async function runGuest(root, store, { base = location.origin + location.
     unAck = store.subscribe((what) => what === "live" && screen === "sent" && showAck(store.doc("live", "quiz")?.ack));
   };
 
-  // Eitan's place vote (live/vote): drawn into its own section so the rest of the screen stays put.
   let unVote = null;
   const drawVote = () => {
     const el = root.querySelector?.("[data-testid=vote]");
@@ -253,7 +248,7 @@ export async function runGuest(root, store, { base = location.origin + location.
         const code = b?.dataset.arg;
         if (!code || !(code === VOTE_NONE || store.vote()?.ids.includes(code))) return;
         if (!voteTap(lastVote, code, store.vote()?.pick)) return;
-        store.castVote(code).catch(saveFailed); // local copy updates synchronously; the write may wait on the network
+        store.castVote(code).catch(saveFailed);
         ping(s.ntfy, STR.vote.ntfy(s.her));
         notifyRecord("vote").catch(saveFailed);
       });

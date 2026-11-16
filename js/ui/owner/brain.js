@@ -90,7 +90,6 @@ export function brainViews({ root, store, stack, views, common }) {
     });
   };
 
-  // One food: rate + note; custom foods can be edited or deleted.
   views.food = () => {
     const f = foods().find((x) => x.id === state.open);
     if (!f) return stack.back();

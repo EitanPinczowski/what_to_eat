@@ -1,7 +1,7 @@
 // "Food wrapped": monthly recap computed on Eitan's device from stored history. No new data.
 // The result is a small summary that travels inside the link (#w=), so no Firestore doc and no rules change.
 import { hitFrom, statsRank } from "./learn.js";
-export const MIN_MEALS = 3; // below this the guest sees one friendly "not enough yet" card
+export const MIN_MEALS = 3;
 
 /** "YYYY-MM" (local time) of an ISO timestamp, or "" when it is not a date. */
 export function monthKey(iso) {

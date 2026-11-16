@@ -1,6 +1,5 @@
 // Place picker (PLAN.md §5.5, §7.4; spec-loops-places-design.md §2.7).
 // score = 10 if it serves the food | 2 × shared cuisine tags · + 0.8 × rating · −3 if visited this week
-//         · −2 per price step above her budget. Hidden: closed-on-Shabbat (Fri evening → Sat evening) and closed right now.
 import { CUISINE } from "../data/constants.js";
 import { placeCuisines } from "./cuisine.js";
 import { STR } from "../data/strings.js";
@@ -30,7 +29,6 @@ export function openStatus(place, now = new Date()) {
     const start = r.d * DAY_MIN + r.o;
     const end = r.d * DAY_MIN + r.c + (r.c <= r.o ? DAY_MIN : 0);
     for (const shift of [0, week]) {
-      // shift = week handles a Saturday range that spills into Sunday.
       const left = end - (t + shift);
       if (t + shift >= start && left > 0) return { open: true, closesIn: left };
     }
@@ -120,7 +118,6 @@ export function weightedPick(scored, rnd = Math.random) {
   return scored.at(-1);
 }
 
-// Fallbacks when no saved place fits.
 export const mapsUrl = (q) => `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(q)}`;
 export const recipeUrl = (food) => `https://www.youtube.com/results?search_query=${encodeURIComponent(`מתכון ${food}`)}`;
 export const woltUrl = (q) => `https://wolt.com/he/isr/search?q=${encodeURIComponent(q)}`;

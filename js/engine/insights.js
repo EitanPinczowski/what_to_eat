@@ -4,9 +4,9 @@ import { FoodQuiz } from "./quiz.js";
 import { hitFrom, statsRank } from "./learn.js";
 import { monthKey, prevMonth } from "./wrapped.js";
 
-export const MIN_ENTRIES = 3; // below this the screen shows only its empty state
-export const MIN_ASKED = 5; // a question needs this many answers before it can be called useless
-export const USELESS_RATE = 0.2; // changed the top guess in at most this share of its answers
+export const MIN_ENTRIES = 3;
+export const MIN_ASKED = 5;
+export const USELESS_RATE = 0.2;
 
 const pct = (n, d) => (d ? Math.round((n / d) * 100) : null);
 const topOf = (counts, n = 5) => Object.entries(counts).sort((a, b) => b[1] - a[1] || (a[0] < b[0] ? -1 : 1)).slice(0, n);

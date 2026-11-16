@@ -1,6 +1,5 @@
 // Result mood title (R8): first mood whose tags all appear on the food.
 import { STR } from "../data/strings.js";
-import { TAGS } from "../data/tags.js";
 import { QUESTIONS } from "../data/questions.js";
 
 export function moodFor(food, moods = STR.moods) {
@@ -8,8 +7,6 @@ export function moodFor(food, moods = STR.moods) {
   return m ? m.t : STR.moodDefault;
 }
 
-// The craving card (1b): what her answers say, as chips and one reflecting line. Tags that read as an adjective only.
-const CHIP = "hot cold comfort salty sweet sour spicy crunchy creamy saucy cheesy fried light healthy heavy junk fancy home quick".split(" ");
 const MAX_CHIPS = 3;
 const MIN_SCORE = 1.5;
 
@@ -27,7 +24,7 @@ export function cravingSummary(answers, questions = QUESTIONS) {
       const ans = q?.answers[j];
       if (!ans) continue;
       for (const [tag, v] of Object.entries(ans.fx)) {
-        if (v <= 0 || !CHIP.includes(tag)) continue;
+        if (v <= 0 || !STR.craving.tag[tag]) continue;
         const e = (score[tag] ??= { v: 0, own: 0 });
         if (!order.includes(tag)) order.push(tag);
         const w = v * (idx.length > 1 ? 0.6 : 1) * (inferred ? 0.5 : 1);
@@ -37,7 +34,7 @@ export function cravingSummary(answers, questions = QUESTIONS) {
     }
   }
   const top = order.filter((t) => score[t].v >= MIN_SCORE).sort((a, b) => score[b].v - score[a].v).slice(0, MAX_CHIPS);
-  const chips = top.map((tag) => ({ tag, label: TAGS[tag], inferred: score[tag].own === 0 }));
+  const chips = top.map((tag) => ({ tag, label: STR.craving.tag[tag], inferred: score[tag].own === 0 }));
   const names = chips.map((c) => c.label);
   const list = names.length > 1 ? `${names.slice(0, -1).join(", ")} ו${names.at(-1)}` : names[0];
   return { chips, line: list ? STR.craving.line(list) : "" };

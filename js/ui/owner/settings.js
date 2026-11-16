@@ -49,7 +49,7 @@ export async function moveToNewRoom(store, { keepData = true, storage = localSto
   if (keepData) await withTimeout(next.importJSON(store.exportJSON()), timeout);
   else await withTimeout(next.update((db) => (db.settings = { ...store.get().settings, ntfy: "" })), timeout);
   storage.setItem(ROOM_KEY, id);
-  if (keepData) await withTimeout(store.retire(), timeout).catch((e) => console.error("retire old room", e)); // best effort: the move already happened
+  if (keepData) await withTimeout(store.retire(), timeout).catch((e) => console.error("retire old room", e));
   return id;
 }
 
@@ -109,7 +109,6 @@ export function settingsViews({ root, store, views, common, base, mode }) {
       ...common,
       pushOn: async () => {
         try {
-          // fresh: a stored subscription may be dead, so get a new one and replace the old entries
           const old = [knownEndpoint(), (await currentSub())?.endpoint].filter(Boolean);
           const sub = await subscribeThisDevice(undefined, undefined, { fresh: true });
           await withTimeout(store.update((db) => (db.settings.push = addSub(old.reduce(removeSub, db.settings.push), sub))), WRITE_TIMEOUT);
@@ -128,7 +127,7 @@ export function settingsViews({ root, store, views, common, base, mode }) {
         const res = await notifyAll({ push: [await currentSub()].filter(Boolean) }, "test");
         toast(res.some((c) => c === 201) ? G.push.testSent : G.push.testFail);
         const cur = await currentSub();
-        if (cur && res.includes(410)) store.update((db) => (db.settings.push = pruneDead(db.settings.push, [epHash(cur.endpoint)]))).catch(saveFailed); // the relay says it is gone: drop it
+        if (cur && res.includes(410)) store.update((db) => (db.settings.push = pruneDead(db.settings.push, [epHash(cur.endpoint)]))).catch(saveFailed);
       },
       pushOff: async () => {
         const ep = await unsubscribeThisDevice();
@@ -147,7 +146,6 @@ export function settingsViews({ root, store, views, common, base, mode }) {
         const v = (k, n) => String(fd.get(k) ?? "").trim().slice(0, n);
         const baseUrl = normBase(fd.get("base"));
         if (baseUrl === null) return toast(G.badBase);
-        // Offline-first: a write queued with no ack in 6 s counts as saved; a refusal shows an error.
         const queued = Symbol();
         const res = await Promise.race([
           store
@@ -176,7 +174,7 @@ export function settingsViews({ root, store, views, common, base, mode }) {
         if (chk.bad) return toast(STR.importBad);
         if (chk.dup) return toast(STR.importedOld);
         if (!confirm(STR.importAsk(chk.clean))) return;
-        const { fresh } = await withTimeout(store.importResult(r.payload), WRITE_TIMEOUT).catch(() => ({ fresh: true })); // no ack in time: it is applied locally and syncs later
+        const { fresh } = await withTimeout(store.importResult(r.payload), WRITE_TIMEOUT).catch(() => ({ fresh: true }));
         toast(fresh ? STR.imported : STR.importedOld);
       },
       rejoin: async (fd) => {
@@ -250,7 +248,7 @@ async function fillPush(root, store) {
   const P = G.push;
   const support = pushSupport();
   const sub = support === "unsupported" ? null : await currentSub();
-  if (!st.isConnected) return; // the view changed while waiting
+  if (!st.isConnected) return;
   const on = !!sub && hasSub(store.get().settings.push, sub.endpoint);
   const state = on ? "on" : support;
   st.textContent = P[state];

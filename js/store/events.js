@@ -1,6 +1,5 @@
 // Event log (item 29). Loaded lazily by Store.put and never awaited: a failure here must not touch the quiz.
 // Each change to live/quiz, live/vote or history is turned into small facts in rooms/{id}/events
-// (kinds: sent opened step guess finish vote going howItWas push). No names, no free text.
 import { weatherKind } from "../engine/weather.js";
 import { cachedWeather } from "../weather.js";
 

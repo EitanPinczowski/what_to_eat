@@ -1,6 +1,5 @@
 // Guest quiz screens (spec-flow-firebase.md §2.1). Also used for the owner's "she's next to me" mode.
 // One question per screen, tap = answer. Escapes: 🤫 type it · ↪︎ undo. No skip on her screens (R5).
-// Every step is kept as a small action so the quiz can resume on another browser (live doc).
 import { FOODS } from "../../data/foods.js";
 import { QUESTIONS, questionText } from "../../data/questions.js";
 import { STR } from "../../data/strings.js";
@@ -68,9 +67,6 @@ export function startGuestQuiz(root, opts) {
   const me = room.settings?.me ?? "";
   let gridVeto = new Set();
   let step = null;
-  // Phone back = in-app back: undo the last step (engine too), close the escape/feedback screen, step back from finish,
-  // and from the first question return to the intro.
-  // History: one entry per step (+1 base entry so back on the first screen stays), all owned by this scope.
   const layer = BackLayer.shared(opts.win).scope();
   const introShown = intro && !actions.length;
   let onIntro = introShown;
@@ -229,7 +225,6 @@ export function startGuestQuiz(root, opts) {
     const ans = answered.filter((a) => a.i >= 0).map((a) => [a.q, a.i]);
     const rej = rejectedIds(actions, r.f);
     const out = { result: r, food, rej, mood: moodFor(food), trail: [...z.trail], top: z.ranked().slice(0, 5).map((x) => x.f.id), ans, stats };
-    // The result screen is a step like any other: back un-chooses it (engine undo), so the history entries stay.
     out.back = goBack;
     out.step = (fn) => (uiSteps.push(fn), layer.push(onBack));
     out.seal = (on = true) => (sealed = on);

@@ -1,6 +1,5 @@
 // Food seed: [id, name, emoji, "kind tags…", season months|null, cuisine ids]. Ids are stable: never rename.
 export const FOODS = [
-  // kiosk snacks
   ["bamba", "במבה", "🥜", "snack salty kiosk israeli junk couch creamy", null, ["snack"]],
   ["bissli", "ביסלי", "🍘", "snack salty crunchy kiosk israeli junk fried quick", null, ["snack"]],
   ["klik", "קליק", "🍫", "snack sweet crunchy choco kiosk israeli couch", null, ["snack"]],
@@ -19,12 +18,10 @@ export const FOODS = [
   ["choco_bar", "שוקולד פרה", "🐄", "snack sweet choco creamy kiosk israeli couch", null, ["snack"]],
   ["shoko_bag", "שוקו בשקית", "🧃", "snack sweet choco cold kiosk israeli quick light", null, ["snack"]],
   ["instant_noodles", "נודלס אינסטנט", "🍜", "snack noodles hot salty quick couch junk kiosk", null, ["asian"]],
-  // road stop (item 16): what she grabs at a petrol station
   ["coffee_pastry", "קפה ומאפה", "☕", "snack sweet doughy hot creamy kiosk", null, ["cafe"]],
   ["protein_bar", "חטיף אנרגיה", "💪", "snack sweet crunchy healthy hands quick kiosk veg", null, ["snack"]],
   ["yogurt_cup", "יוגורט", "🫙", "snack sweet cold creamy fruit healthy kiosk", null, ["snack"]],
   ["iced_coffee", "אייס קפה", "🧋", "snack sweet cold creamy quick kiosk", null, ["cafe"]],
-  // sweets & desserts
   ["ice_cream", "גלידה", "🍨", "dessert sweet cold creamy resto street hands couch", null, ["sweet"]],
   ["malabi", "מלבי", "🍮", "dessert sweet cold creamy middle israeli street", null, ["sweet"]],
   ["sufganiya", "סופגנייה", "🍩", "dessert sweet doughy fried israeli heavy hot", [11, 12], ["sweet"]],
@@ -45,7 +42,6 @@ export const FOODS = [
   ["sorbet", "סורבה", "🍧", "dessert sweet cold fruit light healthy sour resto", null, ["sweet"]],
   ["cinnamon_roll", "סינבון", "🥮", "dessert sweet doughy creamy hot american comfort", null, ["sweet"]],
   ["baklava", "בקלאווה", "🥧", "dessert sweet crunchy middle fancy israeli hands", null, ["sweet"]],
-  // street
   ["falafel", "פלאפל", "🧆", "meal street middle israeli bread fried hands veg quick hot", null, ["israeli"]],
   ["sabich", "סביח", "🥙", "meal street middle israeli bread egg veg saucy messy hands", null, ["israeli"]],
   ["shawarma", "שווארמה", "🌯", "meal street middle israeli bread meaty heavy hands messy saucy junk hot", null, ["israeli"]],
@@ -59,7 +55,6 @@ export const FOODS = [
   ["kubbeh", "מרק קובה", "🍲", "meal middle israeli hot saucy meaty sour home comfort", null, ["israeli"]],
   ["corn", "תירס חם", "🌽", "snack hot salty street hands light veg", null, ["israeli"]],
   ["schnitzel_baguette", "שניצל בבגט", "🥖", "meal bread meaty fried hands street israeli hot crunchy quick", null, ["israeli"]],
-  // delivery meals
   ["burger", "המבורגר", "🍔", "meal meaty bread american junk heavy hands resto hot", null, ["american"]],
   ["fries", "צ׳יפס", "🍟", "snack salty fried junk crunchy hot american couch", null, ["american"]],
   ["pizza", "פיצה", "🍕", "meal doughy cheesy italian hot couch junk hands veg", null, ["italian"]],
@@ -92,7 +87,6 @@ export const FOODS = [
   ["greek_salad", "סלט יווני", "🥗", "meal light healthy veg cold cheesy sour", null, ["cafe"]],
   ["sandwich", "כריך", "🥪", "meal bread cold quick hands home cheesy", null, ["cafe"]],
   ["tomato_soup", "מרק עגבניות", "🍅", "meal hot saucy veg light comfort home creamy sour", null, ["cafe"]],
-  // breakfast
   ["shakshuka", "שקשוקה", "🍳", "meal egg breakfast hot saucy spicy israeli bread home", null, ["israeli"]],
   ["il_breakfast", "ארוחת בוקר ישראלית", "🥒", "meal breakfast egg bread cheesy israeli resto fancy light", null, ["israeli", "cafe"]],
   ["omelette", "חביתה", "🥚", "meal egg breakfast hot quick home cook light", null, ["cafe"]],
@@ -102,7 +96,6 @@ export const FOODS = [
   ["avocado_toast", "טוסט אבוקדו", "🥑", "meal breakfast bread healthy light veg resto fancy egg", null, ["cafe"]],
   ["bagel_salmon", "בייגל סלמון", "🥯", "meal breakfast bread fish creamy cold american", null, ["american", "cafe"]],
   ["labneh", "לאפה לבנה וזעתר", "🌿", "snack bread middle israeli sour creamy breakfast", null, ["israeli"]],
-  // home comfort
   ["chicken_rice", "עוף ואורז", "🍗", "meal meaty rice home cook hot comfort", null, ["israeli"]],
   ["mac_cheese", "מקרוני וגבינה", "🧀", "meal noodles cheesy creamy home comfort hot american veg", null, ["american"]],
   ["chicken_soup", "מרק עוף", "🍲", "meal hot meaty home comfort light saucy healthy", null, ["israeli"]],
@@ -112,7 +105,6 @@ export const FOODS = [
   ["meatballs", "קציצות ברוטב", "🍝", "meal meaty saucy hot home comfort middle israeli rice", null, ["israeli"]],
   ["baked_potato", "תפוח אדמה אפוי", "🍠", "meal hot creamy cheesy home veg comfort couch", null, ["american"]],
   ["hamin", "חמין", "🥘", "meal meaty heavy hot home comfort israeli egg middle", null, ["israeli"]],
-  // fresh
   ["il_salad", "סלט ישראלי", "🥗", "snack light healthy veg cold sour israeli home crunchy", null, ["israeli"]],
   ["watermelon_feta", "אבטיח ובולגרית", "🍉", "snack fruit cheesy cold salty light", [6, 7, 8, 9], ["cafe"]],
   ["quinoa_salad", "סלט קינואה", "🥗", "meal healthy light veg cold sour fancy resto", null, ["cafe"]],

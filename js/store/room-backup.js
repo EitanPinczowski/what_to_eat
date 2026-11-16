@@ -14,9 +14,6 @@ export function roomFromLink(text) {
   return r.room && ["q", "s", "join"].includes(r.kind) ? r.room : null;
 }
 
-// ---------- room id backup (item 10) ----------
-// localStorage can be evicted (storage pressure, "clear site data"). A second copy lives in IndexedDB so that
-// losing the first never silently starts a new empty room. Backup shape: { get(): Promise<string|null>, set(id): Promise<void> }.
 const DB_NAME = "mabalach_backup";
 
 /** IndexedDB key-value backup; null where IndexedDB is missing (private mode, tests in Node). */

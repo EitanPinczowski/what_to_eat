@@ -5,7 +5,7 @@ import { STR } from "./data/strings.js";
 export async function registerSW(onUpdate, nav = globalThis.navigator, win = globalThis.window) {
   if (!nav?.serviceWorker || win?.location?.protocol === "file:") return null;
   const isLocal = /^(localhost|127\.0\.0\.1)$/.test(win?.location?.hostname ?? "");
-  if (isLocal && !win.location.search.includes("sw")) return null; // dev + e2e: no cache surprises (add ?sw to test)
+  if (isLocal && !win.location.search.includes("sw")) return null;
   const reg = await nav.serviceWorker.register("sw.js").catch(() => null);
   if (!reg) return null;
   let reloading = false;
@@ -18,7 +18,6 @@ export async function registerSW(onUpdate, nav = globalThis.navigator, win = glo
     const w = reg.installing;
     w?.addEventListener("statechange", () => w.state === "installed" && offer(w));
   });
-  // Check again when the app comes back to the front (PWAs stay open for days).
   win.document?.addEventListener("visibilitychange", () => win.document.visibilityState === "visible" && reg.update().catch(() => {})); // harmless: best effort
   return reg;
 }

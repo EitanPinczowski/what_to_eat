@@ -11,7 +11,7 @@ const clean = (s) => {
     t = t.replace(/\+/g, " ");
   }
   t = t.replace(/\s+/g, " ").trim().slice(0, 60);
-  return /^[-\d.,\s°]+$/.test(t) ? "" : t; // coordinates are not a name
+  return /^[-\d.,\s°]+$/.test(t) ? "" : t;
 };
 
 /**
@@ -42,7 +42,6 @@ export function parsePlaceLink(text) {
   return null;
 }
 
-// Booking links: Tabit and Ontopo have no public search or API, so a place only stores its page link.
 const hostOf = (link) => {
   try {
     return new URL(String(link ?? "").trim()).hostname.toLowerCase();

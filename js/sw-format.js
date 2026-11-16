@@ -1,6 +1,5 @@
 // Push notification text, shared by sw.js (importScripts) and the unit tests (import for the global).
 // Classic script on purpose: service workers cannot be relied on to load ES modules in every browser.
-// The Hebrew template lives here (not js/data/strings.js) because the worker cannot import that module.
 (function (g) {
   const CHOSE = (her, name, emoji) => `${her || "נגה"} בחרה: ${name} ${emoji}`;
   const FOOD_ID = /^[a-z_]{1,30}$/;

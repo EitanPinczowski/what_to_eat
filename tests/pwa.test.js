@@ -83,7 +83,9 @@ test("sw.js: every module reachable from js/main.js is precached (one deploy = o
   };
   walk("js/main.js");
   assert.ok(seen.size > 30);
-  assert.deepEqual([...seen].filter((f) => !shell.has(f)), [], "add these to SHELL in sw.js");
+  // Lazy and not precached on purpose (shell budget): the v1 questions, fetched once on first use, then served from the SW cache (REVIEW.md, W1).
+  const LAZY = ["js/data/questions-retired.js"];
+  assert.deepEqual([...seen].filter((f) => !shell.has(f) && !LAZY.includes(f)), [], "add these to SHELL in sw.js");
 });
 
 test("sw.js: only the app root and index.html map to the cached app shell", () => {

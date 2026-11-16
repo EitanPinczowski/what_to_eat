@@ -34,7 +34,7 @@ export function insightsViews({ root, store, views, common }) {
     const places = Object.fromEntries(store.list("places").map((p) => [p.id, { name: p.name }]));
     const foods = buildFoods(FOODS, store.get().custom);
     const x = insightsFor({ history: store.list("history"), events, places, foods, questions: QUESTIONS });
-    if (!root.querySelector?.("[role=status]")) return; // she left the screen meanwhile
+    if (!root.querySelector?.("[role=status]")) return;
     render(root, html`${raw(topbar(INS.title))}<div class="stack" data-testid="insights">${raw(insightsHtml(x))}</div>`, common);
   };
 }

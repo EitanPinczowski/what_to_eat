@@ -1,6 +1,5 @@
 // Store interface (PLAN.md §5.3, spec-flow-firebase.md §2.2). UI and engine reach data only through a Store.
 // Room doc = settings, ratings, custom foods, inbox, learned weights, imported ids.
-// Subcollections: history, places, live, feedback, errors, shopping.
 import { FOODS } from "../data/foods.js";
 import { MODES } from "../data/constants.js";
 import { buildFoods } from "../engine/foods.js";
@@ -40,7 +39,6 @@ export function migrate(room) {
 
 /** Subcollections whose docs the rules do not let a client delete. Empty since item 11 (the logs can be trimmed). */
 export const NO_DELETE = [];
-// "Rotate key" still overwrites these two with a tombstone instead of deleting, so it works with old and new rules.
 const TOMBSTONE = ["feedback", "errors"];
 
 /** Log collections the owner may trim, and how many docs are kept on start. */
@@ -125,7 +123,7 @@ export class Store {
     this.cols = Object.fromEntries(COLLECTIONS.map((c) => [c, {}]));
     this.subs = new Set();
     this.saveSubs = new Set();
-    this.pending = 0; // writes started and not yet acknowledged (offline: they stay pending)
+    this.pending = 0;
     this._ready = null;
   }
 
@@ -192,7 +190,7 @@ export class Store {
         this.cols[c] = {};
       }
     await Promise.allSettled(ops);
-    this.room = migrate({ moved: true, at }); // quiet: this device is the one that moved, its page reloads next
+    this.room = migrate({ moved: true, at });
     await this._writeRoom({ v: SCHEMA, moved: true, at });
   }
 
@@ -420,7 +418,6 @@ export class Store {
       for (const [id, d] of Object.entries(data.cols?.[c] ?? {})) await this.put(c, id, d);
   }
 
-  // ---- for subclasses ----
   _remote(room, cols) {
     if (room !== undefined) {
       this.room = migrate(room);

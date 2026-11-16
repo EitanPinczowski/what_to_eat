@@ -24,12 +24,12 @@ export function weatherBump(tags, w) {
     if (has("light")) s += 0.2;
     if (has("healthy")) s += 0.1;
     if (has("fruit")) s += 0.1;
-    if (has("dessert") && has("cold") && has("creamy")) s += 0.2; // ice cream
+    if (has("dessert") && has("cold") && has("creamy")) s += 0.2;
     if (has("heavy")) s -= 0.1;
   } else {
     if (has("comfort")) s += 0.35;
     if (has("hot")) s += 0.15;
-    if (has("saucy")) s += 0.1; // soups and stews
+    if (has("saucy")) s += 0.1;
   }
   return Math.max(-WEATHER_CAP, Math.min(WEATHER_CAP, s));
 }

@@ -35,7 +35,6 @@ export function sweepViews({ root, store, views, common, base }) {
       <a class="btn btn-primary act" href="${waUrl(text, s.herPhone)}" target="_blank" rel="noopener">${STR.owner.whatsapp}</a>`, {
       ...common,
       copy: async () => toast((await copy(link)) ? STR.owner.copied : link),
-      // Choosing a mode resets the sweep so her next open starts a fresh deck.
       mode: (mode) => {
         const order = sweepOrder(foods, db.ratings, mode);
         store.put("live", "sweep", { mode, order, i: 0, skipped: [], given: {}, n: order.length, finished: false }).catch(saveFailed);

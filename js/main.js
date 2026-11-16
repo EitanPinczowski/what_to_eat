@@ -25,7 +25,6 @@ async function boot() {
   const route = currentRoute();
   render(root, html`<p class="sub">${STR.loading}</p>`);
   if (route.kind === "bad") return fail(STR.errors.badLink);
-  // The screen's code loads while the store connects; the illustration list is only needed by the screens themselves.
   if (route.kind === "w") {
     const [mod] = await Promise.all([import("./ui/guest/wrapped.js"), pics]);
     return mod.runWrapped(root, route.payload);
@@ -35,11 +34,8 @@ async function boot() {
     if (guardMoved(store)) return;
     return mod.runGuest(root, store);
   }
-  // A device that lost its saved room id gets it back from the second copy before any room is created or adopted.
   if (!localStorage.getItem(ROOM_KEY)) await import("./store/room-backup.js").then((m) => m.restoreRoom()).catch(() => {}); // harmless: no backup means a new room, as before
   if (route.kind === "join") {
-    // Another of the owner's devices: adopt the room, then go home.
-    // A different room already on this device is replaced only after a confirm (old id kept as a backup key).
     const res = adoptRoom(route.room, { ask: () => confirm(STR.joinAsk) });
     clearHash();
     if (res !== "same" && res !== "declined") toast(STR.joined);
@@ -56,8 +52,6 @@ async function boot() {
   const [store] = await Promise.all([openStore(roomId, { mode: route.mode, fast: route.kind !== "r" }), pics]);
   if (guardMoved(store)) return;
   if (route.kind === "r") {
-    // #r= fallback result from WhatsApp → import into the owner's room, then clear the hash.
-    // The link can be crafted by anyone: validate strictly, and only apply after a confirm.
     const chk = store.checkResult(route.payload);
     clearHash();
     if (chk.bad) toast(STR.importBad);
@@ -76,7 +70,6 @@ boot().catch((e) => {
   fail(STR.errors.offline, true);
 });
 
-// New version waiting → a small bar with "refresh" (never reloads by itself mid-quiz).
 registerSW((apply) => {
   if (document.querySelector(".update-bar")) return;
   const bar = document.createElement("div");
@@ -91,11 +84,9 @@ registerSW((apply) => {
   document.body.append(bar);
 }).catch(() => {}); // harmless: best effort
 
-// Android/desktop Chrome: keep the install prompt for the button in settings.
 addEventListener("beforeinstallprompt", (e) => {
   e.preventDefault();
   globalThis.__installPrompt = e;
 });
 
-// A new link opened in this tab (hash-only navigation): boot again.
 addEventListener("hashchange", () => location.hash && location.reload());

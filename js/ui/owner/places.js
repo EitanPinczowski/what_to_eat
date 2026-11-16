@@ -35,7 +35,6 @@ export function placesViews({ root, store, stack, views, common, ctx }) {
   const foods = () => buildFoods(FOODS, store.get().custom);
   const cities = () => [...new Set([store.get().settings.city, ...store.list("places").map((p) => p.city)].filter(Boolean))];
 
-  // ---------- places ----------
   views.places = () => {
     const fc = (ctx.placeCuisine ??= null);
     const list = store.list("places").filter((p) => !fc || (p.cuisines ?? []).includes(fc));
@@ -56,7 +55,6 @@ export function placesViews({ root, store, stack, views, common, ctx }) {
     });
   };
 
-  // "Want to try": paste a Google Maps / Instagram link, name is prefilled from the text when it carries one.
   views.tryForm = () => {
     const d = ctx.tryDraft;
     let ask = false;
@@ -130,7 +128,6 @@ export function placesViews({ root, store, stack, views, common, ctx }) {
         foodq: (v) => ((q = v), refresh()),
         serve: (id) => {
           p.foods.push(id);
-          // serving a dish adds its category; the chips stay hers to correct
           for (const c of cuisinesOfFoods([id], all)) if (!p.cuisines.includes(c)) p.cuisines.push(c);
           p.cuisines = CUISINES.filter((c) => p.cuisines.includes(c));
           root.querySelectorAll('[data-on="cuisine"]').forEach((b) => b.setAttribute("aria-pressed", String(p.cuisines.includes(b.dataset.arg))));
@@ -152,7 +149,6 @@ export function placesViews({ root, store, stack, views, common, ctx }) {
         save: () => {
           if (!p.name.trim()) return toast(L.needName);
           const { id = newId(12), ...data } = p;
-          // Keep only complete ranges; none left = no hours = always eligible.
           const hours = (data.hours ?? []).filter((h) => h.o && h.c).sort((a, b) => a.d - b.d);
           store.put("places", id, { ...data, cuisines: CUISINES.filter((c) => (data.cuisines ?? []).includes(c)), hours, name: data.name.trim().slice(0, 60), link: /^https?:\/\//.test(data.link) ? data.link : "" }).catch(saveFailed);
           toast(STR.owner.saved);
@@ -163,9 +159,7 @@ export function placesViews({ root, store, stack, views, common, ctx }) {
     draw();
   };
 
-  // ---------- her place vote ----------
   const her = () => store.get().settings.her;
-  // Re-draw the picker when her answer lands live (not while the nav screen or the roll animation is up).
   let seenPick = store.vote()?.pick ?? null;
   store.subscribe((what) => {
     const p = store.vote()?.pick ?? null;
@@ -187,7 +181,6 @@ export function placesViews({ root, store, stack, views, common, ctx }) {
       <button class="btn btn-ghost" data-on="voteClear">${K.voteClear}</button></section>${sel.length ? raw(send) : ""}`;
   };
 
-  // ---------- picker ----------
   views.picker = () => {
     if (ctx.navTo) {
       const n = navLinks(ctx.navTo);
@@ -209,7 +202,6 @@ export function placesViews({ root, store, stack, views, common, ctx }) {
       chosen: null,
     });
     const food = all.find((f) => f.id === st.food) ?? null;
-    // the category is the input; the result's food only ranks places that serve it
     if (st.cuisine === undefined) st.cuisine = food?.cuisine?.[0] ?? null;
     const label = food?.name ?? st.free;
     const term = (st.cuisine && cuisineSearch(st.cuisine)) || label;
@@ -218,7 +210,6 @@ export function placesViews({ root, store, stack, views, common, ctx }) {
     const book = st.chosen && st.chosenId ? bookingOf(store.doc("places", st.chosenId)?.link) : null;
     const bookLink = book ? store.doc("places", st.chosenId).link : "";
     const searchSit = !st.mode || st.mode === "sit";
-    // exactly one main button: the chosen place's "go", else the quick-add form's save, else the roll
     const prim = st.chosen ? "go" : ctx.quickAdd ? "quick" : scored.length && st.mode !== "home" ? "roll" : "";
     render(root, html`${raw(topbar(K.title))}
       <div class="field">${K.food}<div class="chips" data-testid="picker-cuisine">${chip("cuisine", "", L.filterAll, !st.cuisine)}${CUISINES.map((c) => chip("cuisine", c, cuisineLabel(c), st.cuisine === c))}</div>
@@ -261,14 +252,12 @@ export function placesViews({ root, store, stack, views, common, ctx }) {
         else if (sel.length < VOTE_MAX) sel.push(id);
         views.picker();
       },
-      // Firestore writes resolve only on server ack: start them, never await.
       voteSend: () => {
         store.sendVote(st.sel ?? []).catch(saveFailed);
         ((st.sel = []), (seenPick = null));
         views.picker();
       },
       voteClear: () => (store.clearVote().catch(saveFailed), (st.sel = []), (seenPick = null), views.picker()),
-      // Opening a fallback link counts as "we're going"; then ask where, to save the place in two taps.
       fallback: (_a, e, el) => {
         window.open(el.href, "_blank", "noopener");
         markGoing(null);
@@ -301,7 +290,7 @@ export function placesViews({ root, store, stack, views, common, ctx }) {
     root.querySelector(".topbar").after(box);
     const reduce = globalThis.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
     const tick = () => {
-      if (ctx.rollId !== rollId || !box.isConnected) return; // left the screen: the roll must not pull her back
+      if (ctx.rollId !== rollId || !box.isConnected) return;
       box.textContent = names[i++ % names.length];
       if (!reduce && i < 14) setTimeout(tick, 40 + i * 12);
       else ((st.chosen = final.place.name), (st.chosenId = final.place.id), views.picker());

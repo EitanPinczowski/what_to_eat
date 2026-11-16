@@ -29,7 +29,7 @@ export function render(root, markup, handlers = {}) {
   root.innerHTML = markup;
   if (root.classList && root.offsetWidth !== undefined) {
     root.classList.remove("screen-in");
-    void root.offsetWidth; // restart the enter animation on every new screen
+    void root.offsetWidth;
     root.classList.add("screen-in");
   }
   bound.set(root, handlers);
@@ -102,7 +102,7 @@ export function saveStatus(store, { show, fail }, str, { delay = 600, hold = 150
       hide = set(() => show(null), hold);
     } else if (e.state === "error") {
       if (!e.pending) show(null);
-      if (e.col === "errors") return console.error("error log failed", e.error); // the log itself: no toast, no loop
+      if (e.col === "errors") return console.error("error log failed", e.error);
       fail(str.fail);
       const now = Date.now();
       if (e.col !== "feedback" && now - lastLog > 60000) {
@@ -117,7 +117,7 @@ export function saveStatus(store, { show, fail }, str, { delay = 600, hold = 150
 export function mountSaveStatus(store, str) {
   const el = document.createElement("div");
   el.className = "savemark";
-  el.setAttribute("aria-live", "polite"); // no role=status: pages and tests treat that role as the one message of the screen
+  el.setAttribute("aria-live", "polite");
   el.hidden = true;
   document.body.append(el);
   return saveStatus(store, {

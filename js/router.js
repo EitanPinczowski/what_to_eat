@@ -26,9 +26,9 @@ const BACK_LOCK_MS = 500;
 export class BackLayer {
   constructor(win = globalThis) {
     this.win = win?.history && win.addEventListener ? win : null;
-    this.entries = []; // {fn, stale, owner}; entries.length is the history position above the base entry
-    this.base = this.win?.history.state?.vs ?? 0; // after a reload the entry we start on still carries an old number
-    this.busy = false; // a history.back() is in flight: a second tap must not go back twice (and out of the app)
+    this.entries = [];
+    this.base = this.win?.history.state?.vs ?? 0;
+    this.busy = false;
     this.listener = (e) => this._pop(e);
     this.win?.addEventListener("popstate", this.listener);
   }
@@ -71,7 +71,7 @@ export class BackLayer {
   back() {
     if (!this.depth) return false;
     if (!this.win) return (this._pop(), true);
-    if (this.busy) return true; // double tap
+    if (this.busy) return true;
     this.busy = true;
     const t = setTimeout(() => (this.busy = false), BACK_LOCK_MS);
     t.unref?.();
@@ -86,16 +86,14 @@ export class BackLayer {
     this.busy = false;
     const cur = this.entries.length;
     if (!cur) return;
-    // A real event says where we landed: below us = back (maybe several steps), above us = a forward press.
     const landed = ev && "state" in ev ? Math.max(0, (ev.state?.vs ?? 0) - this.base) : cur - 1;
     if (landed > cur - 1) {
-      if (landed > cur) this.win?.history.go(cur - landed); // forward navigation is not a back: undo it
+      if (landed > cur) this.win?.history.go(cur - landed);
       return;
     }
     const popped = this.entries.splice(landed, cur - landed).reverse();
     const top = popped[0];
     if (top.stale) {
-      // Its screen is gone: step over it (the next popstate pops the entry below).
       if (this.win && landed > 0) this.win.history.back();
       return;
     }
@@ -135,7 +133,7 @@ class BackScope {
 
 export class ViewStack {
   constructor(show, win = globalThis) {
-    this.show = show; // (view) => void
+    this.show = show;
     this.stack = [];
     this.shared = BackLayer.shared(win);
     this.layer = this.shared.scope();
@@ -155,7 +153,7 @@ export class ViewStack {
   }
   reset(view) {
     this.stack = [view];
-    this.shared.clear(); // wholesale: also any quiz entries still above
+    this.shared.clear();
     this.show(view);
   }
   get top() {

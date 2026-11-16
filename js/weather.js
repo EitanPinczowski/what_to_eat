@@ -1,6 +1,6 @@
 // Impure side: one keyless Open-Meteo call on quiz start. City from settings, cached 1h, silent fail.
 // Never asks for location: geocode the city once (cached), else a fixed Israel default.
-const DEFAULT_PLACE = { lat: 32.08, lon: 34.78 }; // Tel Aviv
+const DEFAULT_PLACE = { lat: 32.08, lon: 34.78 };
 const HOUR = 36e5;
 const WEATHER_URL = "https://api.open-meteo.com/v1/forecast";
 const GEO_URL = "https://geocoding-api.open-meteo.com/v1/search";

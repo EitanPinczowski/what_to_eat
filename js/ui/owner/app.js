@@ -39,21 +39,16 @@ export function receiptLine(live) {
 
 export async function runOwner(root, store, { base = location.origin + location.pathname, mode } = {}) {
   mountSaveStatus(store, STR.save);
-  // never await writes on the owner path (offline-first)
   if (!store.get().settings.ntfy) store.update((db) => (db.settings.ntfy = `mabalach-${newId(16)}`)).catch(saveFailed);
-  // notifications repair themselves after first paint
   const repair = () => import("../../push.js").then((m) => m.repairOnStart(store)).catch(saveFailed);
   repair();
   globalThis.navigator?.serviceWorker?.addEventListener?.("message", (e) => e.data?.type === "wte-sub-changed" && repair());
-  // keep the logs at the newest 200
   if (LOGS.some((c) => store.list(c).length > LOG_KEEP)) store.trimLogs().catch(() => {}); // harmless: retried next start
   const views = {};
   const ctx = {};
-  // changing screen drops the picker's nav card and stops a roll
   const stack = new ViewStack((v) => ((ctx.navTo = null), (ctx.rollId = (ctx.rollId ?? 0) + 1), views[v]()));
   const S = () => store.get().settings;
 
-  // Toast when a new result lands live.
   let known = new Set(store.list("history").map((h) => h.id));
   let collecting = false;
   const collect = () => {
@@ -80,7 +75,6 @@ export async function runOwner(root, store, { base = location.origin + location.
     pickFor: (id) => ((ctx.entryId = id), (ctx.pick = null), stack.push("picker")),
   };
 
-  // "how was it?": 2 h after "going" (goAt), one tap
   const pendingHow = () => store.list("history").find((h) => h.goAt && h.how === undefined && Date.now() - new Date(h.goAt) >= HOW_AFTER);
   const howCard = () => {
     const h = pendingHow();
@@ -103,7 +97,6 @@ export async function runOwner(root, store, { base = location.origin + location.
     toast(T.thanks);
     views.home();
   };
-  // One status card follows the quiz: send -> she's answering -> her result -> how was it.
   const tile = (k) => {
     const hot = k === "wrapped" && isFirstOfMonth();
     return html`<button class="btn tile${hot ? " hot" : ""}" data-on="go" data-arg="${k}"><span class="em">${T.tiles[k].e}</span>${T.tiles[k].t}${hot ? raw(html`<small>${STR.wrapped.firstBadge}</small>`) : ""}</button>`;
@@ -129,13 +122,11 @@ export async function runOwner(root, store, { base = location.origin + location.
   views.more = () =>
     render(root, html`${raw(topbar(T.more))}<div class="tiles">${MORE_TILES.map((k) => raw(tile(k)))}</div>`, common);
 
-  // sending a link starts a fresh run: her old status is cleared (item 8)
   const markSent = () => {
     const fresh = freshLive(store.doc("live", "quiz"));
     if (fresh) store.put("live", "quiz", fresh).catch(saveFailed);
   };
 
-  // the relative time keeps counting (text only)
   setInterval(() => {
     const el = root.querySelector?.("[data-testid=live]");
     if (el && ["home", "send"].includes(stack.top)) el.textContent = liveLine(store.doc("live", "quiz"), S().her);
@@ -156,7 +147,6 @@ export async function runOwner(root, store, { base = location.origin + location.
     root.querySelector?.("[data-testid=wa-send]")?.addEventListener("click", () => setTimeout(markSent, 300));
   };
 
-  // "She's next to me": the same quiz on this phone, saved straight to history.
   views.local = async () => {
     const [{ startGuestQuiz }, { finishForm, resultEntry }] = await Promise.all([import("../guest/quiz.js"), import("../guest/session.js")]);
     render(root, html`<div class="sub-root stack"></div>`, common);
@@ -177,7 +167,6 @@ export async function runOwner(root, store, { base = location.origin + location.
     });
   };
 
-  // screens load on first use; a stub per view, the module overwrites them
   const lazy = (keys, load, make) => {
     let loading = null;
     const stubs = {};
