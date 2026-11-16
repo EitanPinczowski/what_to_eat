@@ -9,7 +9,7 @@
     const p = d && typeof d === "object" ? d : {};
     let body = typeof p.body === "string" ? p.body : "";
     const hit = typeof p.food === "string" && FOOD_ID.test(p.food) && Object.prototype.hasOwnProperty.call(names || {}, p.food) ? names[p.food] : null;
-    if (hit) body = CHOSE(her, hit[0], hit[1]);
+    if (hit) body = p.kind === "checkin" ? `איך היה ה${hit[0]} אתמול? ${hit[1]}` : CHOSE(her, hit[0], hit[1]);
     return {
       title: typeof p.title === "string" && p.title ? p.title : "מה בא לך?",
       body,

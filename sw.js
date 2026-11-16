@@ -18,6 +18,7 @@ const SHELL = [
   "js/data/recipes.js",
   "js/data/strings.js",
   "js/data/strings-insights.js",
+  "js/data/strings-checkin.js",
   "js/data/tags.js",
   "js/engine/foods.js",
   "js/engine/insights.js",
@@ -39,6 +40,7 @@ const SHELL = [
   "js/ui/guest/answers/magnets.js",
   "js/ui/guest/answers/faceoff.js",
   "js/ui/guest/chef.js",
+  "js/ui/guest/checkin.js",
   "js/data/holidays.js",
   "js/data/strings-play.js",
   "js/data/strings-couple.js",
@@ -180,7 +182,10 @@ self.addEventListener("notificationclick", (e) => {
   e.waitUntil(
     self.clients.matchAll({ type: "window", includeUncontrolled: true }).then((list) => {
       const w = list.find((c) => c.url.startsWith(self.registration.scope));
-      return w ? w.focus() : self.clients.openWindow(url);
+      if (!w) return self.clients.openWindow(url);
+      // A check-in tap (#how) must land on its screen even when the app is already open.
+      const go = url.includes("#how") && w.navigate ? w.navigate(url).catch(() => w) : Promise.resolve(w);
+      return go.then((c) => (c || w).focus());
     }),
   );
 });

@@ -14,7 +14,7 @@ function fail(msg, retry = false) {
     ${retry ? raw(html`<button class="btn btn-primary" data-on="retry">${STR.errors.retry}</button>`) : ""}`, { retry: () => location.reload() });
 }
 
-/** A room retired by "rotate key" shows a message instead of empty data, also when it happens while open. */
+/** A room retired by "rotate key" shows a message, also while open. */
 function guardMoved(store) {
   if (store.moved) return (fail(STR.errors.moved), true);
   store.subscribe((what) => what === "room" && store.moved && fail(STR.errors.moved));
@@ -40,6 +40,7 @@ async function boot() {
     clearHash();
     if (res !== "same" && res !== "declined") toast(STR.joined);
   }
+  if (route.kind === "how" && (await import("./ui/guest/checkin.js").then((m) => m.bootHow(root, openStore, pics, guardMoved)))) return;
   if (route.kind === "s") {
     const [store, mod] = await Promise.all([openStore(route.room, { mode: route.mode }), import("./ui/guest/sweep.js"), pics]);
     if (guardMoved(store)) return;

@@ -21,7 +21,7 @@ export function withTimeout(p, ms) {
 }
 
 const VOTE_GAP = 800;
-/** A vote tap counts when it changes her pick and is not a rapid repeat (each counted tap pings Eitan). Mutates `last`. */
+/** A vote tap counts when it changes her pick and is not a rapid repeat. Mutates `last`. */
 export function voteTap(last, code, pick, now = Date.now()) {
   if (code === pick || now - last.at < VOTE_GAP) return false;
   last.at = now;
@@ -50,7 +50,7 @@ export function installErrorLog(store, screen, win = globalThis.window) {
   win?.addEventListener("unhandledrejection", (e) => log(e.reason?.message ?? e.reason, e.reason?.stack));
 }
 
-/** The #r= link must stay short enough for WhatsApp: only what the importer uses, trail cut to the last 8 steps. */
+/** The #r= link must stay WhatsApp-short: only what the importer uses, last 8 trail steps. */
 export function fallbackPayload(id, e) {
   return { t: "quiz", id, at: e.at, f: e.f, fn: cut(e.fn, 80), fe: cut(e.fe, 32), m: e.m, price: e.price, note: cut(e.note, 200), trail: (e.trail ?? []).slice(-8).map((s) => cut(s, 60)) };
 }
@@ -200,7 +200,7 @@ export async function runGuest(root, store, { base = location.origin + location.
           );
           ping(s.ntfy, STR.ntfy(s.her));
           notifyRecord("quiz", out.food).catch(saveFailed);
-          sent();
+          sent(out.food);
         } catch {
           out.seal?.(false);
           out.step?.(() => finishScreen(out, opened));
@@ -209,16 +209,18 @@ export async function runGuest(root, store, { base = location.origin + location.
     }, { on: (store.get().fav ?? []).includes(out.food?.id), toggle: (id) => import("./profile.js").then((m) => m.toggleFav(store, id)) });
   };
 
-  const sent = () => {
+  const sent = (food) => {
     screen = "sent";
     confetti();
     render(root, html`<div class="big reveal" aria-hidden="true">💌</div>
       <h2 class="title" role="status">${STR.result.sent(s.me)}</h2>
       <p class="sub">${STR.result.sentSub}</p>
       <p class="sub ack" data-testid="ack" role="status" aria-live="polite"></p>
-      <section data-testid="vote"></section>`);
+      <section data-testid="vote"></section>
+      <section data-testid="checkin"></section>`);
     watchAck();
     watchVote();
+    if (food) import("./checkin.js").then((c) => c.mountCheckin(root.querySelector("[data-testid=checkin]"), food)).catch(() => {}); // harmless: optional question
   };
 
   let unAck = null;

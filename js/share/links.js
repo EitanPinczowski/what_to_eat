@@ -17,6 +17,7 @@ export const buildResultLink = (base, payload) => `${strip(base)}#r=${encode({ v
 export function parseHash(hash) {
   const h = String(hash ?? "").replace(/^#/, "");
   if (!h) return { kind: "home" };
+  if (h === "how") return { kind: "how" };
   const m = h.match(/^(q|s|join|r|w)=(.+)$/);
   if (!m) return { kind: "bad" };
   const [, kind, val] = m;

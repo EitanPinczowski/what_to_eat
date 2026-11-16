@@ -280,3 +280,4 @@ Known gaps: sim average steps 11.8 (target 10, reported only); sim "found" gate 
 - The relay verifies the signature over `JSON.stringify(parsedBody)` because Vercel gives it parsed JSON; the app sends compact JSON.stringify output, which round-trips byte for byte.
 - Rate limit: 60 sends per hour per room hash, then 429; kept in Blob (`rate/<hash>.json`), read-modify-write, best effort (parallel requests can slip a few through). The older in-memory 20 per 10 min per endpoint stays. Change: ROOM_RATE.
 - CI alert (`x-ci-token` + CI_ALERT_TOKEN) is untouched and needs no room signature.
+- **W9 (boss): whole-shell budget 380 → 400 KB** (owner asked to raise the app size limit). About 20 KB more per app update; first screen unchanged (start-up stays 190 KB).

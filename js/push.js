@@ -2,6 +2,7 @@
 // The relay (wte-push) builds the notification text itself; we only ever send a subscription and a kind.
 export const VAPID_PUBLIC_KEY = "BMjWrD2gEyJKEaCD8HW5TtXu3DkbQlCViPoA1sFP2YqCUjdQTsHpOFxCKHco_IaO04a90XRv8TxXBdBWF-0Oo2Y";
 export const RELAY_URL = "https://wte-push.vercel.app/api/send";
+export const SCHEDULE_URL = RELAY_URL.replace(/send$/, "schedule");
 export const MAX_SUBS = 4;
 export const KINDS = ["quiz", "vote", "sweep", "test", "opened"];
 export const FOOD_RE = /^[a-z_]{1,30}$/;
@@ -71,6 +72,7 @@ export function sendReport(subs, codes, now = new Date().toISOString()) {
 export const mergeDead = (old, add) => [...new Set([...(Array.isArray(old) ? old : []), ...add])].slice(-8);
 
 let bound = null;
+export const boundRoomId = () => bound?.roomId ?? "";
 /** Tell this module which Store (room) the page runs in, so relay calls can be signed. */
 export const bindRoom = (store) => {
   bound = store ?? null;
@@ -131,6 +133,27 @@ async function sendEach(settings, kind, f, { timeout = 4000, url = RELAY_URL, fo
       clearTimeout(t);
     }
   }));
+}
+
+/** Signed POST of one JSON body to a relay endpoint (same HMAC and first-use key as send). Resolves to the status code, 0 = no answer; never rejects. */
+export async function postSigned(url, bodyObj, f = globalThis.fetch, { timeout = 6000 } = {}) {
+  if (typeof f !== "function") return 0;
+  const key = bound?.roomId ? await ensureKey(bound, timeout) : null;
+  if (!key) return 0;
+  const ctl = typeof AbortController === "function" ? new AbortController() : null;
+  const t = setTimeout(() => ctl?.abort(), timeout);
+  try {
+    const text = JSON.stringify(bodyObj);
+    const sig = await signHeaders(bound.roomId, key, text);
+    const post = (extra) => f(url, { method: "POST", headers: { "Content-Type": "application/json", ...sig, ...extra }, body: text, signal: ctl?.signal });
+    let r = await post({});
+    if (r?.status === 401 && (await r.json?.().catch(() => null))?.error === "unregistered") r = await post({ "x-wte-key": key });
+    return r?.status ?? 0;
+  } catch {
+    return 0;
+  } finally {
+    clearTimeout(t);
+  }
 }
 
 /** Fire-and-forget: POST every stored subscription to the relay. Returns a promise that never rejects (status codes, 0 = no answer). */
