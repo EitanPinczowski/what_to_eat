@@ -15,7 +15,6 @@ import { liveLine, freshLive } from "./live-status.js";
 
 const T = STR.owner;
 const HOME_TILES = ["local", "picker", "shopping"];
-const LAZY = "./insights.js"; // lazy, not precached (REVIEW 31)
 const MORE_TILES = ["send", "history", "brain", "places", "sweep", "wrapped", "insights", "settings"];
 const HOW_AFTER = 2 * 3600e3;
 /** Live status line for the guest's quiz (from rooms/{id}/live/quiz). */
@@ -204,7 +203,7 @@ export async function runOwner(root, store, { base = location.origin + location.
   lazy(["wrapped"], () => import("./send-wrapped.js"), (m) => m.wrappedViews({ root, store, views, common, base }));
   lazy(["places", "tryForm", "placeForm", "picker"], () => import("./places.js"), (m) => m.placesViews({ root, store, stack, views, common, ctx }));
   lazy(["recipe", "shopping"], () => import("./shopping.js"), (m) => m.shoppingViews({ root, store, stack, views, common, ctx }));
-  lazy(["insights"], () => import(LAZY), (m) => m.insightsViews({ root, store, views, common }));
+  lazy(["insights"], () => import("./insights.js"), (m) => m.insightsViews({ root, store, views, common }));
   lazy(["settings"], () => import("./settings.js"), (m) => m.settingsViews({ root, store, views, common, base, mode }));
   stack.reset("home");
   return { stack, views };

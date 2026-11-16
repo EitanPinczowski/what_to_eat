@@ -38,13 +38,14 @@ test("owner home: heavy owner screens are not in its static graph", () => {
   for (const f of ["brain", "places", "shopping", "settings", "send-sweep", "send-wrapped"]) assert.ok(!g.has(`js/ui/owner/${f}.js`), f);
 });
 
-// Budgets sit a little above today's sizes (docs/REVIEW.md, item 20). Raise them on purpose, not by accident.
+// Budgets sit a little above today's sizes (docs/REVIEW.md, items 20 and 31). Raise them on purpose, not by accident.
+// Whole shell 300 → 320 KB (item 31): it is precached in the background, so it does not slow the first screen.
 test("size budget: start-up graph and whole shell", () => {
   const start = sizeOf(staticGraph(ENTRIES));
   assert.ok(start <= 177 * 1024, `start-up modules ${start} bytes`);
   const sw = readFileSync("sw.js", "utf8");
   const shell = JSON.parse(sw.slice(sw.indexOf("const SHELL = ") + 14, sw.indexOf("];", sw.indexOf("const SHELL = ")) + 1)).filter((f) => f !== "./");
   const total = sizeOf(shell);
-  assert.ok(total <= 300 * 1024, `shell ${total} bytes`);
+  assert.ok(total <= 320 * 1024, `shell ${total} bytes`);
   console.log(`# start-up ${start} B, shell ${total} B`);
 });

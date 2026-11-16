@@ -111,9 +111,12 @@ test("loadEvents reads the events a MemoryStore holds, oldest first, and ignores
   assert.deepEqual((await loadEvents(s)).map((e) => e.k), ["sent", "finish"]);
 });
 
-test("insights pieces are lazy: not in the start-up shell, loaded through a const path", () => {
+test("insights pieces are precached but load on demand (REVIEW 31)", () => {
   const sw = readFileSync("sw.js", "utf8");
-  for (const f of ["js/ui/owner/insights.js", "js/engine/insights.js", "js/data/strings-insights.js", "js/store/events.js"]) assert.ok(!sw.includes(`"${f}"`), f);
-  assert.match(readFileSync("js/ui/owner/app.js", "utf8"), /const LAZY = "\.\/insights\.js"/);
-  assert.match(readFileSync("js/ui/owner/app.js", "utf8"), /"wrapped", "insights", "settings"/);
+  for (const f of ["js/ui/owner/insights.js", "js/engine/insights.js", "js/data/strings-insights.js", "js/store/events.js"]) assert.ok(sw.includes(`"${f}"`), f);
+  const app = readFileSync("js/ui/owner/app.js", "utf8");
+  assert.ok(app.includes('import("./insights.js")'));
+  assert.doesNotMatch(app, /^import .*insights/m);
+  assert.doesNotMatch(readFileSync("js/store/store.js", "utf8"), /^import .*events\.js/m);
+  assert.match(app, /"wrapped", "insights", "settings"/);
 });

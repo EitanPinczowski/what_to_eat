@@ -13,7 +13,6 @@ export const ACK_CODES = ["seen", "ordered", "onway", "there"];
 export const VOTE_NONE = "x";
 export const VOTE_MIN = 2;
 export const VOTE_MAX = 3;
-const EVENTS = "./events.js"; // lazy, not precached (REVIEW 29)
 const MAX_IMPORTED = 200;
 const MAX_ERRORS = 50;
 const MAX_SHOPPING = 200;
@@ -234,7 +233,7 @@ export class Store {
     const prev = this.cols[col][id];
     this.cols[col][id] = data;
     this._emit(col);
-    import(EVENTS).then((m) => m.record(this, col, id, data, prev)).catch(() => {}); // harmless: optional log
+    import("./events.js").then((m) => m.record(this, col, id, data, prev)).catch(() => {}); // harmless: optional log
     await this._track(col, () => this._writeDoc(col, id, data));
   }
 
