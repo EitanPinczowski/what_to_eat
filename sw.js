@@ -29,6 +29,8 @@ const SHELL = [
   "js/engine/lasttime.js",
   "js/engine/refine.js",
   "js/ui/guest/profile.js",
+  "js/ui/guest/swipe.js",
+  "js/ui/guest/card.js",
   "js/engine/similarity.js",
   "js/engine/weather.js",
   "js/engine/wrapped.js",

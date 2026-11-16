@@ -243,3 +243,9 @@ Known gaps: sim average steps 11.8 (target 10, reported only); sim "found" gate 
 - **Favorites:** prior boost `FAV_BOOST` 0.7 (exclude.js); the novel answer "מוכר ואהוב" adds +1.5 familiar weight to hearts (`novelEffects`). Heart button on her result; the monthly recap shows a heart on top foods from a localStorage mirror `wte-fav` (the recap link has no store).
 - **Like last time:** `likeLastTime` (js/engine/lasttime.js): same weekday, within 2 h, rated 👍, newest wins, not today, not excluded. One card under the start button; a tap records a typed-choice action and goes straight to the result.
 - Profile screen is lazy (js/ui/guest/profile.js), link "הפרופיל שלי" on her welcome screen; W4b adds the big-text toggle there.
+
+## W4b (swipe, night look, big text, result card)
+- Swipe: 2-answer questions and duel/gut pairs; right = first button, left = second; 70 px like the sweep. Hint once (localStorage wte-swipe-hint). Change: js/ui/guest/swipe.js.
+- Night: class `night` on <html> 20:00-05:00 (tokens.css, after the dark rules); first-question lead STR.night.lead except in late/shabbat moments. Change: isNight in quiz.js.
+- Big text: toggle in her profile, localStorage wte-big-text, class `big-text` on the quiz root (css end). Sizes stay inside the design-test scale.
+- Result card: js/ui/guest/card.js (canvas 720x900, fixed berry colors, `answers` slot for couple mode); swipe.js and card.js are in the SW shell (lazy, but profile.js is too).

@@ -67,6 +67,18 @@ for (const scheme of ["light", "dark"]) {
   });
 }
 
+test("her quiz screens at night", async ({ page }) => {
+  test.setTimeout(60000);
+  await page.clock.install({ time: new Date("2026-11-16T21:30:00") });
+  await page.goto(`/?store=local#q=${GUEST}`);
+  await page.getByRole("button", { name: "יאללה, תנחש" }).waitFor();
+  await expect(page.locator("html.night")).toHaveCount(1);
+  await scan(page, "guest welcome night");
+  await page.getByRole("button", { name: "יאללה, תנחש" }).click();
+  await page.locator(".q").waitFor();
+  await scan(page, "guest question night");
+});
+
 test("her quiz result screen", async ({ page }) => {
   await page.goto(`/?store=local#q=${GUEST}`);
   await page.getByRole("button", { name: "יאללה, תנחש" }).click();

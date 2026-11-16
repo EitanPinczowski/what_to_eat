@@ -36,3 +36,9 @@
   --bg: #1F0F1B; --fg: #FBE8F2; --card: #2D1828; --muted: #C9A0B8;
   --accent: #E8629A; --accent2: #5A2745; --on-accent2: #FBE8F2; --on-accent: #2A0A1C; --ink: #000000; --line: #A8789A;
 }
+
+/* W4b: night look for her quiz, 20:00-05:00 (class set on <html> by startGuestQuiz). Warm and dark; beats both dark-mode rules above by coming later. */
+:root.night, :root.night[data-theme] {
+  --bg: #1E1410; --fg: #F6E3D3; --card: #2B1E18; --muted: #D2B5A2;
+  --accent: #EE9A6E; --accent2: #4A2E22; --on-accent2: #F6E3D3; --on-accent: #2A140A; --ink: #000000; --line: #A9836E;
+}

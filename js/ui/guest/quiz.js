@@ -24,6 +24,11 @@ export function momentOf(now = new Date()) {
   return h >= 22 || h < 5 ? "late" : h < 11 ? "morning" : h < 17 ? "noon" : "evening";
 }
 
+/** Her quiz gets the night look from 20:00 to 05:00. */
+export const isNight = (now = new Date()) => now.getHours() >= 20 || now.getHours() < 5;
+export const BIG_KEY = "wte-big-text";
+export const bigText = () => { try { return globalThis.localStorage?.getItem(BIG_KEY) === "1"; } catch { return false; } };
+
 /** A warm one-liner for about 1 answer in 3, never one she already got this quiz. null = stay quiet. */
 export function pickReaction(used, rnd = Math.random) {
   if (rnd() >= 1 / 3) return null;
@@ -92,6 +97,9 @@ export function startGuestQuiz(root, opts) {
       break; // stale log (food removed, bank changed): keep what replayed
     }
   }
+  const doc = root.ownerDocument ?? globalThis.document;
+  doc?.documentElement?.classList.toggle("night", isNight(opts.now ?? new Date())); // warm dark look, 20:00-05:00
+  root.classList?.toggle("big-text", bigText()); // her "טקסט גדול" choice
   const her = room.settings?.her ?? "";
   const me = room.settings?.me ?? "";
   let gridVeto = new Set();
@@ -239,7 +247,7 @@ export function startGuestQuiz(root, opts) {
     let body = "";
     if (step.type === "q") {
       const { q, order } = step;
-      const lead = actions.length ? "" : STR.moment[momentOf(opts.now ?? new Date())]?.lead;
+      const lead = actions.length ? "" : isNight(opts.now ?? new Date()) && !["late", "shabbat"].includes(momentOf(opts.now ?? new Date())) ? STR.night.lead : STR.moment[momentOf(opts.now ?? new Date())]?.lead;
       body = html`${lead ? raw(html`<p class="sub lead">${lead}</p>`) : ""}<h2 class="q">${questionText(q, opts.now ?? new Date())}</h2>
         ${order.map((i) => raw(html`<button class="btn" data-on="ans" data-arg="${i}"><span class="em">${raw(qPic(q.answers[i].e))}</span>${q.answers[i].t}</button>`))}
         ${raw(footer())}`;
@@ -288,6 +296,9 @@ export function startGuestQuiz(root, opts) {
     }
     render(root, backBar(canBack() || !!opts.onExit) + meter() + body, handlers);
     if (step.type === "pick" && step.unsure) fillPick(step);
+    // two-choice screens also take a left or right swipe (lazy module; taps work without it)
+    const two = !root.querySelectorAll ? [] : step.type === "q" ? [...root.querySelectorAll("[data-on=ans]")] : step.type === "duel" || step.type === "gut" ? [...root.querySelectorAll(".duel .food")] : [];
+    if (two.length === 2) import("./swipe.js").then((m) => m.attachSwipe(step.type === "q" ? root : two[0].parentElement, two), () => {}); // harmless: tapping works
     if (actions.length && step.type === "q") root.classList?.remove("slide"), void root.offsetWidth, root.classList?.add("slide");
   }
 

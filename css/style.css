@@ -158,3 +158,11 @@ summary{min-height:var(--tap);display:flex;align-items:center;font-weight:700;cu
 @media (prefers-reduced-motion:reduce){.react{animation:none}.slide{animation:none}}
 .btn.like{display:flex;align-items:center;justify-content:center;gap:8px;background:var(--accent2);color:var(--on-accent2)}
 .btn.heart{align-self:center}
+
+/* W4b: swipe hint, big text, card buttons */
+.swipe-hint{text-align:center;margin:6px 0 0}
+.card-btns{margin:10px 0}
+.big-text .q{font-size:var(--t6)}
+.big-text .btn{font-size:var(--t4);min-height:calc(var(--tap) * 1.3)}
+.big-text .qpic{width:52px;height:52px}
+.big-text .sub{font-size:var(--t3)}

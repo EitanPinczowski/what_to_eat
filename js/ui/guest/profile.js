@@ -1,10 +1,11 @@
 // Her profile (W4a): "never for me" and her hearts. Lazy: loaded only from the small link on her welcome screen.
-// Reads and writes the room doc through the Store (room.never, room.fav). W4b adds the big-text toggle here.
+// Reads and writes the room doc through the Store (room.never, room.fav). The big-text toggle lives here too (localStorage wte-big-text).
 import { FOODS } from "../../data/foods.js";
 import { STR } from "../../data/strings.js";
 import { buildFoods } from "../../engine/foods.js";
 import { cleanList, toggle, NEVER_DEFAULT } from "../../engine/exclude.js";
 import { render, html, raw } from "../dom.js";
+import { BIG_KEY, bigText } from "./quiz.js";
 
 const P = STR.profile;
 
@@ -37,11 +38,18 @@ export function openProfile(root, store, { onBack } = {}) {
         <p class="sub">${P.add}</p>
         <select name="pick" data-testid="never-pick" aria-label="${P.add}"><option value="">${P.pickPlaceholder}</option>${left.map(([k, n]) => raw(html`<option value="${k}">${n}</option>`))}</select>
         <button class="btn" data-on="addNever" data-testid="never-add">${P.addBtn}</button>
+        <h3 class="sub">${P.big}</h3>
+        <button class="btn" data-on="big" data-testid="big-text" aria-pressed="${bigText()}">${P.bigSub}</button>
         <h3 class="sub">${P.favs}</h3>
         <div class="chips" data-testid="fav-list">${fav.length ? fav.map((k) => raw(chip(k, entryName(k, foods), "unfav"))) : raw(html`<span class="sub">${P.favNone}</span>`)}</div>
       </section>`, {
       back: () => onBack?.(),
       qback: () => onBack?.(),
+      big: () => {
+        try { globalThis.localStorage?.setItem(BIG_KEY, bigText() ? "0" : "1"); } catch { /* harmless: it just will not be remembered */ }
+        root.classList?.toggle("big-text", bigText());
+        draw();
+      },
       unnever: (k) => (save("never", never.filter((x) => x !== k)), draw()),
       unfav: (k) => (save("fav", fav.filter((x) => x !== k)), draw()),
       addNever: () => {
