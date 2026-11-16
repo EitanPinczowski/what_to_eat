@@ -176,7 +176,8 @@ export async function runOwner(root, store, { base = location.origin + location.
     let loading = null;
     const stubs = {};
     for (const k of keys)
-      stubs[k] = async () => {
+      stubs[k] = async (...args) => {
+        const top = stack.top; // she may go back while the module loads: then this screen must not draw over the new one
         try {
           loading ??= load().then((m) => make(m));
           await loading;
@@ -185,7 +186,8 @@ export async function runOwner(root, store, { base = location.origin + location.
           console.error(e);
           return toast(T.soon);
         }
-        if (views[k] !== stubs[k]) return views[k]();
+        if (stack.top !== top) return;
+        if (views[k] !== stubs[k]) return views[k](...args);
       };
     Object.assign(views, stubs);
   };
