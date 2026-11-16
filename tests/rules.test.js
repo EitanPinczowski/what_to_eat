@@ -26,3 +26,7 @@ test("rules: every collection the store uses is listed, and NO_DELETE matches th
   const del = rules.match(/allow delete: if signedIn\(\)\s*&& col in \[([^\]]*)\]/)[1].match(/'(\w+)'/g).map((s) => s.slice(1, -1));
   assert.deepEqual(COLLECTIONS.filter((c) => !del.includes(c)).sort(), [...NO_DELETE].sort());
 });
+
+test("rules: place cuisines are a bounded list (F3)", () => {
+  assert.match(rules, /function placeOk\(\)[\s\S]*?lst\('cuisines', 8\)/);
+});

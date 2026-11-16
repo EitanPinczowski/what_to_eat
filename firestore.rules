@@ -58,7 +58,7 @@ service cloud.firestore {
     }
 
     function placeOk() {
-      return str('name', 120) && str('city', 80) && str('link', 2000) && lst('modes', 8) && lst('foods', 100)
+      return str('name', 120) && str('city', 80) && str('link', 2000) && lst('modes', 8) && lst('foods', 100) && lst('cuisines', 8)
         && lst('hours', 30) && lst('visits', 60) && num('price') && num('rating') && flag('shabbat') && flag('wantTry');
     }
 
