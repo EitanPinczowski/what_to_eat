@@ -112,7 +112,7 @@ export async function runSweep(root, store, { base = location.origin + location.
     screen = `card${st.i}`;
     const f = byId.get(st.order[st.i]);
     const foot = html`<div class="pile">
-        ${st.undo.length ? raw(html`<button class="chip" data-on="undo">↩︎ ${STR.back}</button>`) : raw("<span></span>")}
+        ${st.undo.length ? raw(html`<button class="chip" data-on="undo">↪︎ ${STR.back}</button>`) : raw("<span></span>")}
         <span>${W.skipped(st.skipped.length)}</span>
         <span>${W.count(Math.min(st.i, st.order.length), st.order.length)}</span></div>
       <button class="btn btn-ghost" data-on="finish">${W.finish}</button>`;

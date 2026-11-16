@@ -1,5 +1,5 @@
 // Guest quiz screens (spec-flow-firebase.md §2.1). Also used for the owner's "she's next to me" mode.
-// One question per screen, tap = answer. Escapes: 🤫 type it · ↩︎ undo. No skip on her screens (R5).
+// One question per screen, tap = answer. Escapes: 🤫 type it · ↪︎ undo (RTL: back points right). No skip on her screens (R5).
 // Every step is kept as a small action so the quiz can resume on another browser (live doc).
 import { FOODS } from "../../data/foods.js";
 import { QUESTIONS, questionText } from "../../data/questions.js";
@@ -109,11 +109,11 @@ export function startGuestQuiz(root, opts) {
   const meter = () => {
     const p1 = z.ranked()[0]?.p ?? 0;
     const w = Math.round(Math.max(0.1, Math.min(1, p1)) * 100);
-    return html`<div class="meter-wrap"><span class="sub">${STR.meter}</span>
+    return html`<div class="meter-wrap"><div class="line"><span class="sub">${STR.meter}</span><span class="sub qn" data-testid="qn">${STR.qn(actions.length + 1)}</span></div>
       <div class="meter" role="meter" aria-label="${STR.meter}" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${w}"><i style="width:${w}%"></i></div></div>`;
   };
   const footer = () => html`<div class="foot">
-      ${actions.length ? raw(html`<button class="btn btn-ghost" data-on="undo">↩︎ ${STR.back}</button>`) : ""}
+      ${actions.length ? raw(html`<button class="btn btn-ghost" data-on="undo">↪︎ ${STR.back}</button>`) : ""}
       <button class="btn btn-ghost" data-on="escape">${STR.escape}</button>
       ${onFeedback ? raw(html`<button class="btn btn-ghost" data-on="feedback">${STR.feedback.open}</button>`) : ""}</div>`;
 

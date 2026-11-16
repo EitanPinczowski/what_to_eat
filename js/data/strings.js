@@ -14,6 +14,7 @@ export const STR = {
   },
   weatherTease: { rain: "גשם בחוץ… מרק?", cold: "קר בחוץ… משהו חם?", hot: "חם בחוץ… משהו קר?" },
   meter: "כמה אני בטוח",
+  qn: (n) => `שאלה ${n}`,
   loading: "רגע…",
   escapeScreen: {
     text: "אז מה בא לך?",

@@ -38,6 +38,7 @@ code.link{display:block;padding:8px;font-size:var(--t2);word-break:break-all;col
 .meter > i{display:block;height:100%;background:var(--accent);border-radius:inherit;transition:width .4s var(--ease)}
 .meter-wrap{display:flex;flex-direction:column;gap:4px;text-align:start}
 .meter-wrap .sub{text-align:start;font-size:var(--t2)}
+.meter-wrap .line{justify-content:space-between}
 
 .grid{display:grid;grid-template-columns:repeat(3, 1fr);gap:8px}
 .grid .btn{flex-direction:column;justify-content:center;padding:10px 4px;font-size:var(--t2)}
@@ -60,7 +61,7 @@ input[type="checkbox"], input[type="radio"]{width:24px;height:24px;min-height:24
 .reveal, .ack-in{animation:pop .5s var(--ease) both}
 .ack-in{font-size:var(--t4);font-weight:700;color:var(--fg)}
 @keyframes pop{from{transform:scale(.3) rotate(-12deg);opacity:0} to{transform:none;opacity:1}}
-.confetti{position:fixed;inset:0;pointer-events:none;overflow:hidden;z-index:20}
+.confetti{position:fixed;inset:0;pointer-events:none;overflow:hidden;z-index:-1}
 .confetti span{position:absolute;top:-2rem;font-size:var(--t5);animation:fall 2.2s ease-in forwards}
 @keyframes fall{to{transform:translateY(110vh) rotate(540deg)}}
 
