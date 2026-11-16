@@ -1,6 +1,6 @@
 // Owner: history list with the hit-rate stats card (loaded on first use).
 import { STR } from "../../data/strings.js";
-import { statsFrom } from "../../engine/learn.js";
+import { statsFrom } from "../../engine/stats.js";
 import { findQuestion } from "../../data/questions.js";
 import { render, html, raw, topbar } from "../dom.js";
 

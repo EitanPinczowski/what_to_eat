@@ -23,6 +23,7 @@ export function insightsHtml(x) {
     section(INS.rejTitle, list(x.rejected.map((r) => html`${r.emoji} ${r.name} <small>${INS.count(r.n)}</small>`))),
     section(INS.weatherTitle, list(x.weather.map((v) => html`<b>${INS.weather[v.key] ?? v.key}</b> · ${INS.viewLine(v)}`))),
     section(INS.weekdayTitle, list(x.weekday.map((v) => html`<b>${INS.days[v.key] ?? v.key}</b> · ${INS.viewLine(v)}`))),
+    section(INS.prunedTitle, html`<p class="sub">${INS.prunedSub}</p>` + ((x.pruned ?? []).length ? list(x.pruned.map((u) => html`${INS.prunedLine(u)}`)) : html`<p class="sub">${INS.prunedNone}</p>`)),
     section(INS.uselessTitle, html`<p class="sub">${INS.uselessSub}</p>` + (x.useless.length ? list(x.useless.map((u) => html`${INS.uselessLine(u)}`)) : html`<p class="sub">${INS.uselessNone}</p>`)),
   ].join("");
 }

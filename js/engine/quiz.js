@@ -80,6 +80,7 @@ export class FoodQuiz {
     this.pickDistinct = opts.pickDistinct ?? false;
     this.qById = new Map(questions.map((q) => [q.id, q]));
     this.seen = opts.seen ?? [];
+    this.drop = new Set(opts.drop ?? []);
     this.salt = opts.salt ?? "";
     this.novel = opts.novel ?? {};
     this.known = {};
@@ -226,6 +227,8 @@ export class FoodQuiz {
   variant(axis) {
     const asked = this.s.asked;
     let vs = this.questions.filter((q) => q.axis === axis);
+    const kept = vs.filter((q) => !this.drop.has(q.id));
+    if (kept.length >= 2) vs = kept;
     if (!asked.length && vs.some((q) => !q.slider && q.answers.length === 3)) vs = vs.filter((q) => !q.slider && q.answers.length === 3);
     const age = (q) => {
       const i = this.seen.findIndex((ids) => ids.includes(q.id));

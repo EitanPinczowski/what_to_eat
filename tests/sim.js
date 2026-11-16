@@ -247,7 +247,30 @@ const H = table[0.15];
 if (H.first < PRODUCT.first || H.top3 < PRODUCT.top3 || H.steps > PRODUCT.steps) console.log(`sim: report-only product targets not met at noise 0.15`);
 const honest = H.first >= FLOORS.first && H.top3 >= FLOORS.top3 && never.length <= FLOORS.never;
 if (!honest) console.log(`sim: regression floor missed at noise 0.15: first ${pct(H.first)} (>=${pct(FLOORS.first)}), top3 ${pct(H.top3)} (>=${pct(FLOORS.top3)}), never-top-3 foods ${never.length} (<=${FLOORS.never})`);
-const ok = honest && R.found >= TARGETS.found && XF >= TARGETS.express && LX >= R.exact - 0.02;
+// W6 learning check: a person with a consistent personal quirk (the same answers always lead to the same food, even where the tags disagree)
+// must see that food rank better after 10 quizzes than at the start.
+function quirkRank(foodId, ln) {
+  const judge = new FoodQuiz(foods, QUESTIONS);
+  const target = judge.byId.get(foodId);
+  const qs = [...new Map(QUESTIONS.filter((q) => !q.slider && q.answers.length >= 2 && q.answers.every((a) => a.fx)).map((q) => [q.axis, q])).values()].slice(0, 6);
+  // her quirk: she answers the way this food fits, except on two questions where she always gives the answer that looks least like it
+  const ans = qs.map((q, k) => { const ds = q.answers.map((a) => judge.delta(target, q, a)); return [q.id, ds.indexOf(k < 2 ? Math.min(...ds) : Math.max(...ds))]; });
+  const rankOf = (learned) => {
+    const z = new FoodQuiz(foods, QUESTIONS, {}, { rnd: () => 0.5, shuffle: false, learned });
+    for (const [id, i] of ans) z.answer(z.qById.get(id), i);
+    return z.ranked().findIndex((x) => x.f.id === foodId) + 1;
+  };
+  // 10 finished quizzes: 6 follow her quirk, 4 are ordinary (the answers that fit another food), so the learning has a baseline to compare with.
+  const plain = (id) => qs.map((q) => { const t = judge.byId.get(id); const ds = q.answers.map((a) => judge.delta(t, q, a)); return `${q.id}:${ds.indexOf(Math.max(...ds))}`; });
+  const others = ["burger", "schnitzel", "shawarma", "pasta_tomato"].filter((x) => x !== foodId);
+  const hist = Array.from({ length: 10 }, (_, k) => ({ f: k % 5 === 4 ? others[(k / 5) | 0] : foodId, ans: k % 5 === 4 ? plain(others[(k / 5) | 0]) : ans.map(([q, i]) => `${q}:${i}`), at: new Date(2026, 4, 1 + k * 3).toISOString() }));
+  hist.push(...[2, 3].map((k) => ({ f: others[k], ans: plain(others[k]), at: new Date(2026, 4, 28 + k).toISOString() })));
+  return { start: rankOf({}), after: rankOf(learnFrom(hist, foods)) };
+}
+const quirks = ["ramen", "sushi", "pizza"].map((id) => ({ id, ...quirkRank(id) }));
+const qOk = quirks.every((r) => r.after <= r.start) && quirks.reduce((a, r) => a + r.start - r.after, 0) > 0 && quirks.some((r) => r.after <= 3 || r.after <= r.start / 2);
+console.log(`sim: learning check (rank at start -> after 10 quizzes) ${quirks.map((r) => `${r.id} ${r.start}->${r.after}`).join(", ")}${qOk ? "" : "  FAILED"}`);
+const ok = honest && qOk && R.found >= TARGETS.found && XF >= TARGETS.express && LX >= R.exact - 0.02;
 if (R.steps > TARGETS.steps) console.log(`sim: WARN average steps ${R.steps.toFixed(1)} > ${TARGETS.steps}`);
 console.log(ok ? "sim: PASS" : "sim: BELOW TARGET");
 process.exitCode = ok ? 0 : 1;

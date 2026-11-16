@@ -22,6 +22,8 @@ const SHELL = [
   "js/engine/foods.js",
   "js/engine/insights.js",
   "js/engine/learn.js",
+  "js/engine/prune.js",
+  "js/engine/stats.js",
   "js/engine/mood.js",
   "js/engine/prior.js",
   "js/engine/quiz.js",

@@ -1,6 +1,7 @@
 // Insights (item 31): pure numbers for the owner's "what did we learn" screen. Nothing is fetched or drawn here.
 // Input: history entries, events (js/store/events.js), places by id, foods (buildFoods), questions.
 import { FoodQuiz } from "./quiz.js";
+import { prunedVariants } from "./prune.js";
 import { hitFrom, statsRank } from "./learn.js";
 import { monthKey, prevMonth } from "./wrapped.js";
 
@@ -79,6 +80,7 @@ export function insightsFor({ history = [], events = [], places = {}, foods = []
     rejected: topOf(tally(history.flatMap((e) => e.rej ?? []).filter((id) => name.has(id))), 5).map(([id, n]) => ({ id, name: name.get(id).name, emoji: name.get(id).emoji, n })),
     weather: view("w"),
     weekday: view("d"),
+    pruned: history.length >= MIN_ENTRIES ? prunedVariants(history, foods, questions) : [],
     useless: history.length >= MIN_ENTRIES ? uselessQuestions(history, foods, questions) : [],
   };
 }

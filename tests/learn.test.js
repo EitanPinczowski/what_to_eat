@@ -3,7 +3,8 @@ import assert from "node:assert/strict";
 import { FOODS } from "../js/data/foods.js";
 import { QUESTIONS } from "../js/data/questions.js";
 import { buildFoods } from "../js/engine/foods.js";
-import { learnFrom, statsFrom, nudgeExp, MIN_QUIZZES } from "../js/engine/learn.js";
+import { learnFrom, nudgeExp, MIN_QUIZZES } from "../js/engine/learn.js";
+import { statsFrom } from "../js/engine/stats.js";
 import { priorFrom } from "../js/engine/prior.js";
 import { FoodQuiz } from "../js/engine/quiz.js";
 

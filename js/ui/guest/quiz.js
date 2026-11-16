@@ -43,6 +43,9 @@ export function pickReaction(used, rnd = Math.random) {
 /** No motion: unit tests (no document), Playwright (webdriver), globalThis.WTE_NO_MOTION, or prefers-reduced-motion. */
 export const still = () => !globalThis.document || !!globalThis.WTE_NO_MOTION || !!globalThis.navigator?.webdriver || !!globalThis.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
 
+let pruned; // lazy (start-up budget): until it loads, every variant stays
+import("../../engine/prune.js").then((m) => (pruned = m.prunedVariants), () => {});
+
 /** Foods, prior and engine for a room. */
 export function makeQuiz(room, historyList, { now = new Date(), rnd, weather = null } = {}) {
   const foods = allowedFoods(buildFoods(FOODS, room.custom ?? []), room.never); // "never for me": hard-excluded before the engine sees them
@@ -50,7 +53,7 @@ export function makeQuiz(room, historyList, { now = new Date(), rnd, weather = n
   const recent = historyList.filter((h) => h.f && now - new Date(h.at) <= 3 * DAY).map((h) => h.f);
   const prior = priorFrom(foods, { ratings: room.ratings ?? {}, recent, now, exp: room.exp ?? {}, weather, history: historyList });
   for (const [id, b] of Object.entries(favBoosts(fav))) prior[id] = (prior[id] ?? 0) + b;
-  return new FoodQuiz(foods, QUESTIONS, prior, { rnd, learned: learnFrom(historyList, foods), seen: seenFrom(historyList), known: knownFrom({ weather, history: historyList, now }), novel: novelEffects(historyList, foods, now, fav) });
+  return new FoodQuiz(foods, QUESTIONS, prior, { rnd, learned: learnFrom(historyList, foods), seen: seenFrom(historyList), drop: pruned?.(historyList, foods, QUESTIONS).map((d) => d.id), known: knownFrom({ weather, history: historyList, now }), novel: novelEffects(historyList, foods, now, fav) });
 }
 
 /** Apply one recorded action to the engine. */
