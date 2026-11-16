@@ -21,6 +21,12 @@ const SHORTLIST_SIZE = 3;
 const MAX_DUELS = 1;
 export const PICK_BELOW = 0.9; // item 13: at guess time, a top food under this probability ends on 3 options instead of one guess (tuned in tests/sim.js, docs/REVIEW.md)
 
+function hashStr(s) {
+  let h = 2166136261;
+  for (let i = 0; i < s.length; i++) h = Math.imul(h ^ s.charCodeAt(i), 16777619);
+  return h >>> 0;
+}
+
 function shuffle(arr, rnd) {
   const a = [...arr];
   for (let i = a.length - 1; i > 0; i--) {
@@ -194,7 +200,8 @@ export class FoodQuiz {
       .sort((a, b) => b.v - a.v);
     if (!scored.length) return null;
     const near = scored.filter((x) => x.v >= NEAR_BEST * scored[0].v);
-    const pick = near[Math.floor(this.rnd() * near.length)];
+    // Chosen from the state, not rnd(): reopening the link replays her answers and must land on the same question.
+    const pick = near[hashStr(JSON.stringify(this.s)) % near.length];
     return { q: pick.q, v: scored[0].v };
   }
 
