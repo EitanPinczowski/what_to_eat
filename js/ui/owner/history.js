@@ -1,7 +1,7 @@
 // Owner: history list with the hit-rate stats card (loaded on first use).
 import { STR } from "../../data/strings.js";
 import { statsFrom } from "../../engine/learn.js";
-import { QUESTIONS } from "../../data/questions.js";
+import { ALL_QUESTIONS } from "../../data/questions.js";
 import { render, html, raw, topbar } from "../dom.js";
 
 const T = STR.owner;
@@ -17,7 +17,7 @@ export function historyViews({ root, store, views, common }) {
   const statsCard = (list) => {
     const st = statsFrom(list);
     if (!st) return "";
-    const q = QUESTIONS.find((x) => x.id === st.confusing);
+    const q = ALL_QUESTIONS.find((x) => x.id === st.confusing);
     return html`<section class="card stats-card" data-testid="stats">
       <div>${T.stats.hit(Math.round(st.hitRate * 100))} · ${T.stats.steps(st.avgSteps.toFixed(1))} · ${T.stats.n(st.n)}</div>
       ${q ? raw(html`<div class="sub">${T.stats.confusing(q.text)}</div>`) : ""}</section>`;

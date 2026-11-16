@@ -5,10 +5,10 @@ import { FOODS } from "../../data/foods.js";
 import { QUESTIONS, questionText } from "../../data/questions.js";
 import { STR } from "../../data/strings.js";
 import { buildFoods } from "../../engine/foods.js";
-import { priorFrom } from "../../engine/prior.js";
+import { priorFrom, knownFrom, novelEffects } from "../../engine/prior.js";
 import { moodFor } from "../../engine/mood.js";
 import { FoodQuiz } from "../../engine/quiz.js";
-import { learnFrom } from "../../engine/learn.js";
+import { learnFrom, seenFrom } from "../../engine/learn.js";
 import { pic, catLabel, foodLabel } from "../pics.js";
 import { BackLayer } from "../../router.js";
 import { weatherKind } from "../../engine/weather.js";
@@ -21,7 +21,7 @@ export function makeQuiz(room, historyList, { now = new Date(), rnd, weather = n
   const foods = buildFoods(FOODS, room.custom ?? []);
   const recent = historyList.filter((h) => h.f && now - new Date(h.at) <= 3 * DAY).map((h) => h.f);
   const prior = priorFrom(foods, { ratings: room.ratings ?? {}, recent, now, exp: room.exp ?? {}, weather, history: historyList });
-  return new FoodQuiz(foods, QUESTIONS, prior, { rnd, learned: learnFrom(historyList, foods) });
+  return new FoodQuiz(foods, QUESTIONS, prior, { rnd, learned: learnFrom(historyList, foods), seen: seenFrom(historyList), known: knownFrom({ weather, history: historyList, now }), novel: novelEffects(historyList, foods, now) });
 }
 
 /** Apply one recorded action to the engine. */

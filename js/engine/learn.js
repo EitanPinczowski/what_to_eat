@@ -62,3 +62,12 @@ export function nudgeExp(exp, foodId, up) {
   const v = Math.max(-1, Math.min(1, (exp[foodId] ?? 0) + (up ? 0.5 : -0.5)));
   return { ...exp, [foodId]: v };
 }
+
+/** The question ids of her last n quizzes, most recent first (from history `ans`): the engine lets a variant she saw lately wait. */
+export function seenFrom(history, n = 3) {
+  return (history ?? [])
+    .filter((e) => Array.isArray(e.ans))
+    .sort((a, b) => String(b.at ?? "").localeCompare(String(a.at ?? "")))
+    .slice(0, n)
+    .map((e) => e.ans.map((a) => (Array.isArray(a) ? a[0] : String(a).split(":")[0])));
+}

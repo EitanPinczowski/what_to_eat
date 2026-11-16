@@ -1,7 +1,7 @@
 // Guest "food wrapped" (#w=): 4-6 swipeable cards from the summary inside the link, ending in a share image
 // drawn on a canvas (navigator.share with the file, download as fallback). No store, no network except the illustrations.
 import { STR } from "../../data/strings.js";
-import { QUESTIONS } from "../../data/questions.js";
+import { ALL_QUESTIONS } from "../../data/questions.js";
 import { pic, hasPic, artSrc } from "../pics.js";
 import { render, html, raw, confetti } from "../dom.js";
 
@@ -15,7 +15,7 @@ export function wrappedCards(s, her = "") {
   const cards = [{ k: "intro", title: W.introTitle(her, month), sub: W.introSub(s.n) }];
   if (s.top?.length) cards.push({ k: "top", title: W.topTitle, top: s.top });
   if (s.hit !== null && s.hit !== undefined) cards.push({ k: "hit", title: W.hitTitle, big: `${s.hit}%`, sub: W.hitSub(s.hit) });
-  const q = QUESTIONS.find((x) => x.id === s.q);
+  const q = ALL_QUESTIONS.find((x) => x.id === s.q);
   if (q) cards.push({ k: "q", title: W.qTitle, big: "🤔", text: q.text, sub: W.qSub });
   if (s.pl) cards.push({ k: "place", title: W.placeTitle, big: "📍", text: s.pl, sub: W.placeSub });
   cards.push({ k: "share", title: W.shareTitle });

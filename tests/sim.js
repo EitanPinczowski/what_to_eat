@@ -1,5 +1,8 @@
 // Accuracy simulation for the guessing engine (PLAN.md §6.5).
-// A simulated guest answers consistently with a hidden target food, with 15% noise.
+// Two simulated guests, both with 15% noise. "old" (food-tag persona, kept for comparison): answers by the hidden target food's tags.
+// "mood" (the honest one for a feelings quiz): has a mood (tired, stressed, celebrating, before-period, hot day, late night, sad) that
+// pulls MOOD_PULL of her answers toward what the mood wants, whatever the target food is; the rest follow the target. Hot day and
+// late night also set the weather / hour, so the engine's skip-what's-known (warmth) and the hour prior are in play. The floors gate the mood table.
 // Usage: node tests/sim.js [trials-per-food=5] [--verbose]
 import { FOODS } from "../js/data/foods.js";
 import { QUESTIONS } from "../js/data/questions.js";
@@ -7,11 +10,22 @@ import { buildFoods } from "../js/engine/foods.js";
 import { jaccard } from "../js/engine/similarity.js";
 import { FoodQuiz } from "../js/engine/quiz.js";
 import { learnFrom, hitFrom, rankIn } from "../js/engine/learn.js";
+import { priorFrom, knownFrom } from "../js/engine/prior.js";
 
 const TRIALS = Number(process.argv[2]) || 5;
 const VERBOSE = process.argv.includes("--verbose");
 const NOISE = 0.15;
 const TARGETS = { found: 0.945, steps: 10, express: 0.60 };
+const MOOD_PULL = 0.3; // share of a mood guest's answers that follow her mood, not the food
+const MOODS = {
+  tired: { p: "quick couch home comfort" },
+  stressed: { p: "salty crunchy junk fried" },
+  celebrating: { p: "fancy resto meal" },
+  beforePeriod: { p: "choco sweet doughy comfort creamy" },
+  hotDay: { p: "cold light fruit healthy", weather: { temp: 33 } },
+  lateNight: { p: "snack junk quick couch", hour: 23 },
+  sad: { p: "comfort creamy sweet home hot" },
+};
 // Honest accuracy (docs/REVIEW.md): regression floors = measured value rounded down to 5 points; PRODUCT = report-only goals.
 const FLOORS = { first: 0.65, top3: 0.95, never: 6 }; // never = foods that are never the first guess at noise 0 (item 15) // at noise 0.15, tired, learned history
 const PRODUCT = { first: 0.45, top3: 0.85, steps: 9 };
@@ -24,8 +38,15 @@ if (process.env.PICK_DISTINCT) TUNE.pickDistinct = process.env.PICK_DISTINCT !==
 const foods = buildFoods(FOODS);
 const rng = (seed) => () => ((seed = (seed * 16807) % 2147483647) / 2147483647);
 
+const moodOf = (f) => Object.entries(MOODS).map(([k, m]) => [k, m.p.split(" ").filter((t) => f.tags.includes(t)).length]).sort((a, b) => b[1] - a[1])[0][0];
+let PERSONA = "mood"; // "old" | "mood": which guest play() simulates
+
 function play(target, rnd, learned = {}, noiseAt = () => NOISE) {
-  const z = new FoodQuiz(foods, QUESTIONS, {}, { rnd, learned, ...TUNE });
+  const mood = PERSONA === "mood" ? MOODS[moodOf(target)] : null;
+  const now = new Date(2026, 5, 9, mood?.hour ?? 13, 0); // a Tuesday
+  const prior = mood ? priorFrom(foods, { now, weather: mood.weather ?? null }) : {};
+  const known = mood ? knownFrom({ weather: mood.weather ?? null, now }) : {};
+  const z = new FoodQuiz(foods, QUESTIONS, prior, { rnd, learned, known, salt: String(Math.floor(rnd() * 1e6)), ...TUNE });
   const ans = [];
   const judge = new FoodQuiz(foods, QUESTIONS); // the simulated user judges by the raw answer effects
   const jt = judge.byId.get(target.id);
@@ -45,7 +66,9 @@ function play(target, rnd, learned = {}, noiseAt = () => NOISE) {
     if (s.type === "q") {
       const ds = s.q.answers.map((a) => judge.delta(jt, s.q, a)); // jt carries the cuisine tags (c:<id>) she answers by
       const max = Math.max(...ds);
+      const want = mood && rnd() < MOOD_PULL ? s.q.answers.map((a) => mood.p.split(" ").reduce((x, t) => x + Math.max(0, a.fx[t] ?? 0), 0)) : null;
       if (rnd() < noiseAt(z.n)) answer(s.q, Math.floor(rnd() * ds.length));
+      else if (want && Math.max(...want) > 0) answer(s.q, want.indexOf(Math.max(...want)));
       else if (ds.every((d) => d === 0)) answer(s.q, lean(s.q)); // no skip on her screens (R5): she leans toward foods like her target
       else {
         const best = ds.map((d, j) => (d === max ? j : -1)).filter((j) => j >= 0);
@@ -148,6 +171,8 @@ const LX = lx / lm;
 console.log(`sim: with learning exact ${pct(LX)} (baseline ${pct(R.exact)}, ${Object.keys(learned).length} learned answers)`);
 // Honest accuracy: first guess / top 3 / guesses shown, at three noise levels, noise +0.10 after step 8,
 // each starting from a history of one earlier quiz per food (learned bonuses), not an empty one.
+function honestTable(persona) {
+PERSONA = persona;
 const table = {};
 const perFood = {};
 for (const lv of LEVELS) {
@@ -177,7 +202,17 @@ for (const lv of LEVELS) {
   perFood[lv] = per;
   table[lv] = { first: fi / mm, top3: t3 / mm, guesses: gs / mm, steps: st / m, express: xr ? xh / xr : 1, xsteps: xr ? xs / xr : 0 };
 }
-console.log(`sim: honest accuracy (tired after step ${TIRED_AFTER}: +${TIRED_ADD} noise; learned history; ${foods.length} foods x ${TRIALS})`);
+PERSONA = "mood";
+return { table, perFood };
+}
+const OLD = honestTable("old");
+const { table, perFood } = honestTable("mood");
+const row = (name, T) => {
+  console.log(`sim: ${name} persona, honest accuracy at noise 0.15: first ${pct(T[0.15].first)} · top 3 ${pct(T[0.15].top3)} · steps ${T[0.15].steps.toFixed(1)} (noise 0: ${pct(T[0].first)} / ${pct(T[0].top3)} / ${T[0].steps.toFixed(1)}; noise 0.30: ${pct(T[0.3].first)} / ${pct(T[0.3].top3)} / ${T[0.3].steps.toFixed(1)})`);
+};
+row("old food-tag (comparison, not gated)", OLD.table);
+row("mood (gated)", table);
+console.log(`sim: honest accuracy, mood persona (tired after step ${TIRED_AFTER}: +${TIRED_ADD} noise; learned history; ${foods.length} foods x ${TRIALS})`);
 console.log(`noise | first guess (target ${pct(PRODUCT.first)}) | top 3 (target ${pct(PRODUCT.top3)}) | guesses | steps (target <=${PRODUCT.steps}) | express shortlist (steps)`);
 for (const lv of LEVELS) {
   const t = table[lv];
