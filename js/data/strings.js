@@ -11,6 +11,15 @@ export const STR = {
     text: (me) => `${me} כאן. נשחק? את עונה, ואני מנחש מה בא לך לאכול.`,
     go: "יאללה, תנחש",
   },
+  wxLine: (w) => {
+    const t = Math.round(Number(w?.temp));
+    if (!Number.isFinite(t)) return "";
+    const rain = w.rain === true || Number(w.rain) > 0.2;
+    const word = t <= 14 ? "קריר" : t >= 30 ? "חם" : t >= 24 ? "חמים" : "נעים";
+    return `${word} בחוץ, ${t}° ${rain ? "🌧️" : t <= 14 ? "🧥" : t >= 30 ? "☀️" : "🌤️"}`;
+  },
+  noteFrom: (me) => `הערה מ${me}`,
+  answers: { slider: "גררי ובחרי", sliderDone: "זה אני", thermo: "גררי את הכספית", thermoDone: "בדיוק כך", pickOne: "בחרי אחת" },
   weatherTease: { rain: "גשם בחוץ… מרק?", cold: "קר בחוץ… משהו חם?", hot: "חם בחוץ… משהו קר?" },
   left: (n) => (n <= 1 ? "עוד שאלה אחת" : n >= 4 ? "עוד כמה שאלות" : `עוד ${n} שאלות`),
   almost: "כמעט שם",
@@ -147,6 +156,8 @@ export const STR = {
     },
     more: "עוד ⋯",
     soon: "בקרוב",
+    noteLabel: "רוצה להוסיף הערה קטנה?",
+    notePlaceholder: "למשל: מחכה לך בבית 🏠",
     sendTitle: (her) => `שאלון ל${her}`,
     sendText: (her, me) => `היי ${her}, בא לך שאנחש מה בא לך לאכול? 😋 — ${me}`,
     whatsapp: "שליחה בוואטסאפ",

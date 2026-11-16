@@ -69,7 +69,7 @@ service cloud.firestore {
     }
 
     function liveOk(docId) {
-      return str('opened', 40) && str('resultId', 40) && str('ack', 20) && str('ackAt', 40) && str('sentAt', 40) && lst('dead', 8) && obj('push')
+      return str('opened', 40) && str('resultId', 40) && str('ack', 20) && str('ackAt', 40) && str('sentAt', 40) && str('note', 120) && lst('dead', 8) && obj('push')
         && (docId == 'vote'
           ? lst('o', 3) && lst('n', 3) && str('p', 40) && str('pAt', 40)
           : str('mode', 20) && num('n') && num('i') && num('done') && flag('finished') && obj('given')

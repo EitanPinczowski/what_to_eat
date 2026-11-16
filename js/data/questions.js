@@ -11,14 +11,20 @@ export const P = (s) => {
   return Object.keys(dyn).length ? { fx, dyn } : { fx };
 };
 const axis = (id, stage, F, o, vs) =>
-  vs.map(([text, st, p], i) => {
+  vs.map(([text, st, p, ty], i) => {
     const slider = st.length === 5;
     const lo = P(F[p?.[0] ?? 0]), hi = P(F[p?.[1] ?? F.length - 1]);
     const answers = slider
       ? st.map(([e, t], j) => ({ e, t, fx: lerpFx(lo.fx, hi.fx, j / 4), ...(lo.dyn && { dyn: lerpFx(lo.dyn, hi.dyn, j / 4) }), ...(o.big && j === 4 && { big: true }) }))
       : st.map(([e, t], j) => ({ e, t, ...P(F[j]), ...(o.ks && { k: o.ks[j] }), ...(o.big && j === F.length - 1 && { big: true }) }));
-    return { id: id + (i + 1), axis: id, stage, text, answers, ...(slider && { slider: true }), ...(o.o && { ordered: true }), ...(o.multi && { multi: true }), ...(o.need && { need: o.need }) };
+    return { id: id + (i + 1), axis: id, stage, text, answers, ...(slider && { slider: true }), ...((ty ?? (slider ? "slider" : null)) && { type: ty ?? "slider" }), ...(o.o && { ordered: true }), ...(o.multi && { multi: true }), ...(o.need && { need: o.need }) };
   });
+
+/** Answers that are not plain buttons (color swatches, big pictures): same axis, own effects per answer. */
+const special = (axisId, n, stage, type, text, rows) => ({
+  id: axisId + n, axis: axisId, stage, text, type,
+  answers: rows.map(([e, t, fx, c]) => ({ e, t, ...P(fx), ...(c && { c }) })),
+});
 
 export const QUESTIONS = [
   ...axis("hunger", 1, ["snack:3 dessert:1 meal:-2", "meal:3 snack:-2", "meal:3 heavy:2.5 light:-2 snack:-3"], { o: 1, big: 1 }, [
@@ -38,6 +44,18 @@ export const QUESTIONS = [
     ["איך היה היום, במילה אחת?", [["🥺", "קשה"], ["🌀", "מטורף"], ["🎉", "מעולה"]]],
     ["איפה הלב שלך עכשיו?", [["🫂", "צריכה חיבוק"], ["🙂", "בסדר"], ["😌", "רגועה"], ["😄", "טוב לי"], ["🥳", "בא לחגוג"]], [0, 2]],
   ]),
+  special("mood", 5, 2, "color", "איזה צבע את עכשיו?", [
+    ["🟤", "חום וחמים", "comfort:2.5 creamy:1.5 sweet:1 home:1.5", "#8a5a3c"],
+    ["🔴", "אדום ובוער", "salty:2 crunchy:1.5 junk:2 spicy:1", "#d6322e"],
+    ["🔵", "כחול ורגוע", "light:2.5 healthy:2 sour:1", "#2f6fd0"],
+    ["🟡", "צהוב ושמשי", "fancy:2 resto:2 meal:1.5", "#f2b705"],
+  ]),
+  special("mood", 6, 2, "art", "איזו תמונה הכי את עכשיו?", [
+    ["☁️", "ענן רך", "comfort:2 creamy:1.5 home:1.5"],
+    ["🔥", "להבה", "salty:2 junk:1.5 spicy:1 hot:1"],
+    ["🧊", "קרח", "light:2 healthy:1.5 cold:1.5"],
+    ["🌧️", "גשם", "comfort:2.5 home:2 hot:1.5"],
+  ]),
   ...axis("vibe", 2, ["home:2.5 comfort:2.5 hot:1.5", "junk:3 fried:1.5 cheesy:1 healthy:-2", "light:2.5 healthy:2.5 sour:1 junk:-2"], {}, [
     ["איזה אוכל יעשה לך טוב עכשיו?", [["🛋️", "משהו ביתי ומנחם"], ["😈", "ג׳אנק בלי רגשות אשם"], ["🥗", "משהו טרי ונקי"]]],
     ["איזה סוג של ארוחה זו?", [["🛋️", "פיג׳מה וספה"], ["🎁", "פינוק קטן לעצמי"], ["🥗", "משהו נקי ורענן"]]],
@@ -52,6 +70,7 @@ export const QUESTIONS = [
     ["משהו שמחמם או משהו שמרענן?", [["🔥", "שמחמם"], ["🧊", "שמרענן"]]],
     ["ספל תה חם או כוס לימונדה קרה?", [["☕", "תה חם"], ["🍋", "לימונדה קרה"]]],
     ["כמה חם או קר בא לך?", [["🧊", "קר מאוד"], ["🍃", "קריר"], ["🌤️", "פושר"], ["♨️", "חמים"], ["🔥", "חם ומהביל"]], [1, 0]],
+    ["איפה הכספית אצלך עכשיו?", [["🧊", "קר מאוד"], ["🍃", "קריר"], ["🌤️", "פושר"], ["♨️", "חמים"], ["🔥", "חם ומהביל"]], [1, 0], "thermo"],
   ]),
   ...axis("world", 3, ["israeli:2 middle:2 home:2 c:israeli:2.5", "c:italian:2 c:asian:2 c:american:2 c:mexican:2", "street:3 hands:1.5 middle:0.5"], {}, [
     ["ובאיזה עולם זה?", [["🏠", "מוכר וביתי"], ["✈️", "משהו מחו״ל"], ["🌯", "אוכל רחוב"]]],

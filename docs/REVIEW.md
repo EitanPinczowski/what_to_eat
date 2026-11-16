@@ -249,3 +249,9 @@ Known gaps: sim average steps 11.8 (target 10, reported only); sim "found" gate 
 - Night: class `night` on <html> 20:00-05:00 (tokens.css, after the dark rules); first-question lead STR.night.lead except in late/shabbat moments. Change: isNight in quiz.js.
 - Big text: toggle in her profile, localStorage wte-big-text, class `big-text` on the quiz root (css end). Sizes stay inside the design-test scale.
 - Result card: js/ui/guest/card.js (canvas 720x900, fixed berry colors, `answers` slot for couple mode); swipe.js and card.js are in the SW shell (lazy, but profile.js is too).
+
+## W5a: answer types, note, reveal, weather line
+- Types: `type` on a question (slider = every 5-stop one, thermo = warmth4, color = mood5, art = mood6) → lazy module `js/ui/guest/answers/<type>.js` swaps in over the plain buttons; buttons stay under prefers-reduced-motion or on load failure. Change: drop the `type` field of a question to make it buttons only.
+- Variety rule: `varietyFilter` in js/engine/quiz.js (max 2 non-button, never same type twice in a row), applied inside `variant()`, so it is deterministic from the state.
+- Note from Eitan: `note` in live/quiz (rules `str('note', 120)` in liveOk, firestore.rules CHANGED, not deployed). Cleared on each new send; kept by her saves via carry().
+- Flip: 0.7 s CSS, not applied under reduced-motion or webdriver. Weather line: `STR.wxLine` from the cached reading only.

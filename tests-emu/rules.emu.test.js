@@ -91,6 +91,9 @@ test("live: only quiz, sweep and vote docs, typed", async () => {
   await assertFails(l("quiz", { finished: "yes" }));
   await assertFails(l("vote", { o: ["a", "b", "c", "d"] })); // vote lists hold at most 3
   await assertFails(l("quiz", { opened: "x".repeat(41) }));
+  await assertSucceeds(l("quiz", { sentAt: at, note: "x".repeat(120) })); // Eitan's note
+  await assertFails(l("quiz", { sentAt: at, note: "x".repeat(121) }));
+  await assertFails(l("quiz", { sentAt: at, note: 5 }));
 });
 
 test("feedback, errors, shopping: capped strings; unknown collections refused", async () => {

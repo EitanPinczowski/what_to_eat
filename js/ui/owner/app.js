@@ -124,7 +124,8 @@ export async function runOwner(root, store, { base = location.origin + location.
 
   const markSent = () => {
     const fresh = freshLive(store.doc("live", "quiz"));
-    if (fresh) store.put("live", "quiz", fresh).catch(saveFailed);
+    const note = String(root.querySelector?.("[name=note]")?.value ?? "").trim().slice(0, 120);
+    if (fresh) store.put("live", "quiz", { ...fresh, ...(note ? { note } : {}) }).catch(saveFailed);
   };
 
   setInterval(() => {
@@ -137,6 +138,8 @@ export async function runOwner(root, store, { base = location.origin + location.
     const link = buildQuizLink(s.base || base, store.roomId);
     const text = `${T.sendText(s.her, s.me)}\n${link}`;
     render(root, html`${raw(topbar(T.sendTitle(s.her)))}
+      <label class="sub" for="send-note">${T.noteLabel}</label>
+      <input id="send-note" name="note" maxlength="120" autocomplete="off" placeholder="${T.notePlaceholder}" data-testid="note">
       <button class="btn" data-on="copy">${T.copy}</button>
       <code class="link" dir="ltr">${link}</code>
       <p class="sub" data-testid="live" role="status">${liveLine(store.doc("live", "quiz"), s.her)}</p>

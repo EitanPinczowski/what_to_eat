@@ -6,7 +6,7 @@ import { buildResultLink } from "../../share/links.js";
 import { waUrl } from "../../share/whatsapp.js";
 import { pic, catLabel, foodLabel } from "../pics.js";
 import { render, html, raw, confetti, saveFailed, mountSaveStatus } from "../dom.js";
-import { startGuestQuiz, backBar } from "./quiz.js";
+import { startGuestQuiz, backBar, still } from "./quiz.js";
 import { VOTE_NONE } from "../../store/store.js";
 import { fetchWeather, cachedWeather } from "../../weather.js";
 
@@ -97,7 +97,7 @@ export function finishForm(root, out, sendLabel, onSend, heart = null) {
   };
   const draw = () => {
     render(root, html`${out.back ? raw(backBar()) : ""}
-      <section class="card stack result" data-testid="result">${out.craving ? raw(html`<p class="sub craving-line">${out.craving}</p>`) : ""}<div class="mood">${out.mood}</div>
+      <section class="card stack result${still() ? "" : " flip"}" data-testid="result">${out.craving ? raw(html`<p class="sub craving-line">${out.craving}</p>`) : ""}<div class="mood">${out.mood}</div>
         <div class="big reveal" aria-hidden="true">${raw(pic(out.food))}</div>
         <h2 class="title">${out.food?.name ?? out.result.free}</h2>${out.food ? raw(html`<p class="cat">${catLabel(out.food)}</p>`) : ""}${heart && out.food ? raw(html`<button class="btn btn-ghost heart" data-on="heart" data-testid="heart" aria-pressed="${hearted}">${hearted ? STR.heart.on : STR.heart.off}</button>`) : ""}</section>
       <div data-testid="card-host"></div>
@@ -123,7 +123,7 @@ export async function runGuest(root, store, { base = location.origin + location.
   const live = store.doc("live", "quiz");
   const carry = () => {
     const cur = store.doc("live", "quiz");
-    return { ...(cur?.sentAt ? { sentAt: cur.sentAt } : {}), ...(cur?.dead?.length ? { dead: cur.dead } : {}) };
+    return { ...(cur?.note ? { note: cur.note } : {}), ...(cur?.sentAt ? { sentAt: cur.sentAt } : {}), ...(cur?.dead?.length ? { dead: cur.dead } : {}) };
   };
   const saveLive = (data) => store.put("live", "quiz", { ...data, ...carry(), at: new Date().toISOString() }).catch(saveFailed);
 
@@ -167,6 +167,7 @@ export async function runGuest(root, store, { base = location.origin + location.
     startGuestQuiz(root, {
       baseEntry: true,
       weather,
+      note: store.doc("live", "quiz")?.note ?? "",
       room: store.get(),
       store,
       history: store.list("history"),

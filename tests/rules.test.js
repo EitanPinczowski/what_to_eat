@@ -41,7 +41,11 @@ test("rules: history rejections are a bounded list and the inbox mark is a numbe
 });
 
 test("rules: live status sentAt, dead list and push receipt are typed (items 7–8)", () => {
-  assert.match(rules, /function liveOk\(docId\)[\s\S]*?str\('sentAt', 40\) && lst\('dead', 8\) && obj\('push'\)/);
+  assert.match(rules, /function liveOk\(docId\)[\s\S]*?str\('sentAt', 40\) && str\('note', 120\) && lst\('dead', 8\) && obj\('push'\)/);
+});
+
+test("rules: Eitan's note in the live doc is a string of at most 120 characters (W5a)", () => {
+  assert.match(rules, /function liveOk\(docId\)[\s\S]*?str\('note', 120\)/);
 });
 
 test("rules: events are create-only, with fixed keys, typed and bounded (item 29)", () => {

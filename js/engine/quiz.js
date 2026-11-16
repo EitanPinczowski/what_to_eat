@@ -38,6 +38,20 @@ export function lerpFx(a, b, t) {
 export const bucketOf = (q, t) => Math.round(Math.min(1, Math.max(0, t)) * (q.answers.length - 1));
 export const PICK_BELOW = 0.9;
 
+/** The answer type of a question: "buttons" unless it carries a type (slider, thermo, art, color). */
+export const typeOf = (q) => q?.type ?? (q?.slider ? "slider" : "buttons");
+/** Variety rule: at most 2 non-button questions per quiz, never the same non-button type twice in a row. Falls back to all of them if that leaves none. */
+export function varietyFilter(vs, askedQs) {
+  const types = askedQs.map(typeOf);
+  const fancy = types.filter((t) => t !== "buttons").length;
+  const last = types.at(-1);
+  const ok = vs.filter((q) => {
+    const t = typeOf(q);
+    return t === "buttons" || (fancy < 2 && t !== last);
+  });
+  return ok.length ? ok : vs;
+}
+
 function hashStr(s) {
   let h = 2166136261;
   for (let i = 0; i < s.length; i++) h = Math.imul(h ^ s.charCodeAt(i), 16777619);
@@ -216,6 +230,7 @@ export class FoodQuiz {
       const i = this.seen.findIndex((ids) => ids.includes(q.id));
       return i < 0 ? 99 : i;
     };
+    vs = varietyFilter(vs, asked.map((id) => this.qById.get(id)).filter(Boolean));
     const far = Math.max(...vs.map(age));
     vs = vs.filter((q) => age(q) === far);
     return vs[hashStr(`${axis}|${asked.join(",")}|${this.salt}`) % vs.length];

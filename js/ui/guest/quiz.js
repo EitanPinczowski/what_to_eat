@@ -6,7 +6,7 @@ import { STR } from "../../data/strings.js";
 import { buildFoods } from "../../engine/foods.js";
 import { priorFrom, knownFrom, novelEffects } from "../../engine/prior.js";
 import { moodFor, cravingSummary } from "../../engine/mood.js";
-import { FoodQuiz, questionsLeft } from "../../engine/quiz.js";
+import { FoodQuiz, questionsLeft, typeOf } from "../../engine/quiz.js";
 import { learnFrom, seenFrom } from "../../engine/learn.js";
 import { pic, qPic, catLabel, foodLabel } from "../pics.js";
 import { BackLayer } from "../../router.js";
@@ -40,7 +40,7 @@ export function pickReaction(used, rnd = Math.random) {
 }
 
 /** No motion: unit tests (no document), Playwright (webdriver), globalThis.WTE_NO_MOTION, or prefers-reduced-motion. */
-const still = () => !globalThis.document || !!globalThis.WTE_NO_MOTION || !!globalThis.navigator?.webdriver || !!globalThis.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+export const still = () => !globalThis.document || !!globalThis.WTE_NO_MOTION || !!globalThis.navigator?.webdriver || !!globalThis.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
 
 /** Foods, prior and engine for a room. */
 export function makeQuiz(room, historyList, { now = new Date(), rnd, weather = null } = {}) {
@@ -88,6 +88,7 @@ export function startGuestQuiz(root, opts) {
   const { room, history = [], onProgress, onFinish, onFeedback, intro = true } = opts;
   const z = opts.quiz ?? makeQuiz(room, history, { weather: opts.weather });
   const tease = STR.weatherTease[weatherKind(opts.weather)] ?? "";
+  const wx = STR.wxLine(opts.weather);
   const actions = [];
   for (const a of opts.actions ?? []) {
     try {
@@ -249,7 +250,7 @@ export function startGuestQuiz(root, opts) {
       const { q, order } = step;
       const lead = actions.length ? "" : isNight(opts.now ?? new Date()) && !["late", "shabbat"].includes(momentOf(opts.now ?? new Date())) ? STR.night.lead : STR.moment[momentOf(opts.now ?? new Date())]?.lead;
       body = html`${lead ? raw(html`<p class="sub lead">${lead}</p>`) : ""}<h2 class="q">${questionText(q, opts.now ?? new Date())}</h2>
-        ${order.map((i) => raw(html`<button class="btn" data-on="ans" data-arg="${i}"><span class="em">${raw(qPic(q.answers[i].e))}</span>${q.answers[i].t}</button>`))}
+        <div class="answers" data-type="${typeOf(q)}">${order.map((i) => raw(html`<button class="btn" data-on="ans" data-arg="${i}"><span class="em">${raw(qPic(q.answers[i].e))}</span>${q.answers[i].t}</button>`))}</div>
         ${raw(footer())}`;
     } else if (step.type === "grid") {
       body = html`<h2 class="q">${STR.grid.text}</h2>
@@ -296,6 +297,11 @@ export function startGuestQuiz(root, opts) {
     }
     render(root, backBar(canBack() || !!opts.onExit) + meter() + body, handlers);
     if (step.type === "pick" && step.unsure) fillPick(step);
+    // playful answer types: a small lazy module swaps in over the plain buttons; those stay for reduced motion or if it fails to load
+    if (step.type === "q" && typeOf(step.q) !== "buttons" && root.querySelector && !globalThis.matchMedia?.("(prefers-reduced-motion: reduce)").matches && !globalThis.WTE_NO_MOTION) {
+      const on = step, host = root.querySelector(".answers");
+      import(`./answers/${typeOf(on.q)}.js`).then((m) => step === on && host?.isConnected && m.mount(host, on.q, on.order), () => {}); // harmless: the buttons work
+    }
     // two-choice screens also take a left or right swipe (lazy module; taps work without it)
     const two = !root.querySelectorAll ? [] : step.type === "q" ? [...root.querySelectorAll("[data-on=ans]")] : step.type === "duel" || step.type === "gut" ? [...root.querySelectorAll(".duel .food")] : [];
     if (two.length === 2) import("./swipe.js").then((m) => m.attachSwipe(step.type === "q" ? root : two[0].parentElement, two), () => {}); // harmless: tapping works
@@ -339,6 +345,8 @@ export function startGuestQuiz(root, opts) {
       <p class="sub">${STR.intro.text(me)}</p>
       <p class="sub">${STR.moment[momentOf(opts.now ?? new Date())]?.intro ?? ""}</p>
       ${tease ? raw(html`<p class="sub">${tease}</p>`) : ""}
+      ${wx ? raw(html`<p class="sub wx" data-testid="wx">${wx}</p>`) : ""}
+      ${opts.note ? raw(html`<div class="note-card" data-testid="note-card"><small>${STR.noteFrom(me)}</small>${opts.note}</div>`) : ""}
       <button class="btn btn-primary" data-on="go" autofocus>${STR.intro.go}</button>
       <div data-testid="like-host"></div>
       ${opts.store ? raw(html`<button class="btn btn-ghost" data-on="profile" data-testid="profile-link">${STR.profile.link}</button>`) : ""}`, handlers);
