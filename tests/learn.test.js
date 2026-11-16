@@ -48,3 +48,17 @@ test("nudgeExp ±0.5 within ±1; prior uses it only for unrated foods", () => {
   assert.equal(priorFrom(foods, { exp: { pizza: 1 }, ratings: { pizza: { r: 3 } }, now }).pizza, 1);
   assert.equal(priorFrom(foods, { exp: { pizza: -1 }, ratings: { pizza: { r: 4 } }, now }).pizza, 2.5);
 });
+
+test("hitFrom: the one definition of first-guess hit, top-3 hit and rank", async () => {
+  const { hitFrom, rankIn, statsRank } = await import("../js/engine/learn.js");
+  assert.deepEqual(hitFrom(1), { rank: 1, hit: true, first: true, top3: true });
+  assert.deepEqual(hitFrom(3), { rank: 3, hit: true, first: false, top3: true });
+  assert.deepEqual(hitFrom(4), { rank: 4, hit: true, first: false, top3: false });
+  assert.deepEqual(hitFrom(0), { rank: 0, hit: false, first: false, top3: false });
+  assert.equal(rankIn(["a", "b", "c"], "c"), 3);
+  assert.equal(rankIn(["a"], "z"), 0);
+  assert.equal(statsRank({ hit: true, guesses: 2 }), 2);
+  assert.equal(statsRank({ hit: true }), 1);
+  assert.equal(statsRank({ hit: false, guesses: 3 }), 0);
+  assert.equal(statsRank(undefined), 0);
+});

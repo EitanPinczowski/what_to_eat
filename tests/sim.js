@@ -6,7 +6,7 @@ import { QUESTIONS } from "../js/data/questions.js";
 import { buildFoods } from "../js/engine/foods.js";
 import { jaccard } from "../js/engine/similarity.js";
 import { FoodQuiz } from "../js/engine/quiz.js";
-import { learnFrom } from "../js/engine/learn.js";
+import { learnFrom, hitFrom, rankIn } from "../js/engine/learn.js";
 
 const TRIALS = Number(process.argv[2]) || 5;
 const VERBOSE = process.argv.includes("--verbose");
@@ -30,7 +30,8 @@ function play(target, rnd, learned = {}, noiseAt = () => NOISE) {
   const judge = new FoodQuiz(foods, QUESTIONS); // the simulated user judges by the raw answer effects
   const jt = judge.byId.get(target.id);
   const offered = []; // food ids shown as guesses / picks, in order
-  let first = null, guesses = 0, inPick = false;
+  let guesses = 0, inPick = false;
+  const hit3 = () => hitFrom(rankIn(offered, target.id)); // the one definition of a hit (js/engine/learn.js)
   const answer = (q, i) => (i >= 0 && ans.push([q.id, i]), z.answer(q, i));
 
   const sim = (f) => (f.id === target.id ? 1 : jaccard(f.tags, target.tags));
@@ -59,11 +60,9 @@ function play(target, rnd, learned = {}, noiseAt = () => NOISE) {
     } else if (s.type === "guess") {
       guesses++;
       offered.push(s.f.id);
-      first ??= s.f.id === target.id;
       z.guessResult(s.f, s.f.id === target.id ? "yes" : sim(s.f) >= 0.5 ? "close" : "no");
     } else if (s.type === "pick") {
       const hit = s.items.find((f) => f.id === target.id);
-      first ??= s.items[0]?.id === target.id;
       inPick = !!hit;
       offered.push(...s.items.map((f) => f.id));
       if (s.unsure && !hit) {
@@ -71,13 +70,12 @@ function play(target, rnd, learned = {}, noiseAt = () => NOISE) {
         continue;
       }
       z.choose(hit ?? "—");
-      return { exact: false, found: !!hit, steps: z.n + 1, ans, express: !!s.express || (!!s.unsure && z.s.big), first, top3: inPick || offered.slice(0, 3).includes(target.id), guesses, win: offered[0] };
+      return { exact: false, found: !!hit, steps: z.n + 1, ans, express: !!s.express || (!!s.unsure && z.s.big), first: hit3().first, top3: inPick || hit3().top3, guesses, win: offered[0] };
     }
   }
   const ok = z.result?.f === target.id;
   if (z.result?.f && !offered.length) offered.push(z.result.f);
-  first ??= ok;
-  return { exact: ok, found: ok, steps: z.n, ans, express: false, first, top3: offered.slice(0, 3).includes(target.id), guesses, win: offered[0] };
+  return { exact: ok, found: ok, steps: z.n, ans, express: false, first: hit3().first, top3: hit3().top3, guesses, win: offered[0] };
 }
 
 function coverage() {

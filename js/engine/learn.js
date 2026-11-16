@@ -36,6 +36,12 @@ export function learnFrom(entries, foods) {
   return out;
 }
 
+/** The one definition of a hit. rank = 1-based place of the right food among what was offered, 0 = never offered. */
+export const hitFrom = (rank) => ({ rank, hit: rank > 0, first: rank === 1, top3: rank >= 1 && rank <= 3 });
+export const rankIn = (offered, id) => offered.indexOf(id) + 1;
+/** Rank of a history entry's stats: the guess that was right (stats.guesses), 0 when none was. */
+export const statsRank = (s) => (s?.hit ? Math.max(1, s.guesses | 0) : 0);
+
 /** Accuracy stats from history entries with `stats` ({hit, steps, guesses, skips}). */
 export function statsFrom(entries) {
   const st = entries.map((e) => e.stats).filter(Boolean);
@@ -45,7 +51,7 @@ export function statsFrom(entries) {
   const worst = Object.entries(skips).sort((a, b) => b[1] - a[1])[0];
   return {
     n: st.length,
-    hitRate: st.filter((s) => s.hit).length / st.length,
+    hitRate: st.filter((s) => hitFrom(statsRank(s)).hit).length / st.length,
     avgSteps: st.reduce((a, s) => a + (s.steps ?? 0), 0) / st.length,
     confusing: worst ? worst[0] : null,
   };

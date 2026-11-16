@@ -1,5 +1,6 @@
 // "Food wrapped": monthly recap computed on Eitan's device from stored history. No new data.
 // The result is a small summary that travels inside the link (#w=), so no Firestore doc and no rules change.
+import { hitFrom, statsRank } from "./learn.js";
 export const MIN_MEALS = 3; // below this the guest sees one friendly "not enough yet" card
 
 /** "YYYY-MM" (local time) of an ISO timestamp, or "" when it is not a date. */
@@ -28,7 +29,7 @@ export function hardQuestion(entries) {
   const asked = {}, missed = {};
   for (const e of entries) {
     if (!e.stats || !Array.isArray(e.ans)) continue;
-    const miss = !(e.stats.hit && e.stats.guesses <= 1);
+    const miss = !hitFrom(statsRank(e.stats)).first;
     for (const a of e.ans) {
       const q = String(a).split(":")[0];
       asked[q] = (asked[q] ?? 0) + 1;
@@ -55,7 +56,7 @@ export function wrappedSummary(history, month, places = {}) {
     meta[key] ??= [e.f ?? null, String(e.fn ?? "").slice(0, 40), e.fe || "🍽️"];
   }
   const withStats = es.filter((e) => e.stats);
-  const firstHit = withStats.filter((e) => e.stats.hit && e.stats.guesses <= 1).length;
+  const firstHit = withStats.filter((e) => hitFrom(statsRank(e.stats)).first).length;
   const visits = {};
   for (const e of es) if (e.place && places[e.place]?.name) visits[e.place] = (visits[e.place] ?? 0) + 1;
   const fav = top(visits)[0];
