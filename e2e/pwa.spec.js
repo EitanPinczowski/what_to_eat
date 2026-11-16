@@ -33,12 +33,15 @@ const controlled = (page) => page.waitForFunction(() => navigator.serviceWorker.
 const cacheNames = (page) => page.evaluate(async () => (await caches.keys()).filter((k) => k.startsWith("wte-")).sort());
 // The worker claiming the page the first time fires controllerchange, which reloads it once (js/pwa.js); reload on purpose so the page is steady.
 const install = async (page) => {
-  await page.goto(`${base}/?store=local&sw`);
-  await controlled(page);
-  // The app's own controllerchange reload can land mid-call ("frame detached"); retry until one reload completes.
+  // The app's own controllerchange reload can land mid-call ("frame detached"): load until a controlled page stays put.
   for (let i = 0; ; i++) {
-    try { await page.reload({ waitUntil: "load" }); break; }
-    catch (e) { if (i >= 2) throw e; await page.waitForLoadState("load").catch(() => {}); }
+    try {
+      await page.goto(`${base}/?store=local&sw`);
+      await controlled(page);
+      await page.evaluate(() => (window.__steady = 1));
+      await page.waitForTimeout(700);
+      if (await page.evaluate(() => window.__steady === 1)) break;
+    } catch (e) { if (i >= 4) throw e; }
   }
   await controlled(page);
   await expect(page.locator("h1")).toHaveText("מה בא לך?");
