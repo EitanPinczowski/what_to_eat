@@ -315,3 +315,8 @@ Known gaps: sim average steps 11.8 (target 10, reported only); sim "found" gate 
 - **Chips speak her words (Q10):** `cravingSummary` chips carry `words` (her own answer text when it is up to 3 words, else the adjective); the quiz card shows `words`, the reflecting line still uses the adjectives (`label`).
 - **Opener by moment (Q18):** `FoodQuiz` takes `moment` (momentOf); questions may carry `at`: hunger2 (animal) only evening/late/shabbat, hunger3 (last meal) only morning/noon/friNoon. Table `AT` in js/data/questions.js.
 - Sim after: mood persona first 49% / top 3 98%, found 95% (floor 95%), steps 9.4. No floors or limits changed. Not done: free rewording of Q1-Q8 (no spec text to follow).
+
+## R1 finished: Q1–Q8 answer wording and effects (2026-11-17, local session)
+- As approved in `docs/plan/round3.md` §A1–A2. vibe2 "🎁 פינוק קטן לעצמי" → "😈 משהו שמנוני בלי רגשות אשם" (it always meant junk); body2 "כמעט אפס" → "כמעט אפס, שיביאו לי", "חצי סוללה" → "מספיק כדי לאכול משהו טוב"; body1 "…משהו קל" → "…משהו בלי מאמץ"; mood4 slider stops: צריכה חיבוק · קצת עייפה · בסדר · טוב לי · בא לחגוג ("רגועה" meant light elsewhere); bite2 → "איזה צליל בא לך לשמוע בביס?".
+- Effects: mood6 cloud = `creamy:2.5 sweet:1.5 dessert:1` (it duplicated the rain); now the best answer for 34 foods (was 4). kick "עם עקיצה" spicy 0.5 → 1.5; on an ordered scale it still never beats "שישרוף" for a spicy food, but it now leans spicy instead of being noise.
+- Sim (mood persona, noise 0.15): first 49% → 52%, top 3 98% → 98%; noise 0: 63/99; noise 0.30: 37/92.
