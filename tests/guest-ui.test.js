@@ -33,6 +33,8 @@ test("countdown: 'עוד n שאלות' next to the craving card, never 0, may go
   const z = startGuestQuiz(root, { room: emptyRoom(), history: [], intro: false });
   assert.match(root.innerHTML, /data-testid="qn">עוד /);
   assert.match(root.innerHTML, /craving-card/);
+  assert.equal(z.next().type, "cat");
+  root.click("cat", "israeli");
   const s = z.next();
   assert.equal(s.type, "q");
   root.click("ans", String(s.order[0]));

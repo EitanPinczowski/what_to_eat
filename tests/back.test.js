@@ -53,13 +53,15 @@ test("opening and leaving the quiz several times leaves one popstate listener; o
   for (let k = 0; k < 4; k++) {
     const root = fakeRoot();
     z = startGuestQuiz(root, { room: emptyRoom(), history: [], intro: false, win: w });
+    root.click("cat", "israeli");
     root.click("ans", "0");
     root.click("ans", "0");
     assert.equal(z.n, 2);
     assert.equal(w.listeners.size, 1, `listener count after quiz ${k + 1}`);
     if (k < 3) {
       w.history.back();
-      w.history.back(); // two answers undone, still in the app
+      w.history.back();
+      w.history.back(); // two answers and the category undone, still in the app
       assert.equal(z.n, 0);
       assert.equal(w.at, 0);
     }
@@ -77,14 +79,17 @@ test("a quiz left behind (screens replaced) does not answer later back presses",
   v.reset("home");
   const r1 = fakeRoot();
   const z1 = startGuestQuiz(r1, { room: emptyRoom(), history: [], intro: false, win: w });
+  r1.click("cat", "israeli");
   r1.click("ans", "0");
   v.reset("home"); // wholesale replace: the quiz's entry is stale
   const r2 = fakeRoot();
   const z2 = startGuestQuiz(r2, { room: emptyRoom(), history: [], intro: false, win: w });
+  r2.click("cat", "israeli");
   r2.click("ans", "0");
   w.history.back(); // z2's answer
   assert.equal(z2.n, 0);
   assert.equal(z1.n, 1);
+  w.history.back(); // z2's category
   w.history.back(); // the stale entry is skipped on the way down to the base
   assert.equal(z1.n, 1);
   assert.equal(w.at, 0);

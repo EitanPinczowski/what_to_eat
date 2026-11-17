@@ -1,5 +1,6 @@
 // FoodQuiz — the guessing engine (PLAN.md §5.4, §6; spec-questions.md R1–R12).
 import { jaccard } from "./similarity.js";
+import { CUISINES } from "../data/cuisines.js";
 
 export const T = 1.3;
 export const NOISE_EPS = 0.15;
@@ -26,6 +27,8 @@ const NEED_MASS = 0.3;
 const FEEL = ["bite", "warmth", "after"];
 const SHORTLIST_SIZE = 3;
 const MAX_DUELS = 1;
+export const CAT_TILES = 6;
+const CAT_BOOST = 3;
 /** Interpolate two effect maps: t = 0 is a, t = 1 is b. */
 export function lerpFx(a, b, t) {
   const out = {};
@@ -82,6 +85,7 @@ export class FoodQuiz {
     this.seen = opts.seen ?? [];
     this.drop = new Set(opts.drop ?? []);
     this.salt = opts.salt ?? "";
+    this.useCat = opts.cat ?? false; // R1c-2: category screen first (guest app + sim)
     this.novel = opts.novel ?? {};
     this.known = {};
     this.s = {
@@ -94,6 +98,7 @@ export class FoodQuiz {
       excl: [],
       refineAt: -1,
       gridDone: false,
+      cat: null,
       wrong: 0,
       lastGuessAt: -99,
       big: false,
@@ -291,6 +296,21 @@ export class FoodQuiz {
     return null;
   }
 
+  /** The 6 types with the most posterior mass, in CUISINES order. */
+  catTiles(ranked) {
+    const mass = CUISINES.map((c) => [c, ranked.reduce((m, x) => m + (this.byId.get(x.f.id).set.has(`c:${c}`) ? x.p : 0), 0)]).filter((x) => x[1] > 0);
+    const top = new Set(mass.sort((a, b) => b[1] - a[1]).slice(0, CAT_TILES).map((x) => x[0]));
+    return CUISINES.filter((c) => top.has(c));
+  }
+
+  /** A tile tap: a soft push towards that type. */
+  category(key, label = key) {
+    this.snap();
+    this.s.cat = key;
+    for (const f of this.foods) if (f.set.has(`c:${key}`)) this.s.score[f.id] += CAT_BOOST;
+    this.trail.push(`סוג אוכל → ${label}`);
+  }
+
   related(a, b) {
     return a.id === b.id || jaccard(a.set, b.set) >= RELATED;
   }
@@ -389,6 +409,10 @@ export class FoodQuiz {
 
     const n = this.s.n;
     const nq = this.s.asked.length;
+    if (this.useCat && this.s.cat === null && !nq) {
+      const tiles = this.catTiles(ranked);
+      if (tiles.length >= 2) return { type: "cat", tiles };
+    }
     if (this.s.refineAt === n) return this.guessStep(ranked); // right after "Close, but…": 3 new options now
     if (this.s.big && nq >= EXPRESS_Q)
       return { type: "pick", express: true, items: ranked.slice(0, SHORTLIST_SIZE).map((x) => x.f) };

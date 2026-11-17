@@ -301,3 +301,9 @@ Known gaps: sim average steps 11.8 (target 10, reported only); sim "found" gate 
 - Quiz: the "abroad" answer of the world axis now points at the 7 foreign types (was italian/asian/american/mexican).
 - **Start-up budget 192 → 194 KB** (decided alone, round 3 approved by the owner; R1c-3 needs a little more later). Trimmed my own additions first. Cost: a few ms on a cold open.
 - **Sim (mood persona, 111→112 foods × 5):** noise 0.15 first 35% → **38%**, top 3 94% → 94%, screens 8.5 → 8.4. Noise 0: 45/98 → 46/98. Noise 0.30: 28/89 → 26/92 (first −2, top 3 +3).
+
+## R1c-2: category first, then the food (2026-11-17)
+- New `cat` step in `FoodQuiz` (opt-in `opts.cat`, on in `makeQuiz` and the sim): before any question she sees 6 tiles, the types (10 cuisines + מתוק + נשנוש) holding the most prior mass for this moment (weather, time, history), shown in fixed order, labels from `STR.cuisine`. A tap is a soft `+3` on foods carrying `c:<type>` (`CAT_BOOST`, `CAT_TILES` in `js/engine/quiz.js`), so a wrong tile removes nothing; the feelings questions then pick themselves by information gain inside it. Recorded as action `{k:"y", c}`; undo/back and resume replay it. It does not count in `z.n` or as a question (screens in the sim read 1 low).
+- Sim (mood persona, noise 0.15): first guess 38% → 53%, top 3 94% → 98%, questions 5.1 → 4.6. The sim guest taps the tile of the target's main type when shown (optimistic); floor `first` raised 0.30 → 0.45.
+- Start-up budget 194 → 196 KB (decided alone). To change: `CAT_BOOST` / `CAT_TILES`, or drop `cat: true` in `makeQuiz` to turn the step off.
+- Not done: no Playwright run here (no browsers); CSS reuses the `.answers` grid.

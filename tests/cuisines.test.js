@@ -57,3 +57,23 @@ test("every picker chip finds foods; thin food types are known (R1c-3 adds foods
   const thin = FOOD_CUISINES.filter((c) => count(c) < 4);
   assert.deepEqual(thin, ["thai", "chinese", "indian"]); // when R1c-3 lands, this list must be empty
 });
+
+test("R1c-2: category step opens the quiz, boosts that type, undoes, and is off by default", async () => {
+  const { FoodQuiz } = await import("../js/engine/quiz.js");
+  const { buildFoods } = await import("../js/engine/foods.js");
+  const { FOODS } = await import("../js/data/foods.js");
+  const { QUESTIONS } = await import("../js/data/questions.js");
+  const foods = buildFoods(FOODS);
+  assert.notEqual(new FoodQuiz(foods, QUESTIONS).next().type, "cat");
+  const z = new FoodQuiz(foods, QUESTIONS, {}, { cat: true });
+  const s = z.next();
+  assert.equal(s.type, "cat");
+  assert.equal(s.tiles.length, 6);
+  const before = z.ranked().find((x) => x.f.id === "bamba").p;
+  z.category("israeli");
+  assert.ok(z.ranked().find((x) => x.f.id === "bamba").p > before);
+  assert.equal(z.next().type, "q");
+  assert.equal(z.n, 0);
+  assert.ok(z.undo());
+  assert.equal(z.next().type, "cat");
+});
