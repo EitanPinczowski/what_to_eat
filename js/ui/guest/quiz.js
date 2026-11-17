@@ -56,7 +56,7 @@ export function makeQuiz(room, historyList, { now = new Date(), rnd, weather = n
   const recent = historyList.filter((h) => h.f && now - new Date(h.at) <= 3 * DAY).map((h) => h.f);
   const prior = priorFrom(foods, { ratings: room.ratings ?? {}, recent, now, exp: room.exp ?? {}, weather, history: historyList });
   for (const [id, b] of Object.entries(favBoosts(fav))) prior[id] = (prior[id] ?? 0) + b;
-  return new FoodQuiz(foods, QUESTIONS, prior, { rnd, learned: learnFrom(historyList, foods), seen: seenFrom(historyList), drop: pruned?.(historyList, foods, QUESTIONS).map((d) => d.id), known: knownFrom({ weather, history: historyList, now }), novel: novelEffects(historyList, foods, now, fav) });
+  return new FoodQuiz(foods, QUESTIONS, prior, { rnd, learned: learnFrom(historyList, foods), seen: seenFrom(historyList), drop: pruned?.(historyList, foods, QUESTIONS).map((d) => d.id), cat: true, moment: momentOf(now), known: knownFrom({ weather, history: historyList, now }), novel: novelEffects(historyList, foods, now, fav) });
 }
 
 /** Apply one recorded action to the engine. */
@@ -65,6 +65,7 @@ export function applyAction(z, a) {
     const q = z.qById.get(a.q);
     if (q) z.answer(q, a.i);
   }
+  else if (a.k === "y") z.category(a.c, STR.cuisine.options[a.c]?.[1]);
   else if (a.k === "d") z.duel(z.food(a.a), z.food(a.b), a.c);
   else if (a.k === "t") z.gut(z.food(a.a), z.food(a.b), a.c);
   else if (a.k === "r") z.refine(a.x ?? {}, a.f ?? [], a.l);
@@ -170,7 +171,7 @@ export function startGuestQuiz(root, opts) {
     const n = questionsLeft(z.s.asked.length, p1);
     const { chips } = cravingSummary(cravingAnswers());
     return html`<div class="craving-card" aria-live="polite"><div class="line"><span class="sub">${STR.cravingTitle}</span><span class="sub qn" data-testid="qn">${p1 >= 0.75 ? STR.almost : STR.left(n)}</span></div>
-      <div class="chips">${chips.length ? chips.map((c) => raw(html`<span class="chip${c.inferred ? " soft" : ""}">${c.label}</span>`)) : raw(html`<span class="chip empty">${STR.cravingEmpty}</span>`)}</div></div>`;
+      <div class="chips">${chips.length ? chips.map((c) => raw(html`<span class="chip${c.inferred ? " soft" : ""}">${c.words}</span>`)) : raw(html`<span class="chip empty">${STR.cravingEmpty}</span>`)}</div></div>`;
   };
   const footer = () => html`<div class="foot">
       ${actions.length ? raw(html`<button class="btn btn-ghost" data-on="undo">↪︎ ${STR.back}</button>`) : ""}
@@ -205,6 +206,7 @@ export function startGuestQuiz(root, opts) {
       setTimeout(() => ((pending = false), act(a)), 150);
     },
     undo: () => pending || goBack(),
+    cat: (c) => act({ k: "y", c }),
     duel: (c) => act({ k: "d", a: step.a.id, b: step.b.id, c }),
     veto: (id, _e, el) => {
       gridVeto.has(id) ? gridVeto.delete(id) : gridVeto.add(id);
@@ -251,14 +253,23 @@ export function startGuestQuiz(root, opts) {
       <button class="btn back" data-on="back">${STR.escapeScreen.back}</button>`, handlers);
   }
 
+  const leadOf = () => {
+    const w = opts.now ?? new Date();
+    const l = isNight(w) && !["late", "shabbat"].includes(momentOf(w)) ? STR.night.lead : STR.moment[momentOf(w)]?.lead;
+    return l ? html`<p class="sub lead">${l}</p>` : "";
+  };
+
   function show() {
     step = z.next();
     if (step.type === "done") return finish();
     let body = "";
-    if (step.type === "q") {
+    if (step.type === "cat") {
+      body = html`${raw(leadOf())}<h2 class="q">${STR.cuisine.text}</h2>
+        <div class="answers" data-type="cat">${step.tiles.map((c) => raw(html`<button class="btn" data-on="cat" data-arg="${c}"><span class="em">${STR.cuisine.options[c][0]}</span>${STR.cuisine.options[c][1]}</button>`))}</div>
+        ${raw(footer())}`;
+    } else if (step.type === "q") {
       const { q, order } = step;
-      const lead = actions.length ? "" : isNight(opts.now ?? new Date()) && !["late", "shabbat"].includes(momentOf(opts.now ?? new Date())) ? STR.night.lead : STR.moment[momentOf(opts.now ?? new Date())]?.lead;
-      body = html`${lead ? raw(html`<p class="sub lead">${lead}</p>`) : ""}<h2 class="q">${questionText(q, opts.now ?? new Date())}</h2>
+      body = html`${raw(actions.length ? "" : leadOf())}<h2 class="q">${questionText(q, opts.now ?? new Date())}</h2>
         <div class="answers" data-type="${typeOf(q)}">${order.map((i) => raw(html`<button class="btn" data-on="ans" data-arg="${i}"><span class="em">${raw(qPic(q.answers[i].e))}</span>${q.answers[i].t}</button>`))}</div>
         ${raw(footer())}`;
     } else if (step.type === "grid") {

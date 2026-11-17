@@ -27,7 +27,7 @@ const MOODS = {
   sad: { p: "comfort creamy sweet home hot" },
 };
 // Honest accuracy (docs/REVIEW.md): regression floors = measured value rounded down to 5 points; PRODUCT = report-only goals.
-const FLOORS = { first: 0.30, top3: 0.90, never: 0 }; // never = foods that are never in the top 3 at noise 0 // at noise 0.15, tired, learned history
+const FLOORS = { first: 0.45, top3: 0.90, never: 0 }; // never = foods that are never in the top 3 at noise 0 // at noise 0.15, tired, learned history
 const PRODUCT = { first: 0.45, top3: 0.85, steps: 9 };
 const LEVELS = [0, 0.15, 0.3];
 const TIRED_AFTER = 8, TIRED_ADD = 0.1; // found was 0.95; no-skip rule (1.6) costs ~1 trial in 475 — see docs/REVIEW.md
@@ -46,7 +46,7 @@ function play(target, rnd, learned = {}, noiseAt = () => NOISE) {
   const now = new Date(2026, 5, 9, mood?.hour ?? 13, 0); // a Tuesday
   const prior = mood ? priorFrom(foods, { now, weather: mood.weather ?? null }) : {};
   const known = mood ? knownFrom({ weather: mood.weather ?? null, now }) : {};
-  const z = new FoodQuiz(foods, QUESTIONS, prior, { rnd, learned, known, salt: String(Math.floor(rnd() * 1e6)), ...TUNE });
+  const z = new FoodQuiz(foods, QUESTIONS, prior, { rnd, learned, known, salt: String(Math.floor(rnd() * 1e6)), cat: true, ...TUNE });
   const ans = [];
   const judge = new FoodQuiz(foods, QUESTIONS); // the simulated user judges by the raw answer effects
   const jt = judge.byId.get(target.id);
@@ -63,7 +63,12 @@ function play(target, rnd, learned = {}, noiseAt = () => NOISE) {
   for (let i = 0; i < 40; i++) {
     const s = z.next();
     if (s.type === "done") break;
-    if (s.type === "q") {
+    if (s.type === "cat") {
+      const mine = s.tiles.filter((c) => jt.set.has(`c:${c}`));
+      const mainOf = jt.cuisine?.[0];
+      const pick = rnd() < noiseAt(z.n) ? s.tiles[Math.floor(rnd() * s.tiles.length)] : mine.includes(mainOf) ? mainOf : mine[0] ?? s.tiles[Math.floor(rnd() * s.tiles.length)];
+      z.category(pick);
+    } else if (s.type === "q") {
       const ds = s.q.answers.map((a) => judge.delta(jt, s.q, a)); // jt carries the cuisine tags (c:<id>) she answers by
       const max = Math.max(...ds);
       const want = mood && rnd() < MOOD_PULL ? s.q.answers.map((a) => mood.p.split(" ").reduce((x, t) => x + Math.max(0, a.fx[t] ?? 0), 0)) : null;

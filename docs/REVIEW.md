@@ -301,3 +301,17 @@ Known gaps: sim average steps 11.8 (target 10, reported only); sim "found" gate 
 - Quiz: the "abroad" answer of the world axis now points at the 7 foreign types (was italian/asian/american/mexican).
 - **Start-up budget 192 → 194 KB** (decided alone, round 3 approved by the owner; R1c-3 needs a little more later). Trimmed my own additions first. Cost: a few ms on a cold open.
 - **Sim (mood persona, 111→112 foods × 5):** noise 0.15 first 35% → **38%**, top 3 94% → 94%, screens 8.5 → 8.4. Noise 0: 45/98 → 46/98. Noise 0.30: 28/89 → 26/92 (first −2, top 3 +3).
+
+## R1c-2: category first, then the food (2026-11-17)
+- New `cat` step in `FoodQuiz` (opt-in `opts.cat`, on in `makeQuiz` and the sim): before any question she sees 6 tiles, the types (10 cuisines + מתוק + נשנוש) holding the most prior mass for this moment (weather, time, history), shown in fixed order, labels from `STR.cuisine`. A tap is a soft `+3` on foods carrying `c:<type>` (`CAT_BOOST`, `CAT_TILES` in `js/engine/quiz.js`), so a wrong tile removes nothing; the feelings questions then pick themselves by information gain inside it. Recorded as action `{k:"y", c}`; undo/back and resume replay it. It does not count in `z.n` or as a question (screens in the sim read 1 low).
+- Sim (mood persona, noise 0.15): first guess 38% → 53%, top 3 94% → 98%, questions 5.1 → 4.6. The sim guest taps the tile of the target's main type when shown (optimistic); floor `first` raised 0.30 → 0.45.
+- Start-up budget 194 → 196 KB (decided alone). To change: `CAT_BOOST` / `CAT_TILES`, or drop `cat: true` in `makeQuiz` to turn the step off.
+- Not done: no Playwright run here (no browsers); CSS reuses the `.answers` grid.
+- R1c-3 (2026-11-17): +25 foods (5 each Mexican, Italian, Indian, Thai, Chinese; 137 total). Raised the food-count cap in tests/data.test.js 120 → 140 and the start-up budget 196 → 204 KB (foods.js grew ~8 KB; decided alone). Emoji art generated with tools/fetch-fluent.mjs, sw-names.js regenerated; the "thin food types" test now expects none. Chinese foods use the `asian` tag (no `chinese` tag exists). To change: edit rows in js/data/foods.js.
+
+## R1 question meaning (2026-11-17)
+- The plan file (§A, Q-numbers) was not available in this checkout, so I read the item from ideas.md and the code; judgment calls:
+- **One job per question (Q19):** `light`/`heavy` effects removed from body, mood colour/art/faceoff, vibe3 and family4 (replaced by `healthy`/`cold`/`sour`); they now live in `after` (plus hunger's dinosaur and the "קליל" magnet). Guard: tests/meaning.test.js. To undo: put `light:` back in those rows of js/data/questions.js.
+- **Chips speak her words (Q10):** `cravingSummary` chips carry `words` (her own answer text when it is up to 3 words, else the adjective); the quiz card shows `words`, the reflecting line still uses the adjectives (`label`).
+- **Opener by moment (Q18):** `FoodQuiz` takes `moment` (momentOf); questions may carry `at`: hunger2 (animal) only evening/late/shabbat, hunger3 (last meal) only morning/noon/friNoon. Table `AT` in js/data/questions.js.
+- Sim after: mood persona first 49% / top 3 98%, found 95% (floor 95%), steps 9.4. No floors or limits changed. Not done: free rewording of Q1-Q8 (no spec text to follow).

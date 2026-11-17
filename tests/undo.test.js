@@ -139,7 +139,8 @@ test("back from the result screen un-chooses it and the live progress shrinks; s
   const z = startGuestQuiz(root, { room: emptyRoom(), history: [], intro: false, onProgress: (p) => progress.push(p), onFinish: (o) => (out = o) });
   for (let i = 0; i < 40 && !out; i++) {
     const h = root.innerHTML;
-    if (h.includes('data-on="guess"')) root.click("guess", "yes");
+    if (h.includes('data-on="cat"')) root.click("cat", "israeli");
+    else if (h.includes('data-on="guess"')) root.click("guess", "yes");
     else if (h.includes('data-on="ans"')) root.click("ans", String(z.next().order[0]));
     else if (h.includes('data-on="gridDone"')) root.click("gridDone");
     else if (h.includes('data-on="duel"')) root.click("duel", "a");
@@ -161,13 +162,17 @@ test("first question back does nothing; with an intro it returns to the intro", 
   const root = fakeRoot();
   startGuestQuiz(root, { room: emptyRoom(), history: [], intro: true });
   root.click("go");
-  assert.ok(root.innerHTML.includes('data-on="ans"'));
+  assert.ok(root.innerHTML.includes('data-on="cat"'));
   root.click("qback");
   assert.ok(root.innerHTML.includes('data-on="go"'));
   root.click("go");
+  root.click("cat", "israeli");
+  assert.ok(root.innerHTML.includes('data-on="ans"'));
   root.click("ans", "0");
   root.click("qback");
   assert.ok(root.innerHTML.includes('data-on="ans"'));
+  root.click("qback");
+  assert.ok(root.innerHTML.includes('data-on="cat"'));
   root.click("qback");
   assert.ok(root.innerHTML.includes('data-on="go"'));
   root.click("qback"); // intro: nothing before it
