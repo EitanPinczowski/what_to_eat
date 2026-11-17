@@ -21,7 +21,9 @@ function fakeRoot() {
   };
 }
 
-test("countdown: 'עוד n שאלות' next to the craving card, never 0, may go up or down", () => {
+// R3 (2026-11-17, owner-approved S3): the "עוד n שאלות" countdown broke its promise (it said 3 and the quiz ended), so her
+// screen now shows forward-only segments in the back-button row; questionsLeft stays as an engine helper.
+test("progress: segments in the back row, start empty, only move forward, no question count promised", () => {
   assert.equal(STR.left(1), "עוד שאלה אחת");
   assert.equal(STR.left(2), "עוד 2 שאלות");
   assert.equal(questionsLeft(0, 0), 7);
@@ -31,21 +33,23 @@ test("countdown: 'עוד n שאלות' next to the craving card, never 0, may go
   assert.ok(questionsLeft(3, 0.1) > questionsLeft(3, 0.7));
   const root = fakeRoot();
   const z = startGuestQuiz(root, { room: emptyRoom(), history: [], intro: false });
-  assert.match(root.innerHTML, /data-testid="qn">עוד /);
-  assert.match(root.innerHTML, /craving-card/);
+  assert.match(root.innerHTML, /<div class="qbar">.*<div class="prog" data-testid="qn" role="progressbar"[^>]*aria-valuenow="0"/s);
+  assert.doesNotMatch(root.innerHTML, /עוד \d|עוד כמה|craving-card/);
+  const now = () => Number(root.innerHTML.match(/aria-valuenow="(\d+)"/)[1]);
   assert.equal(z.next().type, "cat");
   root.click("cat", "israeli");
   const s = z.next();
   assert.equal(s.type, "q");
+  const before = now();
   root.click("ans", String(s.order[0]));
-  assert.match(root.innerHTML, /data-testid="qn">(עוד|כמעט)/);
+  assert.ok(now() >= before + 1, `progress ${before} -> ${now()}`);
+  assert.doesNotMatch(root.innerHTML, /<button[^>]*class="[^"]*tag/); // tags are not controls
 });
 
-test("back arrow points right (→) in RTL; the undo link uses the right-pointing hook", () => {
+test("back arrow points right (→) in RTL; one back control per screen (R3: the second undo link is gone)", () => {
   assert.match(backBar(), />→</);
   const src = readFileSync("js/ui/guest/quiz.js", "utf8");
-  assert.ok(!/data-on="undo">↩/.test(src));
-  assert.match(src, /data-on="undo">↪/);
+  assert.ok(!/data-on="undo">/.test(src));
 });
 
 test("her screens never offer skip / don't know; confetti is drawn behind content", () => {

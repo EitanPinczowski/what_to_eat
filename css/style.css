@@ -213,3 +213,15 @@ summary{min-height:var(--tap);display:flex;align-items:center;font-weight:700;cu
 @keyframes chef-nod{30%{transform:translateY(5px) rotate(-6deg)}}
 @keyframes chef-drool{50%{transform:rotate(-8deg) scale(1.06)}}
 @keyframes chef-cheer{0%{transform:scale(.4) rotate(-20deg);opacity:0}50%{transform:scale(1.3) rotate(10deg)}}
+
+/* R3 (S1 S3 S4): compact quiz header, honest progress, read-only tags */
+body:has(.qbar .prog) > header{display:none}
+.qbar:has(.prog){align-items:center;gap:10px}
+.prog{flex:1;display:flex;gap:4px}
+.prog i{flex:1;height:8px;border-radius:9px;background:var(--accent2);transition:background .3s}
+.prog i.on{background:var(--accent)}
+.qn-almost{font-size:var(--t2);white-space:nowrap}
+.tags{display:flex;flex-wrap:wrap;gap:6px;margin:2px 0}
+.tag{padding:2px 10px;border-radius:99px;background:var(--accent2);color:var(--on-accent2);font-size:var(--t2);font-weight:500;animation:chipin .3s var(--ease)}
+.tag.soft{background:transparent;border:1px dashed var(--muted)}
+.big-text .tag,.big-text .qn-almost{font-size:var(--t3)}

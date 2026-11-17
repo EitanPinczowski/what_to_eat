@@ -6,7 +6,7 @@ import { STR } from "../../data/strings.js";
 import { buildFoods } from "../../engine/foods.js";
 import { priorFrom, knownFrom, novelEffects } from "../../engine/prior.js";
 import { moodFor, cravingSummary } from "../../engine/mood.js";
-import { FoodQuiz, questionsLeft, typeOf } from "../../engine/quiz.js";
+import { FoodQuiz, typeOf } from "../../engine/quiz.js";
 import { learnFrom, seenFrom } from "../../engine/learn.js";
 import { pic, qPic, catLabel, foodLabel } from "../pics.js";
 import { BackLayer } from "../../router.js";
@@ -166,15 +166,22 @@ export function startGuestQuiz(root, opts) {
     ...Object.values(z.known).map((k) => ({ q: k.q, i: k.i, inferred: true })),
     ...actions.filter((x) => x.k === "a" && (Array.isArray(x.i) || x.i >= 0)).map((x) => ({ q: x.q, i: x.i })),
   ];
+  // R3 (S1, S3, S4): one row [back · progress · chef]; progress only moves forward and fills at the guess; tags are read-only.
+  let progHi = 0, progAt = 0;
+  const PROG = 7;
   const meter = () => {
     const p1 = z.ranked()[0]?.p ?? 0;
-    const n = questionsLeft(z.s.asked.length, p1);
+    const almost = p1 >= 0.6;
+    if (actions.length < progAt) progHi = 0; // an undo may move it back
+    progAt = actions.length;
+    const ready = ["guess", "pick", "gut"].includes(step?.type);
+    progHi = Math.max(progHi, ready ? PROG : Math.min(PROG - 1, z.s.asked.length + (almost ? 1 : 0)));
     const { chips } = cravingSummary(cravingAnswers());
-    return html`<div class="craving-card" aria-live="polite"><div class="line"><span class="sub">${STR.cravingTitle}</span><span class="sub qn" data-testid="qn">${p1 >= 0.75 ? STR.almost : STR.left(n)}</span></div>
-      <div class="chips">${chips.length ? chips.map((c) => raw(html`<span class="chip${c.inferred ? " soft" : ""}">${c.words}</span>`)) : raw(html`<span class="chip empty">${STR.cravingEmpty}</span>`)}</div></div>`;
+    const bar = html`<div class="prog" data-testid="qn" role="progressbar" aria-label="${STR.progressAria}" aria-valuemin="0" aria-valuemax="${PROG}" aria-valuenow="${progHi}">${Array.from({ length: PROG }, (_, i) => raw(`<i${i < progHi ? ' class="on"' : ""}></i>`))}</div>${almost || ready ? raw(html`<span class="sub qn-almost">${STR.almost}</span>`) : ""}`;
+    const tags = chips.length ? html`<div class="tags" aria-live="polite">${chips.map((c) => raw(html`<span class="tag${c.inferred ? " soft" : ""}">${c.words}</span>`))}</div>` : "";
+    return { bar, tags };
   };
   const footer = () => html`<div class="foot">
-      ${actions.length ? raw(html`<button class="btn btn-ghost" data-on="undo">↪︎ ${STR.back}</button>`) : ""}
       <button class="btn btn-ghost" data-on="escape">${STR.escape}</button>
       ${onFeedback ? raw(html`<button class="btn btn-ghost" data-on="feedback">${STR.feedback.open}</button>`) : ""}</div>`;
 
@@ -315,7 +322,8 @@ export function startGuestQuiz(root, opts) {
         ${step.unsure ? raw(html`<button class="btn" data-on="pickNone">${STR.pick.none}</button>`) : ""}
         <button class="btn btn-ghost" data-on="escape">${STR.pick.free}</button>`;
     }
-    render(root, backBar(canBack() || !!opts.onExit) + meter() + body, handlers);
+    const m = meter();
+    render(root, backBar(canBack() || !!opts.onExit).replace(/<\/div>$/, m.bar + "</div>") + m.tags + body, handlers);
     if (step.type === "pick" && step.unsure) fillPick(step);
     if (!still()) import("./chef.js").then((m) => m.place(root, step.type === "guess" || step.type === "pick" ? "drool" : "idle"), () => {});
     if (step.type === "q" && typeOf(step.q) !== "buttons" && root.querySelector && !globalThis.matchMedia?.("(prefers-reduced-motion: reduce)").matches && !globalThis.WTE_NO_MOTION) {

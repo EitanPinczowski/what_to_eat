@@ -34,7 +34,7 @@ test("undo goes back a question; escape accepts free text", async ({ page }) => 
   const q1 = await page.locator(".q").textContent();
   await page.locator('[data-on="ans"]').first().click();
   await expect(page.locator(".q")).not.toHaveText(q1);
-  await page.locator('[data-on="undo"]').click();
+  await page.locator('[data-on="qback"]').click();
   await expect(page.locator(".q")).toHaveText(q1);
   await page.locator('[data-on="escape"]').click();
   await page.locator('input[name="food"]').fill("מרק של סבתא");
@@ -80,7 +80,7 @@ test("resume: reopening the link continues where she stopped", async ({ page }) 
   const q = await page.locator(".q").textContent();
   await page.reload();
   await expect(page.locator(".q")).toHaveText(q);
-  await expect(page.locator('[data-on="undo"]')).toBeVisible();
+  await expect(page.locator('[data-on="qback"]')).toBeVisible();
 });
 
 test("feedback is saved to the room", async ({ page }) => {

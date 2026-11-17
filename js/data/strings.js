@@ -24,6 +24,7 @@ export const STR = {
   weatherTease: { rain: "גשם בחוץ… מרק?", cold: "קר בחוץ… משהו חם?", hot: "חם בחוץ… משהו קר?" },
   left: (n) => (n <= 1 ? "עוד שאלה אחת" : n >= 4 ? "עוד כמה שאלות" : `עוד ${n} שאלות`),
   almost: "כמעט שם",
+  progressAria: "כמה נשאר עד הניחוש",
   cravingTitle: "מה שבא לך עד עכשיו",
   cravingEmpty: "נגלה ביחד…",
   craving: {

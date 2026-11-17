@@ -330,3 +330,8 @@ Known gaps: sim average steps 11.8 (target 10, reported only); sim "found" gate 
 - Called with `QUESTIONS` from her quiz (`js/ui/guest/quiz.js`) and the sim. Without the third argument the old behaviour is unchanged (tests/w6, tests/learn untouched).
 - Q11 (light/heavy asked too often) is covered by R1's one-job-per-question change; no probe-cost tuning needed.
 - Sim: 52% / 98% at noise 0.15 (unchanged); "with learning" exact 9% (baseline 6%). To change: `poolKey` in `js/engine/learn.js`.
+
+### R3: compact quiz header (2026-11-17)
+- Her quiz is one header row: back · 7 forward-only progress segments · chef. The brand h1 is hidden in her quiz (`body:has(.qbar .prog)`); the countdown text is replaced by honest progress; the second "undo" link is gone (one back control, `[data-on="qback"]`); answer tags are read-only `.tag`s. Question top moved 430px -> 112px at 375x812.
+- Tests changed on purpose: guest-ui countdown test rewritten, quiz.spec undo/resume use `qback`, win32 first-question baseline regenerated, Linux one deleted (regenerate from CI artifact `screenshot-baselines-linux`).
+- Not done: picked category as first tag (optional). To undo: revert the R3 commit.
