@@ -307,3 +307,4 @@ Known gaps: sim average steps 11.8 (target 10, reported only); sim "found" gate 
 - Sim (mood persona, noise 0.15): first guess 38% → 53%, top 3 94% → 98%, questions 5.1 → 4.6. The sim guest taps the tile of the target's main type when shown (optimistic); floor `first` raised 0.30 → 0.45.
 - Start-up budget 194 → 196 KB (decided alone). To change: `CAT_BOOST` / `CAT_TILES`, or drop `cat: true` in `makeQuiz` to turn the step off.
 - Not done: no Playwright run here (no browsers); CSS reuses the `.answers` grid.
+- R1c-3 (2026-11-17): +25 foods (5 each Mexican, Italian, Indian, Thai, Chinese; 137 total). Raised the food-count cap in tests/data.test.js 120 → 140 and the start-up budget 196 → 204 KB (foods.js grew ~8 KB; decided alone). Emoji art generated with tools/fetch-fluent.mjs, sw-names.js regenerated; the "thin food types" test now expects none. Chinese foods use the `asian` tag (no `chinese` tag exists). To change: edit rows in js/data/foods.js.

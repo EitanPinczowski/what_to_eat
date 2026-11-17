@@ -55,7 +55,7 @@ test("every picker chip finds foods; thin food types are known (R1c-3 adds foods
   const count = (c) => foods.filter((f) => f.cuisine.includes(c)).length;
   for (const c of CUISINES) assert.ok(count(c) >= 1, c);
   const thin = FOOD_CUISINES.filter((c) => count(c) < 4);
-  assert.deepEqual(thin, ["thai", "chinese", "indian"]); // when R1c-3 lands, this list must be empty
+  assert.deepEqual(thin, []); // R1c-3 landed: every food type has foods
 });
 
 test("R1c-2: category step opens the quiz, boosts that type, undoes, and is off by default", async () => {
