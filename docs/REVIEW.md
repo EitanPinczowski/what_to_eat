@@ -320,3 +320,13 @@ Known gaps: sim average steps 11.8 (target 10, reported only); sim "found" gate 
 - As approved in `docs/plan/round3.md` §A1–A2. vibe2 "🎁 פינוק קטן לעצמי" → "😈 משהו שמנוני בלי רגשות אשם" (it always meant junk); body2 "כמעט אפס" → "כמעט אפס, שיביאו לי", "חצי סוללה" → "מספיק כדי לאכול משהו טוב"; body1 "…משהו קל" → "…משהו בלי מאמץ"; mood4 slider stops: צריכה חיבוק · קצת עייפה · בסדר · טוב לי · בא לחגוג ("רגועה" meant light elsewhere); bite2 → "איזה צליל בא לך לשמוע בביס?".
 - Effects: mood6 cloud = `creamy:2.5 sweet:1.5 dessert:1` (it duplicated the rain); now the best answer for 34 foods (was 4). kick "עם עקיצה" spicy 0.5 → 1.5; on an ordered scale it still never beats "שישרוף" for a spicy food, but it now leans spicy instead of being noise.
 - Sim (mood persona, noise 0.15): first 49% → 52%, top 3 98% → 98%; noise 0: 63/99; noise 0.30: 37/92.
+
+## R1b coverage experiments (2026-11-17, local session)
+- **Q15 (green curry = butter chicken):** solved by R1c-1, nothing to add: green curry is `thai`, butter chicken `indian`, so the category step and the world answer tell them apart.
+- **Q13 "main dish" axis** (meaty / veg / fish-egg / cheese-dough, meals only): tried and NOT kept. Gate was +3 points of first guess at noise 0.15: 52% → 52% (noise 0: 63 → 66, noise 0.30 top 3: 92 → 94). To retry: the axis text and effects are in `docs/plan/round3.md` §A5 Q13; Fluent art for 🥩/🐟 can reuse `img/emoji/steak.webp` / `grilled_fish.webp` as `q-1f969` / `q-1f41f`.
+
+## R2 learning by axis (2026-11-17, local session)
+- `learnFrom(entries, foods, questions)` also pools plain-button wordings of one axis under `~axis:slot` (they share effects by design; rotation shows each wording ~1/3 as often, so each alone needed ~3× the quizzes to reach the 2-sighting minimum). Sliders, multi-picks and special types (colour, art, face-off, magnets) keep `qid:i` only. `FoodQuiz.delta` reads the wording's own key first, then the pooled one. Old history keys need no migration.
+- Called with `QUESTIONS` from her quiz (`js/ui/guest/quiz.js`) and the sim. Without the third argument the old behaviour is unchanged (tests/w6, tests/learn untouched).
+- Q11 (light/heavy asked too often) is covered by R1's one-job-per-question change; no probe-cost tuning needed.
+- Sim: 52% / 98% at noise 0.15 (unchanged); "with learning" exact 9% (baseline 6%). To change: `poolKey` in `js/engine/learn.js`.

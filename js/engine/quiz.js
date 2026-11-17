@@ -170,7 +170,8 @@ export class FoodQuiz {
       d += v * w * (this.s.big && tag === "healthy" ? 0.5 : 1);
     }
     if (a.dyn) for (const [k, v] of Object.entries(a.dyn)) d += v * w * (this.novel[k]?.[f.id] ?? 0);
-    const learned = this.learned[`${q.id}:${q.answers.indexOf(a)}`];
+    const ai = q.answers.indexOf(a);
+    const learned = this.learned[`${q.id}:${ai}`] ?? this.learned[`~${q.axis}:${ai}`]; // own wording first, then the pooled axis (R2)
     if (learned) for (const [tag, v] of Object.entries(learned)) if (set.has(tag) && !(tag in a.fx)) d += v * w;
     return d;
   }

@@ -166,7 +166,7 @@ if (dups.length) console.log(`identical tags: ${dups.join(", ")}`);
 if (VERBOSE && misses.length) console.log(`weak foods (${misses.length}): ${misses.join(", ")}`);
 // Accuracy gates CI; the step target is reported only (see docs/REVIEW.md, step 1.3).
 // Learning (§2.6) must never lower accuracy: replay with bonuses learned from one quiz per food.
-const learned = learnFrom(hist, foods);
+const learned = learnFrom(hist, foods, QUESTIONS);
 let lx = 0, ln = 0, lm = 0;
 for (const f of foods)
   for (let t = 0; t < TRIALS; t++) {
@@ -187,7 +187,7 @@ for (const lv of LEVELS) {
   const h = [];
   let k = 0;
   for (const f of foods) h.push({ f: f.id, ans: play(f, rng(5 + k++ * 104729), {}, noiseAt).ans });
-  const lrn = learnFrom(h, foods);
+  const lrn = learnFrom(h, foods, QUESTIONS);
   let m = 0, mm = 0, fi = 0, t3 = 0, gs = 0, st = 0, qn = 0, qmax = 0, xr = 0, xh = 0, xs = 0;
   const per = new Map(foods.map((f) => [f.id, { first: 0, top3: 0, steps: 0, wins: {}, runs: 0 }]));
   for (const f of foods)
@@ -270,7 +270,7 @@ function quirkRank(foodId, ln) {
   const others = ["burger", "schnitzel", "shawarma", "pasta_tomato"].filter((x) => x !== foodId);
   const hist = Array.from({ length: 10 }, (_, k) => ({ f: k % 5 === 4 ? others[(k / 5) | 0] : foodId, ans: k % 5 === 4 ? plain(others[(k / 5) | 0]) : ans.map(([q, i]) => `${q}:${i}`), at: new Date(2026, 4, 1 + k * 3).toISOString() }));
   hist.push(...[2, 3].map((k) => ({ f: others[k], ans: plain(others[k]), at: new Date(2026, 4, 28 + k).toISOString() })));
-  return { start: rankOf({}), after: rankOf(learnFrom(hist, foods)) };
+  return { start: rankOf({}), after: rankOf(learnFrom(hist, foods, QUESTIONS)) };
 }
 const quirks = ["ramen", "sushi", "pizza"].map((id) => ({ id, ...quirkRank(id) }));
 const qOk = quirks.every((r) => r.after <= r.start) && quirks.reduce((a, r) => a + r.start - r.after, 0) > 0 && quirks.some((r) => r.after <= 3 || r.after <= r.start / 2);

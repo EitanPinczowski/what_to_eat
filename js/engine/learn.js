@@ -3,10 +3,15 @@ export const MIN_QUIZZES = 5;
 const CAP = 1.5;
 const MIN_SEEN = 2;
 
+/** R2 (2026-11-17): plain-button variants of one axis share their answer effects, so their learning is pooled under
+ * "~axis:slot" too (each wording alone is seen about a third as often). Sliders, multi-picks and special types keep "qid:i" only. */
+export const poolKey = (q, i) => (q && !q.type && !q.multi && Number.isInteger(i) ? `~${q.axis}:${i}` : null);
+
 /**
- * entries: history ({f, ans, at, how}); returns "qid:i" → {tag: bonus}
+ * entries: history ({f, ans, at, how}); returns "qid:i" → {tag: bonus}, plus "~axis:slot" when `questions` is given
  */
-export function learnFrom(entries, foods) {
+export function learnFrom(entries, foods, questions = null) {
+  const qById = questions ? new Map(questions.map((q) => [q.id, q])) : null;
   const byId = new Map(foods.map((f) => [f.id, f.tags]));
   const picks = entries.filter((e) => byId.has(e.f) && Array.isArray(e.ans));
   if (picks.length < MIN_QUIZZES) return {};
@@ -19,7 +24,15 @@ export function learnFrom(entries, foods) {
     return m;
   };
   const all = mass(picks), byAns = {}, out = {};
-  for (const e of picks) for (const a of e.ans) (byAns[Array.isArray(a) ? a.join(":") : a] ??= []).push(e);
+  for (const e of picks)
+    for (const a of e.ans) {
+      const k = Array.isArray(a) ? a.join(":") : a;
+      (byAns[k] ??= []).push(e);
+      if (!qById) continue;
+      const [qid, i] = String(k).split(":");
+      const pk = poolKey(qById.get(qid), /^\d+$/.test(i ?? "") ? Number(i) : NaN);
+      if (pk && !(byAns[pk] ??= []).includes(e)) byAns[pk].push(e);
+    }
   for (const [k, es] of Object.entries(byAns)) {
     if (es.length < MIN_SEEN) continue;
     const loc = mass(es), o = {};
