@@ -1,4 +1,5 @@
 import { test, expect } from "@playwright/test";
+import { magnets } from "./helpers.js";
 
 const ROOM = "e2eroom000000000000000000";
 
@@ -16,6 +17,7 @@ test("guest plays the quiz to a result (local store)", async ({ page }) => {
       await yes.click();
       continue;
     }
+    await magnets(page);
     const next = page.locator('[data-on="ans"], [data-on="gridDone"], [data-on="duel"][data-arg="a"], [data-on="gut"][data-arg="a"], [data-on="pick"]').first();
     await next.click();
   }

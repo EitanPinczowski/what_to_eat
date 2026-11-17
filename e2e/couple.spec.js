@@ -1,4 +1,5 @@
 import { test, expect } from "@playwright/test";
+import { magnets } from "./helpers.js";
 
 test("couple mode: he answers, she answers, she sees his answers only at the end", async ({ page, context }) => {
   await page.goto("/?store=local");
@@ -23,6 +24,7 @@ test("couple mode: he answers, she answers, she sees his answers only at the end
       await yes.click();
       continue;
     }
+    await magnets(her);
     await her.locator('[data-on="ans"], [data-on="gridDone"], [data-on="duel"][data-arg="a"], [data-on="gut"][data-arg="a"], [data-on="pick"]').first().click();
   }
   await expect(her.locator(".mood")).toBeVisible();

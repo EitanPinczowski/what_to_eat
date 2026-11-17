@@ -15,3 +15,12 @@ export async function openAdvanced(page) {
   const d = page.getByTestId("advanced");
   if (!(await d.evaluate((e) => e.open))) await d.locator("summary").click();
 }
+
+/** The fridge-magnets answer: its "done" button stays disabled until two magnets are stuck, so a generic
+ * "click the first answer" loop would wait on it forever. Sticks two when that question is on screen. */
+export async function magnets(page) {
+  if (!(await page.locator('[data-testid="magnets"] [data-on="ans"][disabled]').count())) return;
+  const free = page.locator('[data-testid="magnets"] .magnet:not(.stuck)');
+  await free.first().click();
+  await free.first().click();
+}

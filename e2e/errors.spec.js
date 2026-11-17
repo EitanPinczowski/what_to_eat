@@ -1,7 +1,7 @@
 // Item 33g: error paths. A failed write, a failed weather fetch, no network and a failed Firebase start each end in a toast
 // or a fallback screen, never a blank page and never an uncaught error.
 import { test, expect } from "@playwright/test";
-import { openMore } from "./helpers.js";
+import { openMore, magnets } from "./helpers.js";
 
 const GUEST = "e2eerrors000000000000000";
 
@@ -14,7 +14,9 @@ async function playToResult(page) {
   for (let i = 0; i < 40 && !(await page.locator(".mood").count()); i++) {
     const yes = page.locator('[data-on="guess"][data-arg="yes"]');
     if (await yes.count()) await yes.click();
-    else await page.locator('[data-on="ans"], [data-on="gridDone"], [data-on="duel"][data-arg="a"], [data-on="gut"][data-arg="a"], [data-on="pick"]').first().click();
+    else {
+      await magnets(page);
+      await page.locator('[data-on="ans"], [data-on="gridDone"], [data-on="duel"][data-arg="a"], [data-on="gut"][data-arg="a"], [data-on="pick"]').first().click(); }
   }
   await expect(page.locator(".mood")).toBeVisible();
 }

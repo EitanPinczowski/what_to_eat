@@ -2,6 +2,7 @@
 // The app has no UA sniffing for these; what matters is that the link opens and the quiz plays with the things those
 // webviews often lack (navigator.share, clipboard, window.open, sometimes storage). Works the same on Pixel and iPhone projects.
 import { test, expect } from "@playwright/test";
+import { magnets } from "./helpers.js";
 
 const ROOM = "e2einapp0000000000000000";
 const UAS = {
@@ -19,6 +20,7 @@ async function playToResult(page) {
       await yes.click();
       continue;
     }
+    await magnets(page);
     await page.locator('[data-on="ans"], [data-on="gridDone"], [data-on="duel"][data-arg="a"], [data-on="gut"][data-arg="a"], [data-on="pick"]').first().click();
   }
 }
