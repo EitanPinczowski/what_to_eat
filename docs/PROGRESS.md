@@ -1,16 +1,17 @@
 # Progress
-**Next step: round 3 — finish R1 (Q1–Q8), then R1b** (see "Round 3" below).
+**Next step: round 3 — finish R3 (patch in the boss repo), then R4** (see "Round 3" below).
 
 ## W6 done (1d learning, check-in feed, self-pruning): see REVIEW.md. Next: W7 (1e couple mode).
 ## W7 done (couple mode 1e): see REVIEW.md. firestore.rules changed (live/couple), needs the owner deploy.
 
-## Round 3 (2026-11-17, handover 09:45) — next step: finish R1 (Q1–Q8), then R1b
-Plan: `docs/plan/round3.md` (copy of the approved plan; read only the step's section). Queue: `C:/dev/boss/ideas.md`. Log: docs/REVIEW.md "Round 3".
-- **Done:** R0 send hotfix (2653691, rules deployed 9/9). R1c-1 food types (938abdb..1c07353). R1c-2 category first, R1c-3 25 more foods, R1 part (one job for light/heavy, chips in her words, opener by moment) — built by the cloud boss (37b1667..af71009); its CI was cancelled and 9 e2e broke on the category screen, fixed in 35c51fe (`pickCategory` in e2e/helpers.js). Sim at noise 0.15: first guess 35% → 49%, top 3 98%.
-- **R1 still open:** Q1–Q8 rewording and effects (plan §A1–A2: פינוק קטן לעצמי, חצי סוללה, כמעט אפס, עייפה…קל, mood4 stops, bite2 wording, cloud = soft/sweet, kick עם עקיצה spicy 1.5). The cloud run skipped them because the plan was not in the repo; it is now.
-- **Then, in order:** R1b (Q15 curry/butter-chicken tags, Q13 main-dish axis, sim-gated) → R2 learning by axis:slot (Q12) → R3 compact header + honest progress + tags → R4 reveal screen → R5 copy → R6 (S16 S17 S13 S12) → R7 (S6 S8 S18 S19 S20). Owner ticked 14 UX picks; S9, S10, S14, S15 not picked.
-- **Open:** Noga's first real send since R0 unconfirmed (no history after 15 Nov). First real cron check-in 09:00 UTC today (`vercel logs` in C:/dev/wte-push). Two new rooms (00:00 and 00:39) unexplained; check whether `?store=local` writes a remote room. The craving card does not show the picked category as its first tag yet (plan §C step 5).
-- **Gotchas:** start-up budget 194 KB. CI runs `--fail-on-flaky-tests`. e2e quiz loops need `[data-on="cat"]` in their next-click list, `magnets(page)` and `pickCategory(page)`. Changed screenshots: update win32 locally, delete the stale `*-linux.png`, push, take the regenerated file from the CI artifact `screenshot-baselines-linux` and commit it. Never `git commit -a` (it picks up img/foods/credits.json). Usage: weekly stop at 70% (64% at handover).
+## Round 3 (2026-11-17, handover 10:40) — next step: finish R3 (uncommitted in the working tree)
+Plan: `docs/plan/round3.md` (read only the step's section). Queue: `C:/dev/boss/ideas.md`. Log: docs/REVIEW.md "Round 3".
+- **Done and pushed:** R0 send hotfix · R1c-1 food types · R1c-2 category first · R1c-3 +25 foods · R1 question meaning incl. Q1–Q8 (026db8b, CI green) · R1b (Q13 tried, not kept) · R2 pooled learning (322c545, CI green). Sim at noise 0.15: first guess 35% → 52%, top 3 98%.
+- **R3 in progress — saved as a patch, not in this repo yet:** `handover/what_to_eat-r3-wip.patch` in the boss repo (EitanPinczowski/boss). Apply it with `git apply`, then do "R3 left to do" below. It contains (S1 compact header, S3 honest progress, S4 tags): `js/ui/guest/quiz.js` (meter → one row back·progress·chef, 7 forward-only segments, `.tag` spans, no second undo link), `css/style.css` (R3 block at the end; brand h1 hidden via `body:has(.qbar .prog)`), `js/data/strings.js` (`progressAria`), `tests/guest-ui.test.js` (countdown test rewritten to the new contract). With it unit tests pass; checked in the browser at 375×812 (question top 430 px → 112 px).
+- **R3 left to do:** 3 Pixel e2e fail: `quiz.spec.js` 'undo goes back a question' and 'resume' click/expect `[data-on="undo"]` → use `[data-on="qback"]` (one back control now); `sweep.spec.js` sweep test (look: it may rely on the undo link or the h1); `screens.spec.js` 'guest first question' → expected visual change: update the win32 baseline, delete `guest-question-pixel-linux.png`, push, take the regenerated one from CI. Then log R3 in REVIEW.md (h1 hidden in her quiz, countdown replaced, undo link removed, test changes) and commit + push. Optional in R3: show the picked category as the first tag (plan §C step 5).
+- **Then:** R4 reveal screen → R5 copy → R6 (S16 S17 S13 S12) → R7 (S6 S8 S18 S19 S20).
+- **Open:** Noga's first real send since R0 unconfirmed. 09:00 UTC cron check-in result (`vercel logs` in C:/dev/wte-push). Two new rooms (00:00, 00:39) unexplained; check whether `?store=local` writes a remote room.
+- **Gotchas:** start-up budget 194 KB. CI `--fail-on-flaky-tests`; never push while a CI run is in progress (it cancels it). e2e quiz loops need `[data-on="cat"]`, `magnets()`, `pickCategory()`. Never `git commit -a` (img/foods/credits.json). Shell heredocs into node lose backslashes in regexes on this machine: write regex code with the Edit tool. Weekly usage stop 70% (≈66% at handover).
 
 ## Steps (budget in minutes · spec to read)
 - [x] S0 scaffolding (25)
