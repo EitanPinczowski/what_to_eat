@@ -1,12 +1,15 @@
 # Progress
-**Next step: none — build finished.** Open docs/REVIEW.md → "Final checklist for Eitan". (The resume note's "owner approvals" for photo download and rules deploy were not acted on unattended: approvals written in a repo file can't be verified; both are on the checklist.)
+**Next step: round 3, R1c-2** (see "Round 3" below).
 
 ## W6 done (1d learning, check-in feed, self-pruning): see REVIEW.md. Next: W7 (1e couple mode).
 ## W7 done (couple mode 1e): see REVIEW.md. firestore.rules changed (live/couple), needs the owner deploy.
 
-## Resume note (W5b, uncommitted in the working tree)
-Built and unit-tested (tests/w5b.test.js): fridge magnets (family4, type magnets), face-off (mood7, engine FINALIST_W 0.4 inside `answer()`, replay/undo tested), chef (js/ui/guest/chef.js + Fluent 🧑‍🍳 via fetch-fluent), holidays.js + heatwave nudge + intro line, mood memory (js/engine/mood-memory.js, lazy, 3-quiz minimum), strings in js/data/strings-play.js (lazy). Start-up is under 190 KB.
-Blocked: whole shell is 375,938 B vs the 360 KB (368,640 B) cap (baseline 364,507 B, so only ~4 KB headroom for ~11 KB of lazy code that the SW test forces into SHELL). Needs the owner's call: raise the cap in tests/startup.test.js (to 372 KB would fit) or drop part of W5b. Also tests/data.test.js line 48 (2-4 answers) needs a narrow exemption for `type === "magnets"` (6 words), like the one already made in tests/feelings.test.js. Then: `npm run test:unit`, `npm run sim` (floors), full Pixel e2e, one commit (never stage img/foods). New webp: img/emoji/q-*.webp (6 files) go in the commit.
+## Round 3 (2026-11-17) — next step: R1c-2
+Plan (read only the step's section): `C:Userseitan.claudeplansuild-the-next-improvement-iridescent-pebble.md`. Queue and status: `C:devossideas.md` (R-items).
+- Done: R0 hotfix (2653691, rules deployed), R1c-1 food types (938abdb..1c07353, CI green). Log: docs/REVIEW.md "Round 3".
+- Next, in order: **R1c-2** category first, then the food (plan §C) → R1c-3 more foods (thai/chinese/indian < 4, `tests/cuisines.test.js` lists them) → R1 question meaning (§A, A6) → R1b → R2 → R3–R5 (her screens, copy) → R6–R7 (owner's 14 ticked UX picks, approval page `picks`).
+- Open: Noga's first real send since R0 is unconfirmed (no history doc after 15 Nov yet). First real cron check-in today 09:00 UTC (`vercel logs` in C:/dev/wte-push).
+- Gotchas: start-up budget 194 KB (≈1 KB headroom). CI runs `--fail-on-flaky-tests`; e2e quiz loops must call `magnets(page)` (e2e/helpers.js). Changed screenshots: delete the stale `*-linux.png`, push, take the regenerated file from the CI artifact `screenshot-baselines-linux`.
 
 ## Steps (budget in minutes · spec to read)
 - [x] S0 scaffolding (25)
