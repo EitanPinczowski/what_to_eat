@@ -25,16 +25,21 @@ export function cravingSummary(answers, questions = QUESTIONS, max = MAX_CHIPS) 
       if (!ans) continue;
       for (const [tag, v] of Object.entries(ans.fx)) {
         if (v <= 0 || !STR.craving.tag[tag]) continue;
-        const e = (score[tag] ??= { v: 0, own: 0 });
+        const e = (score[tag] ??= { v: 0, own: 0, best: 0, words: "" });
         if (!order.includes(tag)) order.push(tag);
         const w = v * (idx.length > 1 ? 0.6 : 1) * (inferred ? 0.5 : 1);
         e.v += w;
-        if (!inferred) e.own += w;
+        if (!inferred) {
+          e.own += w;
+          if (w > e.best && idx.length === 1) (e.best = w), (e.words = ans.t);
+        }
       }
     }
   }
   const top = order.filter((t) => score[t].v >= MIN_SCORE).sort((a, b) => score[b].v - score[a].v).slice(0, max);
-  const chips = top.map((tag) => ({ tag, label: STR.craving.tag[tag], inferred: score[tag].own === 0 }));
+  // words = her own answer behind the tag when it is short (R1: chips speak her words); label = the tag's adjective (used in the line)
+  const short = (t) => t && t.trim().split(/\s+/).length <= 3;
+  const chips = top.map((tag) => ({ tag, label: STR.craving.tag[tag], words: short(score[tag].words) ? score[tag].words : STR.craving.tag[tag], inferred: score[tag].own === 0 }));
   const names = chips.map((c) => c.label);
   const list = names.length > 1 ? `${names.slice(0, -1).join(", ")} ו${names.at(-1)}` : names[0];
   return { chips, line: list ? STR.craving.line(list) : "" };

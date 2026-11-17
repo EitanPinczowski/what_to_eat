@@ -33,7 +33,7 @@ export const QUESTIONS = [
     ["מתי אכלת משהו אמיתי בפעם האחרונה?", [["🍽️", "ממש עכשיו"], ["⏰", "לפני כמה שעות"], ["🕳️", "זה היה מזמן"]]],
     ["איפה את על סקאלת הרעב?", [["🐭", "רק לנשנש"], ["🐱", "קצת רעבה"], ["🐻", "רעבה"], ["🐯", "רעבה מאוד"], ["🦖", "אוכלת את השולחן"]]],
   ]),
-  ...axis("body", 1, ["quick:2.5 couch:2 home:1.5", "light:1 fancy:1 resto:0.5", "choco:1.5 doughy:1.5 heavy:2 comfort:2 sweet:1.5"], {}, [
+  ...axis("body", 1, ["quick:2.5 couch:2 home:1.5", "fancy:1.5 resto:0.5 healthy:1", "choco:1.5 doughy:1.5 comfort:2 sweet:1.5"], {}, [
     ["ואיך הגוף מרגיש עכשיו?", [["🪫", "עייפה, בא לי משהו קל"], ["🙂", "בסדר, בא לי לאכול טוב"], ["🫠", "הגוף מבקש פינוק רציני"]]],
     ["כמה אנרגיה נשארה לך?", [["🪫", "כמעט אפס"], ["🔋", "חצי סוללה"], ["😮‍💨", "אין לי, מגיע לי פינוק"]]],
     ["מה הגוף מבקש ממך עכשיו?", [["🛏️", "לנוח, שיביאו לי"], ["🥂", "אוכל טוב שלא מכביד"], ["🫶", "פינוק גדול ומלא"]]],
@@ -47,27 +47,27 @@ export const QUESTIONS = [
   special("mood", 5, 2, "color", "איזה צבע את עכשיו?", [
     ["🟤", "חום וחמים", "comfort:2.5 creamy:1.5 sweet:1 home:1.5", "#8a5a3c"],
     ["🔴", "אדום ובוער", "salty:2 crunchy:1.5 junk:2 spicy:1", "#d6322e"],
-    ["🔵", "כחול ורגוע", "light:2.5 healthy:2 sour:1", "#2f6fd0"],
+    ["🔵", "כחול ורגוע", "healthy:2.5 cold:1 sour:1", "#2f6fd0"],
     ["🟡", "צהוב ושמשי", "fancy:2 resto:2 meal:1.5", "#f2b705"],
   ]),
   special("mood", 6, 2, "art", "איזו תמונה הכי את עכשיו?", [
     ["☁️", "ענן רך", "comfort:2 creamy:1.5 home:1.5"],
     ["🔥", "להבה", "salty:2 junk:1.5 spicy:1 hot:1"],
-    ["🧊", "קרח", "light:2 healthy:1.5 cold:1.5"],
+    ["🧊", "קרח", "healthy:2 cold:2"],
     ["🌧️", "גשם", "comfort:2.5 home:2 hot:1.5"],
   ]),
   special("mood", 7, 2, "faceoff", "איזה מצב רוח מנצח היום?", [
     ["🤗", "צריכה חיבוק", "comfort:2.5 creamy:1.5 sweet:1 home:1.5"],
     ["😤", "עמוס ולחוץ", "salty:2 crunchy:2 junk:1.5"],
     ["🥳", "בא לחגוג", "fancy:2 resto:2 meal:1.5"],
-    ["😌", "רגועה ושקטה", "light:2 healthy:1.5 sour:1"],
+    ["😌", "רגועה ושקטה", "healthy:2 cold:1 sour:1"],
   ]),
-  ...axis("vibe", 2, ["home:2.5 comfort:2.5 hot:1.5", "junk:3 fried:1.5 cheesy:1 healthy:-2", "light:2.5 healthy:2.5 sour:1 junk:-2"], {}, [
+  ...axis("vibe", 2, ["home:2.5 comfort:2.5 hot:1.5", "junk:3 fried:1.5 cheesy:1 healthy:-2", "healthy:3 sour:1.5 junk:-2"], {}, [
     ["איזה אוכל יעשה לך טוב עכשיו?", [["🛋️", "משהו ביתי ומנחם"], ["😈", "ג׳אנק בלי רגשות אשם"], ["🥗", "משהו טרי ונקי"]]],
     ["איזה סוג של ארוחה זו?", [["🛋️", "פיג׳מה וספה"], ["🎁", "פינוק קטן לעצמי"], ["🥗", "משהו נקי ורענן"]]],
     ["איזה אוכל מתאים לאווירה שלך?", [["🤍", "ביתי ומחבק"], ["🍔", "משוחרר ושמנוני"], ["🍃", "נקי ובהיר"]]],
   ]),
-  ...axis("family", 3, ["sweet:3 dessert:2 salty:-1.5", "doughy:2 noodles:2 bread:1.5", "salty:3 fried:2 junk:1.5 sweet:-2", "sour:2.5 light:2 healthy:2"], { multi: 1 }, [
+  ...axis("family", 3, ["sweet:3 dessert:2 salty:-1.5", "doughy:2 noodles:2 bread:1.5", "salty:3 fried:2 junk:1.5 sweet:-2", "sour:3 healthy:2"], { multi: 1 }, [
     ["מה הבטן רוצה?", [["🍫", "מתוק"], ["🥐", "פחמימה טובה, בצק או פסטה"], ["🍟", "משהו מלוח ושמנוני"], ["🥗", "משהו טרי וחמצמץ"]]],
     ["איזה טעם מתגלגל לך בראש?", [["🍬", "משהו מתוק וממכר"], ["🍝", "משהו עם בצק"], ["🧂", "מלוח ושמנוני"], ["🍋", "חמצמץ ורענן"]]],
     ["אם היה לך רק ביס אחד, ממה הוא היה?", [["🍰", "מתוק"], ["🍕", "בצק או פסטה"], ["🍿", "מלוח"], ["🥒", "טרי וחמצמץ"]]],
@@ -114,6 +114,10 @@ export const QUESTIONS = [
     ["איזה מתוק מפתה אותך?", [["🍫", "שוקולד"], ["🍓", "פירות"], ["🍨", "גלידה או קרם"], ["🥧", "מאפה חם"]]],
   ]),
 ];
+
+/** Opener by moment (R1): the first question's wording fits the hour. "Last time you ate" asks about the day; the hunger animal is for the evening. Others fit any time. */
+const AT = { hunger2: ["evening", "late", "shabbat"], hunger3: ["morning", "noon", "friNoon"] };
+for (const q of QUESTIONS) if (AT[q.id]) q.at = AT[q.id];
 
 /** The axis names, in stage order. */
 export const AXES = [...new Set(QUESTIONS.map((q) => q.axis))];

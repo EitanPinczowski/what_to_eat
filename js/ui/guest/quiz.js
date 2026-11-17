@@ -56,7 +56,7 @@ export function makeQuiz(room, historyList, { now = new Date(), rnd, weather = n
   const recent = historyList.filter((h) => h.f && now - new Date(h.at) <= 3 * DAY).map((h) => h.f);
   const prior = priorFrom(foods, { ratings: room.ratings ?? {}, recent, now, exp: room.exp ?? {}, weather, history: historyList });
   for (const [id, b] of Object.entries(favBoosts(fav))) prior[id] = (prior[id] ?? 0) + b;
-  return new FoodQuiz(foods, QUESTIONS, prior, { rnd, learned: learnFrom(historyList, foods), seen: seenFrom(historyList), drop: pruned?.(historyList, foods, QUESTIONS).map((d) => d.id), cat: true, known: knownFrom({ weather, history: historyList, now }), novel: novelEffects(historyList, foods, now, fav) });
+  return new FoodQuiz(foods, QUESTIONS, prior, { rnd, learned: learnFrom(historyList, foods), seen: seenFrom(historyList), drop: pruned?.(historyList, foods, QUESTIONS).map((d) => d.id), cat: true, moment: momentOf(now), known: knownFrom({ weather, history: historyList, now }), novel: novelEffects(historyList, foods, now, fav) });
 }
 
 /** Apply one recorded action to the engine. */
@@ -171,7 +171,7 @@ export function startGuestQuiz(root, opts) {
     const n = questionsLeft(z.s.asked.length, p1);
     const { chips } = cravingSummary(cravingAnswers());
     return html`<div class="craving-card" aria-live="polite"><div class="line"><span class="sub">${STR.cravingTitle}</span><span class="sub qn" data-testid="qn">${p1 >= 0.75 ? STR.almost : STR.left(n)}</span></div>
-      <div class="chips">${chips.length ? chips.map((c) => raw(html`<span class="chip${c.inferred ? " soft" : ""}">${c.label}</span>`)) : raw(html`<span class="chip empty">${STR.cravingEmpty}</span>`)}</div></div>`;
+      <div class="chips">${chips.length ? chips.map((c) => raw(html`<span class="chip${c.inferred ? " soft" : ""}">${c.words}</span>`)) : raw(html`<span class="chip empty">${STR.cravingEmpty}</span>`)}</div></div>`;
   };
   const footer = () => html`<div class="foot">
       ${actions.length ? raw(html`<button class="btn btn-ghost" data-on="undo">↪︎ ${STR.back}</button>`) : ""}

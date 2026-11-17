@@ -308,3 +308,10 @@ Known gaps: sim average steps 11.8 (target 10, reported only); sim "found" gate 
 - Start-up budget 194 → 196 KB (decided alone). To change: `CAT_BOOST` / `CAT_TILES`, or drop `cat: true` in `makeQuiz` to turn the step off.
 - Not done: no Playwright run here (no browsers); CSS reuses the `.answers` grid.
 - R1c-3 (2026-11-17): +25 foods (5 each Mexican, Italian, Indian, Thai, Chinese; 137 total). Raised the food-count cap in tests/data.test.js 120 → 140 and the start-up budget 196 → 204 KB (foods.js grew ~8 KB; decided alone). Emoji art generated with tools/fetch-fluent.mjs, sw-names.js regenerated; the "thin food types" test now expects none. Chinese foods use the `asian` tag (no `chinese` tag exists). To change: edit rows in js/data/foods.js.
+
+## R1 question meaning (2026-11-17)
+- The plan file (§A, Q-numbers) was not available in this checkout, so I read the item from ideas.md and the code; judgment calls:
+- **One job per question (Q19):** `light`/`heavy` effects removed from body, mood colour/art/faceoff, vibe3 and family4 (replaced by `healthy`/`cold`/`sour`); they now live in `after` (plus hunger's dinosaur and the "קליל" magnet). Guard: tests/meaning.test.js. To undo: put `light:` back in those rows of js/data/questions.js.
+- **Chips speak her words (Q10):** `cravingSummary` chips carry `words` (her own answer text when it is up to 3 words, else the adjective); the quiz card shows `words`, the reflecting line still uses the adjectives (`label`).
+- **Opener by moment (Q18):** `FoodQuiz` takes `moment` (momentOf); questions may carry `at`: hunger2 (animal) only evening/late/shabbat, hunger3 (last meal) only morning/noon/friNoon. Table `AT` in js/data/questions.js.
+- Sim after: mood persona first 49% / top 3 98%, found 95% (floor 95%), steps 9.4. No floors or limits changed. Not done: free rewording of Q1-Q8 (no spec text to follow).

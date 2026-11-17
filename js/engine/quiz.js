@@ -87,6 +87,7 @@ export class FoodQuiz {
     this.salt = opts.salt ?? "";
     this.useCat = opts.cat ?? false; // R1c-2: category screen first (guest app + sim)
     this.novel = opts.novel ?? {};
+    this.moment = opts.moment ?? null; // part of the week (momentOf): picks the opener
     this.known = {};
     this.s = {
       score: Object.fromEntries(this.foods.map((f) => [f.id, prior[f.id] ?? 0])),
@@ -235,6 +236,7 @@ export class FoodQuiz {
     const kept = vs.filter((q) => !this.drop.has(q.id));
     if (kept.length >= 2) vs = kept;
     if (!asked.length && vs.some((q) => !q.slider && q.answers.length === 3)) vs = vs.filter((q) => !q.slider && q.answers.length === 3);
+    if (!asked.length && this.moment) vs = vs.some((q) => !q.at || q.at.includes(this.moment)) ? vs.filter((q) => !q.at || q.at.includes(this.moment)) : vs; // opener by moment
     const age = (q) => {
       const i = this.seen.findIndex((ids) => ids.includes(q.id));
       return i < 0 ? 99 : i;
