@@ -1,15 +1,16 @@
 # Progress
-**Next step: round 3, R1c-2** (see "Round 3" below).
+**Next step: round 3 — finish R1 (Q1–Q8), then R1b** (see "Round 3" below).
 
 ## W6 done (1d learning, check-in feed, self-pruning): see REVIEW.md. Next: W7 (1e couple mode).
 ## W7 done (couple mode 1e): see REVIEW.md. firestore.rules changed (live/couple), needs the owner deploy.
 
-## Round 3 (2026-11-17) — next step: R1c-2
-Plan (read only the step's section): `C:/Users/eitan/.claude/plans/build-the-next-improvement-iridescent-pebble.md`. Queue and status: `C:/dev/boss/ideas.md` (R-items).
-- Done: R0 hotfix (2653691, rules deployed), R1c-1 food types (938abdb..1c07353, CI green). Log: docs/REVIEW.md "Round 3".
-- Next, in order: **R1c-2** category first, then the food (plan §C) → R1c-3 more foods (thai/chinese/indian < 4, `tests/cuisines.test.js` lists them) → R1 question meaning (§A, A6) → R1b → R2 → R3–R5 (her screens, copy) → R6–R7 (owner's 14 ticked UX picks, approval page `picks`).
-- Open: Noga's first real send since R0 is unconfirmed (no history doc after 15 Nov yet). First real cron check-in today 09:00 UTC (`vercel logs` in C:/dev/wte-push).
-- Gotchas: start-up budget 194 KB (≈1 KB headroom). CI runs `--fail-on-flaky-tests`; e2e quiz loops must call `magnets(page)` (e2e/helpers.js). Changed screenshots: delete the stale `*-linux.png`, push, take the regenerated file from the CI artifact `screenshot-baselines-linux`.
+## Round 3 (2026-11-17, handover 09:45) — next step: finish R1 (Q1–Q8), then R1b
+Plan: `docs/plan/round3.md` (copy of the approved plan; read only the step's section). Queue: `C:/dev/boss/ideas.md`. Log: docs/REVIEW.md "Round 3".
+- **Done:** R0 send hotfix (2653691, rules deployed 9/9). R1c-1 food types (938abdb..1c07353). R1c-2 category first, R1c-3 25 more foods, R1 part (one job for light/heavy, chips in her words, opener by moment) — built by the cloud boss (37b1667..af71009); its CI was cancelled and 9 e2e broke on the category screen, fixed in 35c51fe (`pickCategory` in e2e/helpers.js). Sim at noise 0.15: first guess 35% → 49%, top 3 98%.
+- **R1 still open:** Q1–Q8 rewording and effects (plan §A1–A2: פינוק קטן לעצמי, חצי סוללה, כמעט אפס, עייפה…קל, mood4 stops, bite2 wording, cloud = soft/sweet, kick עם עקיצה spicy 1.5). The cloud run skipped them because the plan was not in the repo; it is now.
+- **Then, in order:** R1b (Q15 curry/butter-chicken tags, Q13 main-dish axis, sim-gated) → R2 learning by axis:slot (Q12) → R3 compact header + honest progress + tags → R4 reveal screen → R5 copy → R6 (S16 S17 S13 S12) → R7 (S6 S8 S18 S19 S20). Owner ticked 14 UX picks; S9, S10, S14, S15 not picked.
+- **Open:** Noga's first real send since R0 unconfirmed (no history after 15 Nov). First real cron check-in 09:00 UTC today (`vercel logs` in C:/dev/wte-push). Two new rooms (00:00 and 00:39) unexplained; check whether `?store=local` writes a remote room. The craving card does not show the picked category as its first tag yet (plan §C step 5).
+- **Gotchas:** start-up budget 194 KB. CI runs `--fail-on-flaky-tests`. e2e quiz loops need `[data-on="cat"]` in their next-click list, `magnets(page)` and `pickCategory(page)`. Changed screenshots: update win32 locally, delete the stale `*-linux.png`, push, take the regenerated file from the CI artifact `screenshot-baselines-linux` and commit it. Never `git commit -a` (it picks up img/foods/credits.json). Usage: weekly stop at 70% (64% at handover).
 
 ## Steps (budget in minutes · spec to read)
 - [x] S0 scaffolding (25)
