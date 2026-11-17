@@ -1,10 +1,10 @@
 # Progress
-**Next step: round 3 — finish R3 (patch in the boss repo), then R4** (see "Round 3" below).
+**Next step: R4 reveal screen (R3 done)** — see "Round 3" below.
 
 ## W6 done (1d learning, check-in feed, self-pruning): see REVIEW.md. Next: W7 (1e couple mode).
 ## W7 done (couple mode 1e): see REVIEW.md. firestore.rules changed (live/couple), needs the owner deploy.
 
-## Round 3 (2026-11-17, handover 10:40) — next step: finish R3 (uncommitted in the working tree)
+## Round 3 — R3 DONE (6c72b1a + c4d4282, CI green). Next: R4 reveal screen, then R5. Stopped: weekly usage 68%
 Plan: `docs/plan/round3.md` (read only the step's section). Queue: `C:/dev/boss/ideas.md`. Log: docs/REVIEW.md "Round 3".
 - **Done and pushed:** R0 send hotfix · R1c-1 food types · R1c-2 category first · R1c-3 +25 foods · R1 question meaning incl. Q1–Q8 (026db8b, CI green) · R1b (Q13 tried, not kept) · R2 pooled learning (322c545, CI green). Sim at noise 0.15: first guess 35% → 52%, top 3 98%.
 - **R3 in progress — saved as a patch, not in this repo yet:** `handover/what_to_eat-r3-wip.patch` in the boss repo (EitanPinczowski/boss). Apply it with `git apply`, then do "R3 left to do" below. It contains (S1 compact header, S3 honest progress, S4 tags): `js/ui/guest/quiz.js` (meter → one row back·progress·chef, 7 forward-only segments, `.tag` spans, no second undo link), `css/style.css` (R3 block at the end; brand h1 hidden via `body:has(.qbar .prog)`), `js/data/strings.js` (`progressAria`), `tests/guest-ui.test.js` (countdown test rewritten to the new contract). With it unit tests pass; checked in the browser at 375×812 (question top 430 px → 112 px).
