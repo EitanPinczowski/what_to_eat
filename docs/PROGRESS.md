@@ -5,7 +5,7 @@
 ## W7 done (couple mode 1e): see REVIEW.md. firestore.rules changed (live/couple), needs the owner deploy.
 
 ## Round 3 (2026-11-17) — next step: R1c-2
-Plan (read only the step's section): `C:Userseitan.claudeplansuild-the-next-improvement-iridescent-pebble.md`. Queue and status: `C:devossideas.md` (R-items).
+Plan (read only the step's section): `C:/Users/eitan/.claude/plans/build-the-next-improvement-iridescent-pebble.md`. Queue and status: `C:/dev/boss/ideas.md` (R-items).
 - Done: R0 hotfix (2653691, rules deployed), R1c-1 food types (938abdb..1c07353, CI green). Log: docs/REVIEW.md "Round 3".
 - Next, in order: **R1c-2** category first, then the food (plan §C) → R1c-3 more foods (thai/chinese/indian < 4, `tests/cuisines.test.js` lists them) → R1 question meaning (§A, A6) → R1b → R2 → R3–R5 (her screens, copy) → R6–R7 (owner's 14 ticked UX picks, approval page `picks`).
 - Open: Noga's first real send since R0 is unconfirmed (no history doc after 15 Nov yet). First real cron check-in today 09:00 UTC (`vercel logs` in C:/dev/wte-push).
