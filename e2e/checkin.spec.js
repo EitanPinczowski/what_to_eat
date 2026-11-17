@@ -1,4 +1,5 @@
 import { test, expect } from "@playwright/test";
+import { pickCategory } from "./helpers.js";
 
 // Next-day check-in opt-in, relay stubbed: nothing is subscribed or scheduled until she taps yes.
 async function toSent(page, room) {
@@ -15,6 +16,7 @@ async function toSent(page, room) {
   });
   await page.goto(`/?store=local#q=${room}`);
   await page.getByRole("button", { name: "יאללה, תנחש" }).click();
+  await pickCategory(page);
   await page.locator('[data-on="escape"]').click();
   await page.locator('input[name="food"]').fill("פיצה");
   await page.getByRole("button", { name: "זה!" }).click();

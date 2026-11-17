@@ -2,7 +2,7 @@
 // The app has no UA sniffing for these; what matters is that the link opens and the quiz plays with the things those
 // webviews often lack (navigator.share, clipboard, window.open, sometimes storage). Works the same on Pixel and iPhone projects.
 import { test, expect } from "@playwright/test";
-import { magnets } from "./helpers.js";
+import { magnets, pickCategory } from "./helpers.js";
 
 const ROOM = "e2einapp0000000000000000";
 const UAS = {
@@ -21,7 +21,7 @@ async function playToResult(page) {
       continue;
     }
     await magnets(page);
-    await page.locator('[data-on="ans"], [data-on="gridDone"], [data-on="duel"][data-arg="a"], [data-on="gut"][data-arg="a"], [data-on="pick"]').first().click();
+    await page.locator('[data-on="cat"], [data-on="ans"], [data-on="gridDone"], [data-on="duel"][data-arg="a"], [data-on="gut"][data-arg="a"], [data-on="pick"]').first().click();
   }
 }
 
@@ -40,6 +40,7 @@ for (const [name, userAgent] of Object.entries(UAS)) {
       await expect(page.locator("html")).toHaveAttribute("dir", "rtl");
       await expect(page.locator("#app h2")).toContainText("היי");
       await page.getByRole("button", { name: "יאללה, תנחש" }).click();
+      await pickCategory(page);
       await expect(page.getByTestId("qn")).toBeVisible();
       await playToResult(page);
       await expect(page.locator(".mood")).toBeVisible();
@@ -75,6 +76,7 @@ test.describe("in-app browser without usable storage", () => {
 test("the phone's back gesture inside the quiz steps back instead of leaving the page", async ({ page }) => {
   await page.goto(`/?store=local#q=${ROOM}`);
   await page.getByRole("button", { name: "יאללה, תנחש" }).click();
+  await pickCategory(page);
   const q1 = await page.locator(".q").textContent();
   await page.locator('[data-on="ans"]').first().click();
   await expect(page.locator(".q")).not.toHaveText(q1);

@@ -2,7 +2,7 @@
 import { test, expect } from "@playwright/test";
 import AxeBuilder from "@axe-core/playwright";
 import { oldLocalRecord } from "../tests/fixtures/old-data.js";
-import { openMore, magnets } from "./helpers.js";
+import { openMore, magnets, pickCategory } from "./helpers.js";
 
 const ROOM = "e2ea11y00000000000000000";
 const GUEST = "e2eguest0000000000000000";
@@ -58,6 +58,7 @@ for (const scheme of ["light", "dark"]) {
     await page.getByRole("button", { name: "יאללה, תנחש" }).waitFor();
     await scan(page, `guest welcome ${scheme}`);
     await page.getByRole("button", { name: "יאללה, תנחש" }).click();
+    await pickCategory(page);
     await page.locator(".q").waitFor();
     await scan(page, `guest question ${scheme}`);
     await page.locator('[data-on="escape"]').click();
@@ -75,6 +76,7 @@ test("her quiz screens at night", async ({ page }) => {
   await expect(page.locator("html.night")).toHaveCount(1);
   await scan(page, "guest welcome night");
   await page.getByRole("button", { name: "יאללה, תנחש" }).click();
+  await pickCategory(page);
   await page.locator(".q").waitFor();
   await scan(page, "guest question night");
 });
@@ -82,12 +84,13 @@ test("her quiz screens at night", async ({ page }) => {
 test("her quiz result screen", async ({ page }) => {
   await page.goto(`/?store=local#q=${GUEST}`);
   await page.getByRole("button", { name: "יאללה, תנחש" }).click();
+  await pickCategory(page);
   for (let i = 0; i < 40 && !(await page.locator(".mood").count()); i++) {
     const yes = page.locator('[data-on="guess"][data-arg="yes"]');
     if (await yes.count()) await yes.click();
     else {
       await magnets(page);
-      await page.locator('[data-on="ans"], [data-on="gridDone"], [data-on="duel"][data-arg="a"], [data-on="gut"][data-arg="a"], [data-on="pick"]').first().click(); }
+      await page.locator('[data-on="cat"], [data-on="ans"], [data-on="gridDone"], [data-on="duel"][data-arg="a"], [data-on="gut"][data-arg="a"], [data-on="pick"]').first().click(); }
   }
   await expect(page.locator(".mood")).toBeVisible();
   await scan(page, "guest result");

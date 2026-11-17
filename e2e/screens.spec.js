@@ -4,7 +4,7 @@
 //  - elsewhere a screen without a baseline for this platform is skipped, so no machine goes red for lack of one.
 import { test, expect } from "@playwright/test";
 import { existsSync } from "node:fs";
-import { openMore } from "./helpers.js";
+import { openMore, pickCategory } from "./helpers.js";
 
 test.beforeEach(({}, ti) => test.skip(ti.project.name !== "pixel", "screenshots: Pixel project only"));
 
@@ -88,6 +88,7 @@ test("guest first question", async ({ page }) => {
   await setup(page);
   await page.goto(`/?store=local#q=${ROOM}`);
   await page.getByRole("button", { name: "יאללה, תנחש" }).click();
+  await pickCategory(page);
   await page.locator(".q").waitFor();
   await snap(page, "guest-question");
 });
@@ -96,6 +97,7 @@ test("guest free text", async ({ page }) => {
   await setup(page);
   await page.goto(`/?store=local#q=${ROOM}`);
   await page.getByRole("button", { name: "יאללה, תנחש" }).click();
+  await pickCategory(page);
   await page.locator('[data-on="escape"]').click();
   await page.locator('input[name="food"]').waitFor();
   await snap(page, "guest-free-text");

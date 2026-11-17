@@ -1,5 +1,5 @@
 import { test, expect } from "@playwright/test";
-import { magnets } from "./helpers.js";
+import { magnets, pickCategory } from "./helpers.js";
 
 test("couple mode: he answers, she answers, she sees his answers only at the end", async ({ page, context }) => {
   await page.goto("/?store=local");
@@ -14,6 +14,7 @@ test("couple mode: he answers, she answers, she sees his answers only at the end
   const her = await context.newPage();
   await her.goto(link.replace("#", "?store=local#"));
   await her.getByRole("button", { name: "יאללה, תנחש" }).click();
+  await pickCategory(her);
   await expect(her.getByTestId("qn")).toBeVisible();
   for (let i = 0; i < 40; i++) {
     if (await her.locator(".mood").count()) break;
@@ -25,7 +26,7 @@ test("couple mode: he answers, she answers, she sees his answers only at the end
       continue;
     }
     await magnets(her);
-    await her.locator('[data-on="ans"], [data-on="gridDone"], [data-on="duel"][data-arg="a"], [data-on="gut"][data-arg="a"], [data-on="pick"]').first().click();
+    await her.locator('[data-on="cat"], [data-on="ans"], [data-on="gridDone"], [data-on="duel"][data-arg="a"], [data-on="gut"][data-arg="a"], [data-on="pick"]').first().click();
   }
   await expect(her.locator(".mood")).toBeVisible();
   const his = her.getByTestId("his");

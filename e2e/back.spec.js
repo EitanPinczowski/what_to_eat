@@ -1,10 +1,11 @@
 import { test, expect } from "@playwright/test";
+import { pickCategory } from "./helpers.js";
 
 // F1: back at every quiz stage — the on-screen arrow AND the phone's back (page.goBack) undo one step, engine state included.
 const START = { name: "יאללה, תנחש" };
 // Same path on every machine: fixed timezone and clock (the prior leans on the hour) plus a seeded Math.random below.
 test.use({ timezoneId: "Asia/Jerusalem" });
-const NEXT = '[data-on="ans"], [data-on="gridDone"], [data-on="duel"][data-arg="a"], [data-on="gut"][data-arg="a"], [data-on="guess"][data-arg="no"], [data-on="pick"]';
+const NEXT = '[data-on="cat"], [data-on="ans"], [data-on="gridDone"], [data-on="duel"][data-arg="a"], [data-on="gut"][data-arg="a"], [data-on="guess"][data-arg="no"], [data-on="pick"]';
 
 const room = (page, id) => page.evaluate((r) => JSON.parse(localStorage.getItem(`mabalach_v1:${r}`)), id);
 const liveN = async (page, id) => ((await room(page, id))?.cols?.live?.quiz?.actions ?? []).length;
@@ -97,6 +98,7 @@ test("hungry express shortlist: back from the pick of 3 and from the finish scre
   const id = "e2eback0000000000000000b";
   const errors = [];
   await open(page, id, errors);
+  await pickCategory(page); // R1c-2: the category screen comes first
   await page.locator('[data-on="ans"][data-arg="2"]').click(); // 🦖 (index 2 of 3)
   for (let i = 0; i < 12 && (await kind(page)) !== "pick"; i++) await page.locator(NEXT).first().click();
   expect(await kind(page)).toBe("pick");

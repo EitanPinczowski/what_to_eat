@@ -183,6 +183,7 @@ for (const scheme of ["light", "dark"]) {
       await her.reload();
       await shot(her, "her-intro");
       await her.getByRole("button", { name: "יאללה, תנחש" }).click();
+      await pickCategory(her);
       const seen = new Set();
       for (let i = 0; i < 40; i++) {
         if (await her.locator(".mood").count()) break;
@@ -190,7 +191,7 @@ for (const scheme of ["light", "dark"]) {
         if (!seen.has(kind)) { seen.add(kind); await shot(her, `her-q-${kind}`); }
         if (kind === "guess") { await her.locator('[data-on="guess"][data-arg="yes"]').click(); continue; }
         await magnets(her);
-        await her.locator('[data-on="ans"], [data-on="gridDone"], [data-on="duel"][data-arg="a"], [data-on="gut"][data-arg="a"], [data-on="pick"]').first().click();
+        await her.locator('[data-on="cat"], [data-on="ans"], [data-on="gridDone"], [data-on="duel"][data-arg="a"], [data-on="gut"][data-arg="a"], [data-on="pick"]').first().click();
       }
       await shot(her, "her-finish");
       await her.locator('[data-on="mode"]').first().click();

@@ -1,5 +1,5 @@
 import { test, expect } from "@playwright/test";
-import { openMore } from "./helpers.js";
+import { openMore, pickCategory } from "./helpers.js";
 
 const ROOM_KEY = "mabalach_room";
 const readRoom = (page) =>
@@ -81,6 +81,8 @@ test("place vote: owner sends 2, she picks one, owner sees it and gets navigatio
   const her = await context.newPage();
   await her.goto(link.replace("#", "?store=local#"));
   await her.getByRole("button", { name: "יאללה, תנחש" }).click();
+
+  await pickCategory(her);
   await her.locator('[data-on="escape"]').click();
   await her.locator('input[name="food"]').fill("פיצה");
   await her.getByRole("button", { name: "זה!" }).click();
@@ -152,6 +154,8 @@ test("back gesture: owner sub-screens go one step back and never leave the app",
 test("back gesture: mid-quiz goes one question back and stays in the app", async ({ page }) => {
   await page.goto("/?store=local#q=backgest0000000000000000");
   await page.getByRole("button", { name: "יאללה, תנחש" }).click();
+
+  await pickCategory(page);
   const q1 = await page.locator(".q").textContent();
   await page.locator('[data-on="ans"]').first().click();
   await expect(page.locator(".q")).not.toHaveText(q1);
@@ -211,11 +215,14 @@ test("back gesture: opening and leaving the 'she's next to me' quiz repeatedly k
   await page.goto("/?store=local");
   for (let k = 0; k < 3; k++) {
     await page.locator('.tile[data-arg="local"]').click();
+    await pickCategory(page); // R1c-2: the category screen comes first
     const q1 = await page.locator(".q").first().textContent();
     await page.locator('[data-on="ans"]').first().click();
     await expect(page.locator(".q").first()).not.toHaveText(q1);
     await page.goBack(); // one answer back
     await expect(page.locator(".q").first()).toHaveText(q1);
+    await page.goBack(); // the category pick back
+    await expect(page.locator('[data-on="cat"]').first()).toBeVisible();
     await page.goBack(); // out of the quiz, home
     await expect(page.locator(".tiles")).toBeVisible();
     expect(page.url()).toContain("localhost:8000");

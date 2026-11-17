@@ -1,7 +1,7 @@
 // Item 33g: error paths. A failed write, a failed weather fetch, no network and a failed Firebase start each end in a toast
 // or a fallback screen, never a blank page and never an uncaught error.
 import { test, expect } from "@playwright/test";
-import { openMore, magnets } from "./helpers.js";
+import { openMore, magnets, pickCategory } from "./helpers.js";
 
 const GUEST = "e2eerrors000000000000000";
 
@@ -16,7 +16,7 @@ async function playToResult(page) {
     if (await yes.count()) await yes.click();
     else {
       await magnets(page);
-      await page.locator('[data-on="ans"], [data-on="gridDone"], [data-on="duel"][data-arg="a"], [data-on="gut"][data-arg="a"], [data-on="pick"]').first().click(); }
+      await page.locator('[data-on="cat"], [data-on="ans"], [data-on="gridDone"], [data-on="duel"][data-arg="a"], [data-on="gut"][data-arg="a"], [data-on="pick"]').first().click(); }
   }
   await expect(page.locator(".mood")).toBeVisible();
 }
@@ -53,6 +53,7 @@ test("her quiz plays to a result even when every save fails", async ({ page }) =
   });
   await page.goto(`/?store=local#q=${GUEST}`);
   await page.getByRole("button", { name: "יאללה, תנחש" }).click();
+  await pickCategory(page);
   await playToResult(page);
   await noBlank(page);
   expect(errors).toEqual([]);
@@ -79,6 +80,7 @@ for (const [name, handler] of [
     await noBlank(page);
     await page.goto(`/?store=local#q=${GUEST}`);
     await page.getByRole("button", { name: "יאללה, תנחש" }).click();
+    await pickCategory(page);
     await playToResult(page);
     expect(errors).toEqual([]);
   });
@@ -124,6 +126,7 @@ test("the free-tier limit (ntfy answers 429): one calm toast, the quiz still fin
   });
   await page.goto("/?store=local#q=e2ebusy00000000000000000");
   await page.getByRole("button", { name: "יאללה, תנחש" }).click();
+  await pickCategory(page);
   await playToResult(page);
   await page.locator('[data-on="send"]').first().click();
   await expect(page.locator(".toast", { hasText: "השרת עמוס היום" })).toHaveCount(1, { timeout: 10000 });

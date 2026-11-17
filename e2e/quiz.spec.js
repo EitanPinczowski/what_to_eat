@@ -1,5 +1,5 @@
 import { test, expect } from "@playwright/test";
-import { magnets } from "./helpers.js";
+import { magnets, pickCategory } from "./helpers.js";
 
 const ROOM = "e2eroom000000000000000000";
 
@@ -9,6 +9,7 @@ test("guest plays the quiz to a result (local store)", async ({ page }) => {
   await page.goto(`/?store=local#q=${ROOM}`);
   await expect(page.locator("#app h2")).toContainText("היי");
   await page.getByRole("button", { name: "יאללה, תנחש" }).click();
+  await pickCategory(page);
   await expect(page.getByTestId("qn")).toBeVisible();
   for (let i = 0; i < 40; i++) {
     if (await page.locator(".mood").count()) break;
@@ -18,7 +19,7 @@ test("guest plays the quiz to a result (local store)", async ({ page }) => {
       continue;
     }
     await magnets(page);
-    const next = page.locator('[data-on="ans"], [data-on="gridDone"], [data-on="duel"][data-arg="a"], [data-on="gut"][data-arg="a"], [data-on="pick"]').first();
+    const next = page.locator('[data-on="cat"], [data-on="ans"], [data-on="gridDone"], [data-on="duel"][data-arg="a"], [data-on="gut"][data-arg="a"], [data-on="pick"]').first();
     await next.click();
   }
   await expect(page.locator(".mood")).toBeVisible();
@@ -29,6 +30,7 @@ test("guest plays the quiz to a result (local store)", async ({ page }) => {
 test("undo goes back a question; escape accepts free text", async ({ page }) => {
   await page.goto(`/?store=local#q=${ROOM}`);
   await page.getByRole("button", { name: "יאללה, תנחש" }).click();
+  await pickCategory(page);
   const q1 = await page.locator(".q").textContent();
   await page.locator('[data-on="ans"]').first().click();
   await expect(page.locator(".q")).not.toHaveText(q1);
@@ -49,6 +51,7 @@ test("finish: choose how and budget, send, then the link says it was sent", asyn
   const room = "e2esend00000000000000000";
   await page.goto(`/?store=local#q=${room}`);
   await page.getByRole("button", { name: "יאללה, תנחש" }).click();
+  await pickCategory(page);
   await page.locator('[data-on="escape"]').click();
   await page.locator('input[name="food"]').fill("פיצה");
   await page.getByRole("button", { name: "זה!" }).click();
@@ -71,6 +74,7 @@ test("resume: reopening the link continues where she stopped", async ({ page }) 
   const room = "e2eresume000000000000000";
   await page.goto(`/?store=local#q=${room}`);
   await page.getByRole("button", { name: "יאללה, תנחש" }).click();
+  await pickCategory(page);
   await page.locator('[data-on="ans"]').first().click();
   await page.locator('[data-on="ans"]').first().click();
   const q = await page.locator(".q").textContent();
@@ -83,6 +87,7 @@ test("feedback is saved to the room", async ({ page }) => {
   const room = "e2efeedback0000000000000";
   await page.goto(`/?store=local#q=${room}`);
   await page.getByRole("button", { name: "יאללה, תנחש" }).click();
+  await pickCategory(page);
   await page.locator('[data-on="feedback"]').click();
   await page.locator("textarea").fill("הכפתור לא עבד");
   await page.getByRole("button", { name: "שליחה" }).click();

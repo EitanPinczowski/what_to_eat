@@ -1,5 +1,5 @@
 import { test, expect } from "@playwright/test";
-import { openMore } from "./helpers.js";
+import { openMore, pickCategory } from "./helpers.js";
 
 test("owner: home tiles, send-quiz link, live status from her tab, toast on result", async ({ page, context }) => {
   await page.goto("/?store=local");
@@ -15,6 +15,7 @@ test("owner: home tiles, send-quiz link, live status from her tab, toast on resu
   await her.goto(link.replace("#", "?store=local#"));
   await expect(page.getByTestId("live")).toContainText("פתחה");
   await her.getByRole("button", { name: "יאללה, תנחש" }).click();
+  await pickCategory(her);
   await her.locator('[data-on="ans"]').first().click();
   await expect(page.getByTestId("live")).toContainText("שאלה 1");
   await her.locator('[data-on="escape"]').click();
