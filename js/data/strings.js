@@ -44,8 +44,8 @@ export const STR = {
   night: { lead: "כבר ערב מאוחר… בא לך משהו קליל יותר?" },
   swipeHint: "אפשר גם להחליק ימינה או שמאלה 👉",
   card: {
-    save: "שמירה",
-    whatsapp: "שליחה בוואטסאפ",
+    save: "שמירת תמונה",
+    whatsapp: "שיתוף",
     file: "מה-בא-לך.png",
     title: "מה בא לי עכשיו",
     shareText: (food) => `בא לי ${food} 🙂`,
@@ -82,6 +82,7 @@ export const STR = {
     several: "כמה דברים מתאימים. איזה מהם?",
     send: "זה!",
     unsure: "אחת מאלה?",
+    maybe: "או אולי…",
     none: "אף אחת מאלה",
     express: "רעבה כזאת? אין זמן. מה מ-3 האלה?",
   },

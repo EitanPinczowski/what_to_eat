@@ -1,5 +1,5 @@
 # Progress
-**Next step: R4 reveal screen (R3 done)** — see "Round 3" below.
+**Next step: R5 copy (R4 done, e2e not run here)** — see "Round 3" below.
 
 ## W6 done (1d learning, check-in feed, self-pruning): see REVIEW.md. Next: W7 (1e couple mode).
 ## W7 done (couple mode 1e): see REVIEW.md. firestore.rules changed (live/couple), needs the owner deploy.

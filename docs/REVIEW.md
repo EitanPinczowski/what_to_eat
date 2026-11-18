@@ -335,3 +335,7 @@ Known gaps: sim average steps 11.8 (target 10, reported only); sim "found" gate 
 - Her quiz is one header row: back · 7 forward-only progress segments · chef. The brand h1 is hidden in her quiz (`body:has(.qbar .prog)`); the countdown text is replaced by honest progress; the second "undo" link is gone (one back control, `[data-on="qback"]`); answer tags are read-only `.tag`s. Question top moved 430px -> 112px at 375x812.
 - Tests changed on purpose: guest-ui countdown test rewritten, quiz.spec undo/resume use `qback`, win32 first-question baseline regenerated, Linux one deleted (regenerate from CI artifact `screenshot-baselines-linux`).
 - Not done: picked category as first tag (optional). To undo: revert the R3 commit.
+
+## R4 reveal screen (S2)
+- Pick screen: first item is a full-width hero, the other two sit under "או אולי…" (`STR.pick.maybe`); refine nudges are small pill chips (`.chip-btn`); none/free links stay ghost.
+- Result: image save/share moved to a quiet row above the send button, labels "שמירת תמונה" / "שיתוף"; send button is `position:sticky` at the bottom. Mode/price already follow "זה!" (result screen). S17 not done. Pixel e2e/screenshots not run here (no Playwright); the pick screen baseline may need regenerating from CI.

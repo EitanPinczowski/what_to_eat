@@ -316,10 +316,14 @@ export function startGuestQuiz(root, opts) {
         </div>
         ${raw(footer())}`;
     } else if (step.type === "pick") {
+      const [top, ...rest] = step.items;
+      const why = (f) => (step.unsure ? raw(html`<small class="why" data-why="${f.id}"></small>`) : "");
       body = html`<h2 class="q">${step.express ? STR.pick.express : step.unsure ? STR.pick.unsure : STR.pick.text}</h2>
-        <div class="grid">${step.items.map((f) => raw(html`<button class="btn food" data-on="pick" data-arg="${f.id}">${raw(foodLabel(f))}${step.unsure ? raw(html`<small class="why" data-why="${f.id}"></small>`) : ""}</button>`))}</div>
+        <button class="btn food pick-hero" data-on="pick" data-arg="${top.id}">${raw(foodLabel(top, "big"))}${why(top)}</button>
+        ${rest.length ? raw(html`<p class="sub maybe">${STR.pick.maybe}</p>`) : ""}
+        <div class="grid pick-rest">${rest.map((f) => raw(html`<button class="btn food" data-on="pick" data-arg="${f.id}">${raw(foodLabel(f))}${why(f)}</button>`))}</div>
         ${step.unsure ? raw(html`<div class="nudges" data-testid="nudges"></div>`) : ""}
-        ${step.unsure ? raw(html`<button class="btn" data-on="pickNone">${STR.pick.none}</button>`) : ""}
+        ${step.unsure ? raw(html`<button class="btn btn-ghost" data-on="pickNone">${STR.pick.none}</button>`) : ""}
         <button class="btn btn-ghost" data-on="escape">${STR.pick.free}</button>`;
     }
     const m = meter();
@@ -347,7 +351,7 @@ export function startGuestQuiz(root, opts) {
         if (el) el.textContent = m.whyLine(f, ans);
       }
       const host = root.querySelector("[data-testid=nudges]");
-      if (host) host.innerHTML = html`<p class="sub">${STR.refine.title}</p><div class="chips">${m.nudgesFor(ans).map((k) => raw(html`<button class="btn" data-on="refine" data-arg="${k}">${STR.refine.nudge[k]}</button>`))}</div>`;
+      if (host) host.innerHTML = html`<p class="sub">${STR.refine.title}</p><div class="chips">${m.nudgesFor(ans).map((k) => raw(html`<button class="btn chip-btn" data-on="refine" data-arg="${k}">${STR.refine.nudge[k]}</button>`))}</div>`;
     }, () => {});
   }
 

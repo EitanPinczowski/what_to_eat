@@ -225,3 +225,14 @@ body:has(.qbar .prog) > header{display:none}
 .tag{padding:2px 10px;border-radius:99px;background:var(--accent2);color:var(--on-accent2);font-size:var(--t2);font-weight:500;animation:chipin .3s var(--ease)}
 .tag.soft{background:transparent;border:1px dashed var(--muted)}
 .big-text .tag,.big-text .qn-almost{font-size:var(--t3)}
+
+/* R4 (S2): reveal. Hero guess, "או אולי…" row, nudges as chips, quiet card row, sticky primary */
+.pick-hero{width:100%;padding:14px;border-width:3px}
+.pick-hero .em,.pick-hero .big{font-size:calc(var(--t6) * 2)}
+.maybe{margin:10px 0 4px;font-size:var(--t2)}
+.pick-rest .btn.food{font-size:var(--t2);padding:8px}
+.pick-rest .btn.food .em{font-size:var(--t5)}
+.nudges .btn.chip-btn{flex:0 1 auto;min-height:36px;padding:4px 12px;border-radius:99px;font-size:var(--t2)}
+.card-quiet .card-btns{margin:4px 0}
+.card-quiet .btn{font-size:var(--t2);min-height:40px;background:transparent;box-shadow:none}
+.sticky-send{position:sticky;bottom:12px;z-index:5}
