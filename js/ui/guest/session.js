@@ -249,7 +249,7 @@ export async function runGuest(root, store, { base = location.origin + location.
     const opts = v.ids.map((id, i) => html`<button class="btn" data-on="vote" data-arg="${id}" aria-pressed="${v.pick === id}">${v.names[i] ?? ""}</button>`);
     const none = html`<button class="btn btn-ghost" data-on="vote" data-arg="${VOTE_NONE}" aria-pressed="${v.pick === VOTE_NONE}">${STR.vote.neither}</button>`;
     const name = v.names[v.ids.indexOf(v.pick)] ?? "";
-    const line = v.pick === VOTE_NONE ? STR.vote.pickedNone : v.pick ? STR.vote.picked(name) : STR.vote.sub;
+    const line = v.pick === VOTE_NONE ? STR.vote.pickedNone(s.me) : v.pick ? STR.vote.picked(name) : STR.vote.sub(s.me);
     el.innerHTML = html`<h3 class="q">${STR.vote.title}</h3><p class="sub" role="status" aria-live="polite">${line}</p>
       <div class="stack">${raw(opts.join(""))}${raw(none)}</div>`;
   };

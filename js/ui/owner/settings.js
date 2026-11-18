@@ -76,7 +76,7 @@ export function settingsViews({ root, store, views, common, base, mode }) {
       <section class="card stack" data-testid="push"><b>${G.push.title}</b><span class="sub">${G.push.help}</span>
         <span class="sub" data-testid="push-state" role="status"></span>
         <div class="stack" data-testid="push-actions"></div>
-        <label class="check"><input type="checkbox" data-testid="notify-open" data-input="notifyOpen" ${s.notifyOpen ? "checked" : ""}> ${G.push.openedLabel}</label>
+        <label class="check"><input type="checkbox" data-testid="notify-open" data-input="notifyOpen" ${s.notifyOpen ? "checked" : ""}> ${G.push.openedLabel(s.her || "היא")}</label>
         <span class="sub">${G.push.openedHelp}</span></section>
       <a class="btn btn-ghost" href="credits.html" data-testid="credits-link">${G.credits.link}</a>
       <section class="card stack install"><b>${STR.install.title}</b><span class="sub">${installHelp(installKind())}</span>
