@@ -339,3 +339,10 @@ Known gaps: sim average steps 11.8 (target 10, reported only); sim "found" gate 
 ## R4 reveal screen (S2)
 - Pick screen: first item is a full-width hero, the other two sit under "או אולי…" (`STR.pick.maybe`); refine nudges are small pill chips (`.chip-btn`); none/free links stay ghost.
 - Result: image save/share moved to a quiet row above the send button, labels "שמירת תמונה" / "שיתוף"; send button is `position:sticky` at the bottom. Mode/price already follow "זה!" (result screen). S17 not done. Pixel e2e/screenshots not run here (no Playwright); the pick screen baseline may need regenerating from CI.
+
+## R6 (S16, S17, S13, S12; S9/S10 not done)
+- S16: `.chip` uses `--on-accent` (was `#fff`); emoji on `.btn` get a light text-shadow halo in night and dark looks (css/style.css, R6 block).
+- S17: result modes in a 2x2 grid (`.grid.modes`), "לבשל" icon is now 🍲, the craving line no longer ends with " —". Test change: `tests/feelings.test.js` regex no longer expects the trailing dash.
+- S13: swipe hint is a one-time wiggle of the first card (`.swipe-nudge`, off under reduced motion), no text; `STR.swipeHint` is now unused. Change: js/ui/guest/swipe.js.
+- S12: `mountSaveStatus` hides the "saved" mark until the first pointerdown/keydown, so start-up writes stay silent (js/ui/dom.js). Pending/fail unchanged.
+- Not run here: Playwright e2e and the contrast/axe check; result-screen baselines may need regenerating from CI.

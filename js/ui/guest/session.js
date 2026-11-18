@@ -102,7 +102,7 @@ export function finishForm(root, out, sendLabel, onSend, heart = null) {
         <div class="big reveal" aria-hidden="true">${raw(pic(out.food))}</div>
         <h2 class="title">${out.food?.name ?? out.result.free}</h2>${out.food ? raw(html`<p class="cat">${catLabel(out.food)}</p>`) : ""}${heart && out.food ? raw(html`<button class="btn btn-ghost heart" data-on="heart" data-testid="heart" aria-pressed="${hearted}">${hearted ? STR.heart.on : STR.heart.off}</button>`) : ""}</section>
       <p class="sub">${STR.result.how}</p>
-      <div class="grid choose">${STR.result.modes.map((x) => raw(html`<button class="btn" data-on="mode" data-arg="${x.m}" aria-pressed="${form.m === x.m}"><span class="em">${x.e}</span>${x.t}</button>`))}</div>
+      <div class="grid choose modes">${STR.result.modes.map((x) => raw(html`<button class="btn" data-on="mode" data-arg="${x.m}" aria-pressed="${form.m === x.m}"><span class="em">${x.e}</span>${x.t}</button>`))}</div>
       <p class="sub">${STR.result.budget}</p>
       <div class="grid choose">${STR.result.prices.map((t, i) => raw(html`<button class="btn" data-on="price" data-arg="${i + 1}" aria-pressed="${form.price === i + 1}">${t}</button>`))}</div>
       <textarea name="note" rows="2" maxlength="300" placeholder="${STR.result.note}" data-input="note">${form.note}</textarea>

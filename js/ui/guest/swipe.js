@@ -1,6 +1,5 @@
 // Swipe for two-choice screens (W4b). Lazy: loaded with her first 2-choice question. Same idea as the sweep's swipe:
 // a pointer drag past SWIPE px picks a side; anything shorter is a normal tap and the click goes through untouched.
-import { STR } from "../../data/strings.js";
 
 export const SWIPE = 70; // px, as in sweep.js
 const HINT_KEY = "wte-swipe-hint";
@@ -29,11 +28,9 @@ export function attachSwipe(el, buttons, { hint = true } = {}) {
     setTimeout(() => buttons[s].click(), 70);
   });
   if (hint && !seen()) {
-    const p = document.createElement("p");
-    p.className = "sub swipe-hint";
-    p.setAttribute("data-testid", "swipe-hint");
-    p.textContent = STR.swipeHint;
-    el.append(p);
+    // direction by motion, not words: the first choice card wiggles once (CSS turns it off under reduced motion)
+    buttons[0].classList.add("swipe-nudge");
+    buttons[0].addEventListener("animationend", () => buttons[0].classList.remove("swipe-nudge"), { once: true });
     markSeen();
   }
 }

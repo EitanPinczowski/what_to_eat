@@ -106,7 +106,7 @@ test("cravingSummary: the 2-3 strongest adjective tags and one reflecting line",
   assert.deepEqual(r.chips.map((c) => c.tag), ["comfort", "home", "creamy"]);
   assert.deepEqual(r.chips.map((c) => c.label), ["מנחם", "ביתי", "קרמי"]);
   assert.equal(r.line, STR.craving.line("מנחם, ביתי וקרמי"));
-  assert.match(r.line, /^בא לך משהו .* ו.*—$/);
+  assert.match(r.line, /^בא לך משהו .* ו.*$/);
   assert.ok(r.chips.every((c) => c.inferred === false));
   // object form, a pair (0.6 each), an inferred answer (half), unknown ids and an empty list
   assert.deepEqual(cravingSummary([{ q: "mood1", i: 0 }, { q: "vibe1", i: 0 }]).chips.map((c) => c.tag), ["comfort", "home", "creamy"]);

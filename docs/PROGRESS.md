@@ -1,5 +1,5 @@
 # Progress
-**Next step: R6 a11y + contrast + big text (R5 copy done; e2e not run here)** — see "Round 3" below.
+**Next step: R7 owner polish (R6 S16 S17 S13 S12 done; S9 big text and S10 aria not done; e2e not run here)** — see "Round 3" below.
 
 ## W6 done (1d learning, check-in feed, self-pruning): see REVIEW.md. Next: W7 (1e couple mode).
 ## W7 done (couple mode 1e): see REVIEW.md. firestore.rules changed (live/couple), needs the owner deploy.

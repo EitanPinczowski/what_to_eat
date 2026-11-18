@@ -39,7 +39,7 @@ code.link{display:block;padding:8px;font-size:var(--t2);word-break:break-all;col
 .craving-card .sub{text-align:start;font-size:var(--t2)}
 .craving-card .line{justify-content:space-between}
 .chips{display:flex;flex-wrap:wrap;gap:6px;min-height:28px}
-.chip{padding:3px 10px;border-radius:99px;background:var(--accent);color:#fff;font-size:var(--t2);animation:chipin .3s var(--ease)}
+.chip{padding:3px 10px;border-radius:99px;background:var(--accent);color:var(--on-accent);font-size:var(--t2);animation:chipin .3s var(--ease)}
 .chip.soft{border-style:dashed;background:transparent}
 .chip.empty{background:none;color:inherit;font-style:italic;padding-inline:0}
 .craving-line{margin:0 0 4px}
@@ -236,3 +236,11 @@ body:has(.qbar .prog) > header{display:none}
 .card-quiet .card-btns{margin:4px 0}
 .card-quiet .btn{font-size:var(--t2);min-height:40px;background:transparent;box-shadow:none}
 .sticky-send{position:sticky;bottom:12px;z-index:5}
+
+/* R6 (S17) result modes 2x2; (S16) night/dark: light halo behind emoji art; (S13) swipe hint by motion */
+.grid.modes{grid-template-columns:1fr 1fr}
+.night .btn .em,:root[data-theme="dark"] .btn .em{text-shadow:0 0 6px rgba(255,255,255,.55)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .btn .em{text-shadow:0 0 6px rgba(255,255,255,.55)}}
+.swipe-nudge{animation:swipenudge .9s var(--ease) 1}
+@keyframes swipenudge{0%,100%{transform:translateX(0)}25%{transform:translateX(14px)}60%{transform:translateX(-14px)}}
+@media (prefers-reduced-motion:reduce){.swipe-nudge{animation:none}}

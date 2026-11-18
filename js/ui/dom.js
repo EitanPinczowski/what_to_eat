@@ -122,8 +122,12 @@ export function mountSaveStatus(store, str) {
   el.setAttribute("aria-live", "polite");
   el.hidden = true;
   document.body.append(el);
+  // S12: the "saved" mark only follows a write after a touch or key press (start-up writes stay silent)
+  let touched = false;
+  const arm = () => (touched = true);
+  for (const ev of ["pointerdown", "keydown"]) document.addEventListener(ev, arm, { capture: true, once: true });
   return saveStatus(store, {
-    show: (t) => ((el.hidden = !t), (el.textContent = t ?? "")),
+    show: (t) => ((el.hidden = !t || (!touched && t === str.saved)), (el.textContent = t ?? "")),
     fail: (t) => toast(t),
   }, str);
 }
