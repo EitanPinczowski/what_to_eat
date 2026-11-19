@@ -347,3 +347,12 @@ Known gaps: sim average steps 11.8 (target 10, reported only); sim "found" gate 
 - S13: swipe hint is a one-time wiggle of the first card (`.swipe-nudge`, off under reduced motion), no text; `STR.swipeHint` is now unused. Change: js/ui/guest/swipe.js.
 - S12: `mountSaveStatus` hides the "saved" mark until the first pointerdown/keydown, so start-up writes stay silent (js/ui/dom.js). Pending/fail unchanged.
 - Not run here: Playwright e2e and the contrast/axe check; result-screen baselines may need regenerating from CI.
+
+### R7 owner polish (S6 S8 S18 S19 S20)
+- S6: home tiles are 4 (send, her-beside-me, picker, shopping, 2x2); the "more" list is titled "כל הכלים" and no longer repeats send. The big send button on the result card is removed (the send tile replaces it). Change: `HOME_TILES`/`MORE_TILES` in js/ui/owner/app.js.
+- S8: couple toggle is `role="switch"` with `aria-checked` and a knob (css R7 block). e2e `couple.spec.js` clicks by testid, unaffected.
+- S18: live status is a pill at the top of the send screen; the raw URL sits in a "הצגת הקישור" disclosure (still `code.link` for tests).
+- S19: picker empty state (no saved places at all) shows a primary "להוסיף מקום ראשון" button; `add` handler added to the picker.
+- S20: settings: names/phones/city form is a titled card; help texts for notifications and install sit behind "איך?" disclosures.
+- Size: shell budget raised 400 -> 416 KB in tests/startup.test.js (css + strings).
+- Not run here: e2e (a11y, tour, owner specs may need a look: home send button moved into a tile).

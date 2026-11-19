@@ -1,5 +1,5 @@
 # Progress
-**Next step: R7 owner polish (R6 done incl. S9 S10; e2e not run here)** — see "Round 3" below.
+**Next step: R8 or next queued item (R7 owner polish done; e2e not run here)** — see "Round 3" below.
 
 ## W6 done (1d learning, check-in feed, self-pruning): see REVIEW.md. Next: W7 (1e couple mode).
 ## W7 done (couple mode 1e): see REVIEW.md. firestore.rules changed (live/couple), needs the owner deploy.

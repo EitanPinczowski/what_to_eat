@@ -13,7 +13,7 @@ export function mountCouple(host, store, saveFailed = () => {}) {
   const mine = () => parseHis(store.doc("live", "couple")?.his).map(([q, i]) => `${q}:${i}`);
   let on = forced || mine().length > 0, his = mine();
   const draw = () => {
-    host.innerHTML = html`<button class="btn" data-testid="couple-toggle" aria-pressed="${on}">${COUPLE.toggle}</button>
+    host.innerHTML = html`<button class="btn switch" role="switch" data-testid="couple-toggle" aria-checked="${on}"><span class="knob" aria-hidden="true"></span>${COUPLE.toggle}</button>
       ${on ? raw(HIS_QS.map((id) => html`<div class="stack" data-testid="couple-q"><p class="sub">${COUPLE.qs[id].t}</p>
         <div class="chips">${raw(COUPLE.qs[id].a.map(([e, t], i) => html`<button class="btn" data-q="${id}" data-i="${i}" aria-pressed="${his.includes(`${id}:${i}`)}">${e} ${t}</button>`).join(""))}</div></div>`).join("")) : ""}
       <p class="sub">${on ? COUPLE.hidden : COUPLE.hint}</p>`;

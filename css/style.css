@@ -250,3 +250,13 @@ body:has(.qbar .prog) > header{display:none}
 .big-text .craving-card .sub{font-size:var(--t3)}
 .big-text .prog i{height:10px}
 @media (max-width:360px){.craving-card{padding:6px 10px}.craving-card .sub{font-size:var(--t2)}.big-text .craving-card .sub{font-size:var(--t2)}}
+/* R7 owner polish: S8 switch, S18 status pill + link box, S20 help disclosures */
+.btn.switch{justify-content:flex-start;gap:10px}
+.btn.switch .knob{position:relative;flex:none;width:44px;height:24px;border-radius:12px;border:2px solid var(--line);background:var(--bg)}
+.btn.switch .knob::before{content:"";position:absolute;top:2px;inset-inline-start:2px;width:16px;height:16px;border-radius:50%;background:var(--muted);transition:inset-inline-start .15s}
+.btn.switch[aria-checked="true"]{background:var(--accent2);color:var(--on-accent2);border-color:var(--accent)}
+.btn.switch[aria-checked="true"] .knob{background:var(--accent);border-color:var(--accent)}
+.btn.switch[aria-checked="true"] .knob::before{inset-inline-start:22px;background:var(--on-accent)}
+@media (prefers-reduced-motion:reduce){.btn.switch .knob::before{transition:none}}
+.pill{align-self:flex-start;padding:6px 12px;border:2px solid var(--line);border-radius:999px;background:var(--accent2);color:var(--on-accent2)}
+.linkbox summary,details.how summary{font-size:var(--t2);color:var(--muted);cursor:pointer;min-height:32px}

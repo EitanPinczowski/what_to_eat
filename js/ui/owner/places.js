@@ -221,7 +221,7 @@ export function placesViews({ root, store, stack, views, common, ctx }) {
       ${st.chosen ? raw(html`<section class="card chosen" data-testid="chosen"><div class="big" aria-hidden="true">🎯</div><h3 class="title">${st.chosen}</h3></section>`) : ""}
       ${scored.length && noneOfKind && st.mode !== "home" ? raw(html`<p class="sub" data-testid="none-of-kind">${K.noneOfKind((food?.cuisine ?? []).map((c) => STR.cuisine.options[c][1]).join(", "))}</p>`) : ""}
       ${scored.length && st.mode !== "home" ? raw(html`${prim === "roll" ? "" : raw(html`<button class="btn" data-on="roll">${K.roll}</button>`)}
-        <ul class="foods">${scored.map((r) => raw(html`<li class="row"><button class="linkish" data-on="choose" data-arg="${r.place.id}"><b>${r.place.name}</b> <span class="sub">${reasonText(r, food)}</span> ${r.closesIn ? raw(html`<span class="sub" data-testid="closes-soon">⏰ ${closesText(r)}</span>`) : ""}</button><button class="chip" data-on="voteToggle" data-arg="${r.place.id}" aria-pressed="${(st.sel ?? []).includes(r.place.id)}">${(st.sel ?? []).includes(r.place.id) ? K.voteIn : K.voteAdd}</button><span class="sub">${r.score}</span></li>`))}</ul>`) : raw(html`<p class="sub">${st.mode === "home" ? "" : K.none}</p>`)}
+        <ul class="foods">${scored.map((r) => raw(html`<li class="row"><button class="linkish" data-on="choose" data-arg="${r.place.id}"><b>${r.place.name}</b> <span class="sub">${reasonText(r, food)}</span> ${r.closesIn ? raw(html`<span class="sub" data-testid="closes-soon">⏰ ${closesText(r)}</span>`) : ""}</button><button class="chip" data-on="voteToggle" data-arg="${r.place.id}" aria-pressed="${(st.sel ?? []).includes(r.place.id)}">${(st.sel ?? []).includes(r.place.id) ? K.voteIn : K.voteAdd}</button><span class="sub">${r.score}</span></li>`))}</ul>`) : raw(html`<p class="sub">${st.mode === "home" ? "" : K.none}</p>${st.mode === "home" || store.list("places").length ? "" : raw(html`<button class="btn btn-primary" data-on="add" data-testid="empty-add">${K.addFirst}</button>`)}`)}
       <div class="stack fallbacks">
         ${st.mode === "home" ? raw(recipeBlock(recipesFor(food?.id, label), label || "")) : raw(html`<a class="btn" href="${mapsUrl(q || K.anyTerm)}" target="_blank" rel="noopener" data-on="fallback">${K.maps(q || K.anyTerm)}</a>`)}
         ${st.mode === "delivery" && !scored.length ? raw(html`<a class="btn" href="${woltUrl(term || "אוכל")}" target="_blank" rel="noopener" data-on="fallback">${K.wolt(term || "אוכל")}</a>
@@ -243,6 +243,7 @@ export function placesViews({ root, store, stack, views, common, ctx }) {
       city: (c) => ((st.city = c || null), (st.chosen = null), views.picker()),
       choose: (id) => ((st.chosen = store.doc("places", id)?.name ?? null), (st.chosenId = id), views.picker()),
       roll: () => roll(scored, st),
+      add: () => ((ctx.place = { name: "", city: store.get().settings.city, modes: [], foods: [], cuisines: [], price: 2, rating: 3, link: "", note: "", shabbat: false, hours: [], visits: [] }), stack.push("placeForm")),
       recipeOpen: (id) => ((ctx.recipeId = id), stack.push("recipe")),
       go: (id) => goTo(id || st.chosenId, st),
       voteToggle: (id) => {

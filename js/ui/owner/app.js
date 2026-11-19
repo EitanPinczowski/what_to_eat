@@ -14,8 +14,8 @@ import { pic } from "../pics.js";
 import { liveLine, freshLive } from "./live-status.js";
 
 const T = STR.owner;
-const HOME_TILES = ["local", "picker", "shopping"];
-const MORE_TILES = ["send", "history", "brain", "places", "sweep", "wrapped", "insights", "settings"];
+const HOME_TILES = ["send", "local", "picker", "shopping"];
+const MORE_TILES = ["history", "brain", "places", "sweep", "wrapped", "insights", "settings"];
 const HOW_AFTER = 2 * 3600e3;
 /** Live status line for the guest's quiz (from rooms/{id}/live/quiz). */
 export function liveStatus(live, her) {
@@ -112,15 +112,14 @@ export async function runOwner(root, store, { base = location.origin + location.
         ${receiptLine(live) ? raw(html`<p class="sub" data-testid="receipt">${receiptLine(live)}</p>`) : ""}
         ${raw(ackCard(live))}
         ${e ? raw(html`<button class="btn btn-primary" data-on="pickFor" data-arg="${e.id}">${T.pickPlace}</button>`) : ""}
-        ${busy || e ? "" : raw(html`<button class="btn btn-primary" data-on="go" data-arg="send">${T.tiles.send.e} ${T.tiles.send.t}</button>`)}
-        ${busy ? "" : raw(howCard())}
+                ${busy ? "" : raw(howCard())}
       </section>
       ${hist.length && backupDue(S()) ? raw(html`<button class="card btn remind" data-on="go" data-arg="settings" data-testid="backup">💾 ${STR.settings.remind}</button>`) : ""}
       <div class="tiles">${HOME_TILES.map((k) => raw(tile(k)))}</div>
       <button class="btn more${isFirstOfMonth() ? " hot" : ""}" data-on="go" data-arg="more">${T.more}</button>`, { ...common, how, ack: (c) => store.setAck(live?.ack === c ? null : c).catch(saveFailed) });
   };
   views.more = () =>
-    render(root, html`${raw(topbar(T.more))}<div class="tiles">${MORE_TILES.map((k) => raw(tile(k)))}</div>`, common);
+    render(root, html`${raw(topbar(T.moreTitle))}<div class="tiles">${MORE_TILES.map((k) => raw(tile(k)))}</div>`, common);
 
   const markSent = () => {
     const fresh = freshLive(store.doc("live", "quiz"));
@@ -138,12 +137,12 @@ export async function runOwner(root, store, { base = location.origin + location.
     const link = buildQuizLink(s.base || base, store.roomId);
     const text = `${T.sendText(s.her, s.me)}\n${link}`;
     render(root, html`${raw(topbar(T.sendTitle(s.her)))}
+      <p class="sub pill" data-testid="live" role="status">${liveLine(store.doc("live", "quiz"), s.her)}</p>
       <label class="sub" for="send-note">${T.noteLabel}</label>
       <input id="send-note" name="note" maxlength="120" autocomplete="off" placeholder="${T.notePlaceholder}" data-testid="note">
       <div class="stack" data-testid="couple-host"></div>
       <button class="btn" data-on="copy">${T.copy}</button>
-      <code class="link" dir="ltr">${link}</code>
-      <p class="sub" data-testid="live" role="status">${liveLine(store.doc("live", "quiz"), s.her)}</p>
+      <details class="linkbox"><summary>${T.showLink}</summary><code class="link" dir="ltr">${link}</code></details>
       <a class="btn btn-primary act" href="${waUrl(text, s.herPhone)}" target="_blank" rel="noopener" data-testid="wa-send">${T.whatsapp}</a>`, {
       ...common,
       copy: async () => (markSent(), toast((await copy(link)) ? T.copied : link)),

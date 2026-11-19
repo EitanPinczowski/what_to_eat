@@ -67,19 +67,19 @@ export function settingsViews({ root, store, views, common, base, mode }) {
     const join = buildJoinLink(s.base || base, store.roomId);
     const field = (k, label, extra = "") => raw(html`<label class="field">${label}<input name="${k}" value="${s[k] ?? ""}" ${raw(extra)}></label>`);
     render(root, html`${raw(topbar(G.title))}
-      <form data-submit="save" class="stack">
+      <form data-submit="save" class="card stack"><b>${G.groupYou}</b>
         ${field("her", G.her, 'maxlength="30"')}${field("me", G.me, 'maxlength="30"')}
         ${field("herPhone", G.herPhone, 'inputmode="tel" dir="ltr" maxlength="20"')}${field("myPhone", G.myPhone, 'inputmode="tel" dir="ltr" maxlength="20"')}
         ${field("city", G.city, 'maxlength="40"')}${field("base", G.base, 'dir="ltr" inputmode="url" autocapitalize="off" autocorrect="off" spellcheck="false" maxlength="200"')}
         <button class="btn btn-primary act" type="submit">${G.save}</button>
       </form>
-      <section class="card stack" data-testid="push"><b>${G.push.title}</b><span class="sub">${G.push.help}</span>
+      <section class="card stack" data-testid="push"><b>${G.push.title}</b><details class="how"><summary>${G.how}</summary><span class="sub">${G.push.help}</span></details>
         <span class="sub" data-testid="push-state" role="status"></span>
         <div class="stack" data-testid="push-actions"></div>
         <label class="check"><input type="checkbox" data-testid="notify-open" data-input="notifyOpen" ${s.notifyOpen ? "checked" : ""}> ${G.push.openedLabel(s.her || "היא")}</label>
-        <span class="sub">${G.push.openedHelp}</span></section>
+        <details class="how"><summary>${G.how}</summary><span class="sub">${G.push.openedHelp}</span></details></section>
       <a class="btn btn-ghost" href="credits.html" data-testid="credits-link">${G.credits.link}</a>
-      <section class="card stack install"><b>${STR.install.title}</b><span class="sub">${installHelp(installKind())}</span>
+      <section class="card stack install"><b>${STR.install.title}</b><details class="how"><summary>${G.how}</summary><span class="sub">${installHelp(installKind())}</span></details>
         ${globalThis.__installPrompt ? raw(html`<button class="btn" data-on="install">${STR.install.button}</button>`) : ""}
         ${installKind() !== "ios" ? raw(html`<span class="sub">${STR.install.ios}</span>`) : ""}</section>
       <details data-k="adv" class="stack" data-testid="advanced" ${st.adv ? "open" : ""}><summary>${G.adv}</summary>
