@@ -125,7 +125,7 @@ export function startGuestQuiz(root, opts) {
     if (!t) return;
     const d = document.createElement("div");
     d.className = "react";
-    d.setAttribute("aria-hidden", "true");
+    d.setAttribute("role", "status"); // S10: read out politely
     d.textContent = t;
     document.body.append(d);
     setTimeout(() => d.remove(), 900);
@@ -329,6 +329,7 @@ export function startGuestQuiz(root, opts) {
     const m = meter();
     render(root, backBar(canBack() || !!opts.onExit).replace(/<\/div>$/, m.bar + "</div>") + m.tags + body, handlers);
     if (step.type === "pick" && step.unsure) fillPick(step);
+    if (actions.length) { const h = root.querySelector?.("h2.q"); if (h) { h.tabIndex = -1; h.focus?.({ preventScroll: true }); } } // S10: a new question moves focus to its heading
     if (!still()) import("./chef.js").then((m) => m.place(root, step.type === "guess" || step.type === "pick" ? "drool" : "idle"), () => {});
     if (step.type === "q" && typeOf(step.q) !== "buttons" && root.querySelector && !globalThis.matchMedia?.("(prefers-reduced-motion: reduce)").matches && !globalThis.WTE_NO_MOTION) {
       const on = step, host = root.querySelector(".answers"), t = typeOf(on.q);

@@ -340,7 +340,8 @@ Known gaps: sim average steps 11.8 (target 10, reported only); sim "found" gate 
 - Pick screen: first item is a full-width hero, the other two sit under "או אולי…" (`STR.pick.maybe`); refine nudges are small pill chips (`.chip-btn`); none/free links stay ghost.
 - Result: image save/share moved to a quiet row above the send button, labels "שמירת תמונה" / "שיתוף"; send button is `position:sticky` at the bottom. Mode/price already follow "זה!" (result screen). S17 not done. Pixel e2e/screenshots not run here (no Playwright); the pick screen baseline may need regenerating from CI.
 
-## R6 (S16, S17, S13, S12; S9/S10 not done)
+## R6 (S16, S17, S13, S12, S9, S10)
+- S9: big text also scales ghost/escape links, craving card and progress; craving card tighter at <=360px (css end). S10: mode/price are role=group with labels (kept aria-pressed, not radio, so tests and the selected style stay), price buttons have aria-label (זול/בינוני/מפנק), reactions are role=status instead of aria-hidden, focus moves to the new question h2 after an answer (quiz.js). Change: those spots. e2e not run.
 - S16: `.chip` uses `--on-accent` (was `#fff`); emoji on `.btn` get a light text-shadow halo in night and dark looks (css/style.css, R6 block).
 - S17: result modes in a 2x2 grid (`.grid.modes`), "לבשל" icon is now 🍲, the craving line no longer ends with " —". Test change: `tests/feelings.test.js` regex no longer expects the trailing dash.
 - S13: swipe hint is a one-time wiggle of the first card (`.swipe-nudge`, off under reduced motion), no text; `STR.swipeHint` is now unused. Change: js/ui/guest/swipe.js.

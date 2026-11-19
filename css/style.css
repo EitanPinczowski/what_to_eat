@@ -244,3 +244,9 @@ body:has(.qbar .prog) > header{display:none}
 .swipe-nudge{animation:swipenudge .9s var(--ease) 1}
 @keyframes swipenudge{0%,100%{transform:translateX(0)}25%{transform:translateX(14px)}60%{transform:translateX(-14px)}}
 @media (prefers-reduced-motion:reduce){.swipe-nudge{animation:none}}
+
+/* R6 (S9): big text scales tags, progress, the escape/ghost links and the craving card */
+.big-text .btn-ghost,.big-text .foot .btn{font-size:var(--t3)}
+.big-text .craving-card .sub{font-size:var(--t3)}
+.big-text .prog i{height:10px}
+@media (max-width:360px){.craving-card{padding:6px 10px}.craving-card .sub{font-size:var(--t2)}.big-text .craving-card .sub{font-size:var(--t2)}}
