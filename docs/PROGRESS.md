@@ -52,3 +52,8 @@ Plan: `docs/plan/round3.md` (read only the step's section). Queue: `C:/dev/boss/
 
 ## W1 (feelings quiz) done
 Bank, staged engine, lazy retired questions, tests, sim floors: all green, see docs/REVIEW.md "W1: feelings quiz". Left: show `cravingSummary` on the result screen (helper and strings exist, not wired); regenerate Linux screenshot baselines only if CI shows a diff.
+
+## CI state (2026-11-19)
+- Run 110 (09d3a2f) is green. It wrote fresh Linux baselines to the `screenshot-baselines-linux` artifact (run 44458374391, expires 2027-02-17).
+- needs-owner: the sandbox proxy blocks the artifact host (blob.core.windows.net), so the PNGs could not be fetched. Download the artifact and commit the PNGs to `e2e/screens.spec.js-snapshots/` so later runs compare against them.
+- Next: W1 leftover (show `cravingSummary` on the result screen), then the next item in the plan.
