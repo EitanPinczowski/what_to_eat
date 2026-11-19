@@ -51,9 +51,9 @@ Plan: `docs/plan/round3.md` (read only the step's section). Queue: `C:/dev/boss/
 - 2026-11-14 · 1.6, 5.2, 5.3, 5.4 (phase-5 tagged, CI + Pages green) · ~15 min (17:48–18:03) · 5h 50%→61% · weekly 52%→54% · claude-opus-5-5 · owner 80% day cap (task prompt). Sim no-skip: exact 77%, found 94.95% → found gate 94.5%. Not done: photo download, rules deploy (need owner in a live session)
 
 ## W1 (feelings quiz) done
-Bank, staged engine, lazy retired questions, tests, sim floors: all green, see docs/REVIEW.md "W1: feelings quiz". Left: show `cravingSummary` on the result screen (helper and strings exist, not wired); regenerate Linux screenshot baselines only if CI shows a diff.
+Bank, staged engine, lazy retired questions, tests, sim floors: all green, see docs/REVIEW.md "W1: feelings quiz". `cravingSummary` is already shown on the result screen (`out.craving` line in `js/ui/guest/session.js`, wired since W2a; checked 2026-11-19, no change needed). Left: regenerate Linux screenshot baselines only if CI shows a diff.
 
 ## CI state (2026-11-19)
 - Run 110 (09d3a2f) is green. It wrote fresh Linux baselines to the `screenshot-baselines-linux` artifact (run 44458374391, expires 2027-02-17).
 - needs-owner: the sandbox proxy blocks the artifact host (blob.core.windows.net), so the PNGs could not be fetched. Download the artifact and commit the PNGs to `e2e/screens.spec.js-snapshots/` so later runs compare against them.
-- Next: W1 leftover (show `cravingSummary` on the result screen), then the next item in the plan.
+- Next: the next item in the plan (W1 leftover was already done, see above).
