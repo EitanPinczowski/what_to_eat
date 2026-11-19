@@ -178,6 +178,7 @@ test("settings: a pasted site address is normalised, saved and survives a reload
   await openMore(page, "settings");
   await expect(page.locator('input[name="base"]')).toHaveValue("https://eitanpinczowski.github.io/what_to_eat/");
   await page.locator('[data-on="back"]').click();
+  await page.locator('[data-on="back"]').click(); // settings -> more -> home (send is a home tile now)
   await page.locator('[data-on="go"][data-arg="send"]').click();
   await expect(page.locator("code.link")).toContainText("https://eitanpinczowski.github.io/what_to_eat/#q=");
   await page.locator('[data-on="back"]').click();

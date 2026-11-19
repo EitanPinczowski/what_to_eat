@@ -1,4 +1,4 @@
-// Home keeps three tiles; everything else lives behind "עוד". openMore opens that list (from home, or from a screen opened out of it) and taps the tile for `key`.
+// Home keeps four tiles; everything else lives behind "עוד". openMore opens that list (from home, or from a screen opened out of it) and taps the tile for `key`.
 export async function openMore(page, key) {
   const tile = page.locator(`.tile[data-arg="${key}"]`);
   const more = page.locator('[data-on="go"][data-arg="more"]');

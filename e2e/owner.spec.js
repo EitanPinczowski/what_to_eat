@@ -3,7 +3,7 @@ import { openMore, pickCategory } from "./helpers.js";
 
 test("owner: home tiles, send-quiz link, live status from her tab, toast on result", async ({ page, context }) => {
   await page.goto("/?store=local");
-  await expect(page.locator(".tile")).toHaveCount(3);
+  await expect(page.locator(".tile")).toHaveCount(4);
   await page.locator('[data-on="go"][data-arg="send"]').click();
   const link = await page.locator("code.link").textContent();
   expect(link).toMatch(/#q=[a-z0-9]{24}$/);

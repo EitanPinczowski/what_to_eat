@@ -65,7 +65,7 @@ test("picker: maps fallback asks where we went and quick-adds the place", async 
 
 test("picker from home links to a fresh quiz result (item 9)", async ({ page, context }) => {
   await page.goto("/?store=local");
-  await expect(page.locator(".tile")).toHaveCount(3);
+  await expect(page.locator(".tile")).toHaveCount(4);
   const room = await page.evaluate(() => localStorage.getItem("mabalach_room"));
   await page.evaluate((room) => {
     const key = `mabalach_v1:${room}`;
@@ -86,7 +86,7 @@ test("picker from home links to a fresh quiz result (item 9)", async ({ page, co
 
 test("picker from a result: category preselected, only its places, booking button on the chosen place", async ({ page }) => {
   await page.goto("/?store=local");
-  await expect(page.locator(".tile")).toHaveCount(3);
+  await expect(page.locator(".tile")).toHaveCount(4);
   const room = await page.evaluate(() => localStorage.getItem("mabalach_room"));
   await page.evaluate((room) => {
     const key = `mabalach_v1:${room}`;

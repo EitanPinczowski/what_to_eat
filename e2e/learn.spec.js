@@ -3,7 +3,7 @@ import { openMore } from "./helpers.js";
 
 test("owner: stats card in history and the 'how was it?' prompt", async ({ page }) => {
   await page.goto("/?store=local");
-  await expect(page.locator(".tile")).toHaveCount(3);
+  await expect(page.locator(".tile")).toHaveCount(4);
   const room = await page.evaluate(() => localStorage.getItem("mabalach_room"));
   await page.evaluate((room) => {
     const key = `mabalach_v1:${room}`;

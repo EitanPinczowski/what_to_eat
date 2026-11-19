@@ -33,7 +33,7 @@ test("settings: names and phones, paste a result link, backup reminder + export,
   expect(newRoom).not.toBe(oldRoom);
   await expect(page.getByTestId("backup")).toHaveCount(0);
   await expect(page.locator(".last .title")).toHaveText("סושי");
-  await openMore(page, "send"); // her fresh result is on the status card, so send sits behind עוד
+  await openMore(page, "send"); // send is a home tile
   await expect(page.locator("a.btn-primary")).toHaveAttribute("href", /wa\.me\/972500000000/);
   await expect(page.locator("code.link")).toContainText(newRoom);
 });
@@ -85,7 +85,7 @@ test("#r= link: declined import changes nothing; a crafted payload is refused wi
 
 test("room recovery: pasted link rejoins a room (confirm, old id kept); a lost room id comes back from the backup (item 10)", async ({ page }) => {
   await page.goto("/?store=local");
-  await expect(page.locator(".tile")).toHaveCount(3);
+  await expect(page.locator(".tile")).toHaveCount(4);
   const room = await page.evaluate(() => localStorage.getItem("mabalach_room"));
   const readBackup = () => page.evaluate(() => new Promise((res) => {
     const rq = indexedDB.open("mabalach_backup", 1);
@@ -98,7 +98,7 @@ test("room recovery: pasted link rejoins a room (confirm, old id kept); a lost r
   // storage eviction: localStorage loses the id, the backup restores it instead of minting a new room
   await page.evaluate(() => localStorage.removeItem("mabalach_room"));
   await page.reload();
-  await expect(page.locator(".tile")).toHaveCount(3);
+  await expect(page.locator(".tile")).toHaveCount(4);
   expect(await page.evaluate(() => localStorage.getItem("mabalach_room"))).toBe(room);
 
   // pasting a link from another room asks first, then switches and keeps the old id
@@ -109,7 +109,7 @@ test("room recovery: pasted link rejoins a room (confirm, old id kept); a lost r
   await openAdvanced(page);
   await page.getByTestId("rejoin").locator("input").fill(`https://example.github.io/what_to_eat/#q=${other}`);
   await page.getByTestId("rejoin").locator('button[type="submit"]').click();
-  await expect(page.locator(".tile")).toHaveCount(3);
+  await expect(page.locator(".tile")).toHaveCount(4);
   expect(asked).toBe(1);
   expect(await page.evaluate(() => localStorage.getItem("mabalach_room"))).toBe(other);
   expect(await page.evaluate(() => localStorage.getItem("mabalach_prev_room"))).toBe(room);
@@ -118,7 +118,7 @@ test("room recovery: pasted link rejoins a room (confirm, old id kept); a lost r
 
 test("problems card: lists errors, clear deletes them (item 11)", async ({ page }) => {
   await page.goto("/?store=local");
-  await expect(page.locator(".tile")).toHaveCount(3);
+  await expect(page.locator(".tile")).toHaveCount(4);
   const room = await page.evaluate(() => localStorage.getItem("mabalach_room"));
   await page.evaluate((room) => {
     const key = `mabalach_v1:${room}`;

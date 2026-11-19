@@ -1,5 +1,6 @@
 # Progress
-**Next step: R8 or next queued item (R7 owner polish done; e2e not run here)** — see "Round 3" below.
+**Next step: R8 or next queued item (R7 owner polish done)**
+**CI state:** run 109 (59896a5 R7) failed: home now has 4 tiles and send is a home tile; e2e counts 3->4 in learn/owner/places/settings specs, features spec needs 2 backs to reach home, Linux baselines for owner-home-*, send, settings, picker deleted so CI regenerates them (take artifact screenshot-baselines-linux, commit). Run 108 (R6) was only cancelled by the R7 push, run 107 green. Verify the fix run. — see "Round 3" below.
 
 ## W6 done (1d learning, check-in feed, self-pruning): see REVIEW.md. Next: W7 (1e couple mode).
 ## W7 done (couple mode 1e): see REVIEW.md. firestore.rules changed (live/couple), needs the owner deploy.
